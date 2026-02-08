@@ -1,8 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { enforceCarpoolConsistencyAfterInvitationUpdate } from "./carpool";
 
 const RSVP_ATTENDANCE = v.union(v.literal("yes"), v.literal("no"));
 const RSVP_TRANSPORT = v.union(v.literal("own"), v.literal("bus"));
+const RSVP_GUEST_ATTENDANCES = v.record(v.string(), RSVP_ATTENDANCE);
 
 export const getIdByToken = query({
   args: { token: v.string() },
@@ -43,9 +45,11 @@ export const getById = query({
       plusOneName: v.optional(v.string()),
       plusOneAttendance: v.optional(RSVP_ATTENDANCE),
       attendance: v.optional(RSVP_ATTENDANCE),
+      guestAttendances: v.optional(RSVP_GUEST_ATTENDANCES),
       answeredForAll: v.optional(v.boolean()),
       answeredForName: v.optional(v.string()),
       transport: v.optional(RSVP_TRANSPORT),
+      carpoolDriverOptIn: v.optional(v.boolean()),
       arrivalDateTime: v.optional(v.string()),
       message: v.optional(v.string()),
       rsvpUpdatedAt: v.optional(v.number()),
@@ -88,9 +92,11 @@ export const listForAdmin = query({
       plusOneName: v.optional(v.string()),
       plusOneAttendance: v.optional(RSVP_ATTENDANCE),
       attendance: v.optional(RSVP_ATTENDANCE),
+      guestAttendances: v.optional(RSVP_GUEST_ATTENDANCES),
       answeredForAll: v.optional(v.boolean()),
       answeredForName: v.optional(v.string()),
       transport: v.optional(RSVP_TRANSPORT),
+      carpoolDriverOptIn: v.optional(v.boolean()),
       arrivalDateTime: v.optional(v.string()),
       message: v.optional(v.string()),
       rsvpUpdatedAt: v.optional(v.number()),
@@ -126,10 +132,9 @@ export const listForAdmin = query({
 export const updateRsvp = mutation({
   args: {
     invitationId: v.id("invitations"),
-    attendance: RSVP_ATTENDANCE,
-    answeredForAll: v.boolean(),
-    answeredForName: v.optional(v.string()),
+    guestAttendances: RSVP_GUEST_ATTENDANCES,
     transport: v.optional(RSVP_TRANSPORT),
+    carpoolDriverOptIn: v.optional(v.boolean()),
     arrivalDateTime: v.optional(v.string()),
     message: v.optional(v.string()),
     plusOneName: v.optional(v.string()),
@@ -137,29 +142,84 @@ export const updateRsvp = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const invitation = await ctx.db.get(args.invitationId);
+    if (!invitation) {
+      throw new Error("Invitation not found");
+    }
+
+    const guests = await ctx.db
+      .query("guests")
+      .withIndex("by_invitation", (q) => q.eq("invitationId", args.invitationId))
+      .collect();
+    const normalizedGuests = guests
+      .map((guest) => ({ _id: guest._id, fullName: guest.fullName.trim() }))
+      .filter((guest) => guest.fullName.length > 0);
+    if (normalizedGuests.length === 0) {
+      throw new Error("Brak gości przypisanych do zaproszenia.");
+    }
+
+    const allowedGuestIds = new Set(normalizedGuests.map((guest) => guest._id));
+    const providedGuestIds = Object.keys(args.guestAttendances).filter(Boolean);
+    for (const guestId of providedGuestIds) {
+      if (!allowedGuestIds.has(guestId as typeof normalizedGuests[number]["_id"])) {
+        throw new Error("Wybierz osobę z listy zaproszenia.");
+      }
+    }
+
+    const nextGuestAttendances: Record<string, "yes" | "no"> = {};
+    for (const guest of normalizedGuests) {
+      const attendance = args.guestAttendances[guest._id];
+      if (attendance !== "yes" && attendance !== "no") {
+        throw new Error("Wybierz odpowiedź dla każdej osoby na zaproszeniu.");
+      }
+      nextGuestAttendances[guest._id] = attendance;
+    }
+
+    const hasAnyYes = normalizedGuests.some(
+      (guest) => nextGuestAttendances[guest._id] === "yes"
+    );
+    const aggregateAttendance: "yes" | "no" = hasAnyYes ? "yes" : "no";
+
     const patch: Record<string, unknown> = {
-      attendance: args.attendance,
-      answeredForAll: args.answeredForAll,
-      answeredForName: args.answeredForName,
-      message: args.message,
-      plusOneName: args.plusOneName,
-      plusOneAttendance: args.plusOneAttendance,
+      attendance: aggregateAttendance,
+      guestAttendances: nextGuestAttendances,
+      answeredForAll: true,
+      answeredForName: undefined,
+      message: args.message?.trim(),
       rsvpUpdatedAt: Date.now(),
     };
 
-    if (args.transport !== undefined) {
-      patch.transport = args.transport;
-    } else {
+    if (aggregateAttendance !== "yes") {
       patch.transport = undefined;
-    }
-
-    if (args.arrivalDateTime !== undefined) {
-      patch.arrivalDateTime = args.arrivalDateTime;
-    } else {
       patch.arrivalDateTime = undefined;
+      patch.carpoolDriverOptIn = false;
+      patch.plusOneName = undefined;
+      patch.plusOneAttendance = undefined;
+    } else {
+      if (args.transport !== undefined) {
+        patch.transport = args.transport;
+      }
+
+      const effectiveTransport = args.transport ?? invitation.transport;
+      if (effectiveTransport !== "own") {
+        patch.carpoolDriverOptIn = false;
+      } else if (args.carpoolDriverOptIn !== undefined) {
+        patch.carpoolDriverOptIn = args.carpoolDriverOptIn === true;
+      }
+
+      if (args.arrivalDateTime !== undefined) {
+        patch.arrivalDateTime = args.arrivalDateTime;
+      }
+      if (args.plusOneAttendance !== undefined) {
+        patch.plusOneAttendance = args.plusOneAttendance;
+      }
+      if (args.plusOneName !== undefined) {
+        patch.plusOneName = args.plusOneName.trim();
+      }
     }
 
     await ctx.db.patch(args.invitationId, patch);
+    await enforceCarpoolConsistencyAfterInvitationUpdate(ctx, args.invitationId);
     return null;
   },
 });
@@ -396,6 +456,7 @@ export const seedInvitations = mutation({
         plusOneName: undefined,
         plusOneAttendance: undefined,
         attendance: undefined,
+        guestAttendances: undefined,
         answeredForAll: undefined,
         answeredForName: undefined,
         transport: undefined,

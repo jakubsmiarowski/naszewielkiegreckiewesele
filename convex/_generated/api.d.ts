@@ -8,8 +8,10 @@
  * @module
  */
 
+import type * as carpool from "../carpool.js";
 import type * as guests from "../guests.js";
 import type * as invitations from "../invitations.js";
+import type * as questions from "../questions.js";
 import type * as settings from "../settings.js";
 
 import type {
@@ -19,8 +21,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  carpool: typeof carpool;
   guests: typeof guests;
   invitations: typeof invitations;
+  questions: typeof questions;
   settings: typeof settings;
 }>;
 

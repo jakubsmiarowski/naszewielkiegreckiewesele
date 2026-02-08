@@ -1,7 +1,14 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
-import { planTimelineDays } from "@/data/plan-timeline";
+import type { AttractionAnchorId } from "@/components/dashboard/types";
 import { Button } from "@/components/ui/button";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { planTimelineDays } from "@/data/plan-timeline";
 import { cn } from "@/lib/utils";
 
 const listVariants = {
@@ -17,8 +24,13 @@ const itemVariants = {
 	show: { opacity: 1, y: 0 },
 };
 
-export function PlanTimeline() {
+export function PlanTimeline({
+	onOpenAttraction,
+}: {
+	onOpenAttraction?: (anchorId: AttractionAnchorId) => void;
+}) {
 	const [activeDayId, setActiveDayId] = useState(planTimelineDays[0]?.id);
+	const [open, setOpen] = useState(false);
 	const activeDay = useMemo(
 		() => planTimelineDays.find((day) => day.id === activeDayId),
 		[activeDayId],
@@ -30,10 +42,57 @@ export function PlanTimeline() {
 
 	return (
 		<div className="space-y-6">
+			{/* Mobile View - Popover */}
+			<div className="md:hidden w-full pb-4 border-b border-border">
+				<Popover open={open} onOpenChange={setOpen}>
+					<PopoverTrigger asChild>
+						<Button
+							variant="outline"
+							role="combobox"
+							aria-expanded={open}
+							className="w-full justify-between bg-background border-border text-foreground hover:bg-muted/50"
+						>
+							{activeDay.label}
+							<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+						</Button>
+					</PopoverTrigger>
+					<PopoverContent
+						className="w-[--radix-popover-trigger-width] p-0"
+						align="start"
+					>
+						<div className="flex flex-col">
+							{planTimelineDays.map((day) => (
+								<Button
+									key={day.id}
+									variant="ghost"
+									className={cn(
+										"justify-start font-normal rounded-none first:rounded-t-md last:rounded-b-md h-auto py-3 px-4",
+										day.id === activeDayId && "bg-muted font-medium",
+									)}
+									onClick={() => {
+										setActiveDayId(day.id);
+										setOpen(false);
+									}}
+								>
+									<Check
+										className={cn(
+											"mr-2 h-4 w-4",
+											day.id === activeDayId ? "opacity-100" : "opacity-0",
+										)}
+									/>
+									{day.label}
+								</Button>
+							))}
+						</div>
+					</PopoverContent>
+				</Popover>
+			</div>
+
+			{/* Desktop View - Tabs */}
 			<div
 				role="tablist"
 				aria-label="Dni planu zabawy"
-				className="flex flex-wrap gap-3"
+				className="hidden md:flex flex-wrap gap-3"
 			>
 				{planTimelineDays.map((day) => {
 					const isActive = day.id === activeDay.id;
@@ -109,6 +168,20 @@ export function PlanTimeline() {
 									<p className="text-muted-foreground mt-2 leading-relaxed">
 										{event.description}
 									</p>
+									{event.attractionAnchorId && onOpenAttraction && (
+										<Button
+											type="button"
+											variant="link"
+											className="mt-2 h-auto p-0 text-primary"
+											onClick={() => {
+												if (event.attractionAnchorId) {
+													onOpenAttraction(event.attractionAnchorId);
+												}
+											}}
+										>
+											{event.attractionCtaLabel ?? "Zobacz powiązaną atrakcję"}
+										</Button>
+									)}
 								</div>
 							</motion.li>
 						))}

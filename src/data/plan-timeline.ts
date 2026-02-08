@@ -1,3 +1,8 @@
+import {
+	ATTRACTION_ANCHORS,
+	type AttractionAnchorId,
+} from "@/components/dashboard/types";
+
 export type PlanEvent = {
 	id: string;
 	time: string;
@@ -5,6 +10,8 @@ export type PlanEvent = {
 	description: string;
 	tag?: string;
 	location?: string;
+	attractionAnchorId?: AttractionAnchorId;
+	attractionCtaLabel?: string;
 };
 
 export type PlanDay = {
@@ -18,185 +25,142 @@ export type PlanDay = {
 export const planTimelineDays: PlanDay[] = [
 	{
 		id: "2026-09-30",
-		label: "Środa 30.09.2026",
+		label: "Środa 30.09",
 		date: "2026-09-30",
-		subtitle: "Przyloty i integracja",
+		subtitle: "Przyloty i spokojny start",
 		events: [
 			{
-				id: "wed-checkin",
-				time: "12:00–16:00",
-				title: "Przyloty i check-in",
-				description:
-					"Luźne zameldowanie w hotelu, odbiór pakietów powitalnych i czas na odpoczynek po podróży.",
-				tag: "Logistyka",
-				location: "Hotel Lefka Ori",
-			},
-			{
-				id: "wed-meetup",
-				time: "18:00",
-				title: "Spotkanie powitalne",
-				description:
-					"Kawa, lemoniada i szybkie przywitanie się ze wszystkimi przed wieczorem.",
-				tag: "Integracja",
-				location: "Taras hotelowy",
-			},
-			{
-				id: "wed-dinner",
+				id: "wed-flight",
 				time: "20:00",
-				title: "Kolacja w tawernie",
+				title: "Wylot i późny przylot do Chanii",
 				description:
-					"Nieformalne rozpoczęcie wspólnego pobytu w greckim klimacie.",
-				tag: "Kolacja",
-				location: "Tawerna przy plaży",
+					"W środę jest tylko jeden lot około 20:00, więc na miejscu w Chanii będziemy mniej więcej o 23:00. Do Chory Sfakion dotrzemy późno.",
+				tag: "Logistyka",
+				location: "Chania / Chora Sfakion",
+			},
+			{
+				id: "wed-early-arrivals",
+				time: "Wieczór",
+				title: "Luźne spotkanie dla osób na miejscu",
+				description:
+					"Jeśli jesteście już na Krecie, spotkajmy się bez presji na spokojny wieczór i wspólne wejście w klimat wyjazdu.",
+				tag: "Integracja",
+				location: "Według uznania",
 			},
 		],
 	},
 	{
 		id: "2026-10-01",
-		label: "Czwartek 01.10.2026",
+		label: "Czwartek 01.10",
 		date: "2026-10-01",
-		subtitle: "Wspólne odkrywanie wyspy",
+		subtitle: "Dzień wesela",
 		events: [
 			{
-				id: "thu-breakfast",
-				time: "09:30",
-				title: "Wspólne śniadanie",
+				id: "thu-free-time",
+				time: "Do 15:00",
+				title: "Czas wolny",
 				description:
-					"Start dnia na spokojnie. Poznajmy się lepiej przed atrakcjami.",
+					"Przed popołudniowym spotkaniem mamy spokojny czas dla siebie. My będziemy się szykować, a Wy możecie wypocząć, pospacerować albo spędzić dzień tak, jak lubicie.",
 				tag: "Relaks",
-				location: "Restauracja hotelowa",
+				location: "Według uznania",
 			},
 			{
-				id: "thu-city",
-				time: "12:00",
-				title: "Spacer po Chanii",
+				id: "thu-ceremony",
+				time: "16:00",
+				title: "Krótka ceremonia",
 				description:
-					"Zwiedzanie starego portu, wąskich uliczek i lokalnych kawiarenek.",
-				tag: "Atrakcje",
-				location: "Chania",
+					"Spotykamy się w starym porcie lub na plaży niedaleko knajpy. Ceremonię poprowadzi Mateusz (bestman) albo urzędnik/konsul z Aten.",
+				tag: "Ceremonia",
+				location: "Stary port / plaża przy knajpie",
 			},
 			{
-				id: "thu-sunset",
-				time: "19:30",
-				title: "Zachód słońca i przekąski",
+				id: "thu-party",
+				time: "Po ceremonii",
+				title: "Zdjęcia i wspólne świętowanie",
 				description:
-					"Lekka kolacja i chwila na wspólne zdjęcia w złotym świetle.",
-				tag: "Integracja",
-				location: "Punkt widokowy",
+					"Po krótkiej sesji zdjęciowej przechodzimy do knajpy na biesiadowanie, toast i zabawę. Chcemy, żeby to był nasz wspólny, radosny wieczór.",
+				tag: "Wesele",
+				location: "Knajpa weselna",
 			},
 		],
 	},
 	{
 		id: "2026-10-02",
-		label: "Piątek 02.10.2026",
+		label: "Piątek 02.10",
 		date: "2026-10-02",
-		subtitle: "Dzień wesela",
+		subtitle: "Poprawiny bez pośpiechu",
 		events: [
 			{
-				id: "fri-prep",
-				time: "10:00–14:00",
-				title: "Relaks i przygotowania",
+				id: "fri-slow-start",
+				time: "Od rana",
+				title: "Spokojny start dnia",
 				description:
-					"Czas na makijaż, fryzurę i spokojne przygotowania do ceremonii.",
-				tag: "Przygotowania",
-				location: "Pokoje hotelowe",
+					"Startujemy na luzie, bez budzika i bez presji czasu. To dzień na odpoczynek po weselu i łapanie oddechu.",
+				tag: "Relaks",
+				location: "Chora Sfakion",
 			},
 			{
-				id: "fri-ceremony",
-				time: "15:30",
-				title: "Ceremonia",
+				id: "fri-afterparty",
+				time: "Popołudnie",
+				title: "Poprawiny na wzgórzu",
 				description:
-					"Oficjalny moment, na który wszyscy czekaliśmy. Do zobaczenia na miejscu!",
-				tag: "Ceremonia",
-				location: "Ogród przy willi",
-			},
-			{
-				id: "fri-photos",
-				time: "17:00",
-				title: "Sesja zdjęciowa i toast",
-				description:
-					"Krótkie zdjęcia z bliskimi i pierwszy toast za nowy rozdział.",
-				tag: "Zdjęcia",
-				location: "Taras widokowy",
-			},
-			{
-				id: "fri-party",
-				time: "19:30",
-				title: "Wesele i afterparty",
-				description:
-					"Kolacja, tańce i niespodzianki. Zostajemy do ostatniego utworu!",
-				tag: "Wesele",
-				location: "Sala weselna",
+					"Jeśli będziecie mieć ochotę, idziemy do pobliskiego baru na wzgórzu na poprawiny. A jeśli ktoś woli wolniejsze tempo, pełna dowolność.",
+				tag: "Integracja",
+				location: "Bar na wzgórzu (opcjonalnie)",
 			},
 		],
 	},
 	{
 		id: "2026-10-03",
-		label: "Sobota 03.10.2026",
+		label: "Sobota 03.10",
 		date: "2026-10-03",
-		subtitle: "Lekki dzień regeneracji",
+		subtitle: "Wycieczka albo czas wolny",
 		events: [
 			{
-				id: "sat-beach",
-				time: "11:00",
-				title: "Plażowanie i regeneracja",
+				id: "sat-loutro",
+				time: "W ciągu dnia",
+				title: "Opcjonalna wycieczka do Loutro",
 				description:
-					"Czas na leniwy poranek, kąpiele i chwilę dla siebie po weselu.",
-				tag: "Relaks",
-				location: "Plaża miejska",
-			},
-			{
-				id: "sat-cruise",
-				time: "14:00",
-				title: "Rejs po zatoce",
-				description:
-					"Opcjonalna wycieczka łodzią z przystankiem na kąpiel w krystalicznej wodzie.",
+					"Możemy zrobić wspólną wyprawę do Loutro i odkryć jedną z najpiękniejszych zatok. Jeśli taki plan Was kręci, chętnie organizujemy to razem.",
 				tag: "Atrakcje",
-				location: "Marina",
+				location: "Loutro (opcjonalnie)",
+				attractionAnchorId: ATTRACTION_ANCHORS.loutroSaturdayTrip,
+				attractionCtaLabel: "Zobacz atrakcje i plan wycieczki do Loutro",
 			},
 			{
-				id: "sat-evening",
-				time: "20:00",
-				title: "Wieczór chill & muzyka",
+				id: "sat-free-time",
+				time: "Alternatywnie",
+				title: "Plaża i lokalne atrakcje",
 				description:
-					"Luźne spotkanie przy muzyce, deserach i świetnych wspomnieniach.",
-				tag: "Integracja",
-				location: "Lounge hotelowy",
+					"Jeśli wolicie spokojniejszy dzień, możemy zostać na miejscu i postawić na plażowanie oraz lokalne atrakcje w okolicy. Decydujemy wspólnie.",
+				tag: "Relaks",
+				location: "Okolica Chory Sfakion",
 			},
 		],
 	},
 	{
 		id: "2026-10-04",
-		label: "Niedziela 04.10.2026",
+		label: "Niedziela 04.10",
 		date: "2026-10-04",
-		subtitle: "Pożegnania",
+		subtitle: "Wczesny powrót",
 		events: [
 			{
-				id: "sun-brunch",
-				time: "09:30",
-				title: "Brunch po weselu",
+				id: "sun-breakfast",
+				time: "Wcześnie rano",
+				title: "Wspólne śniadanie i pożegnanie",
 				description:
-					"Ostatnie wspólne śniadanie i czas na podsumowanie wyjazdu.",
-				tag: "Brunch",
-				location: "Restauracja hotelowa",
+					"W niedzielę jest tylko jeden lot około 10:00, więc spotykamy się na szybkie śniadanie i spokojnie żegnamy przed drogą do domów.",
+				tag: "Pożegnanie",
+				location: "Domki / okolica",
 			},
 			{
-				id: "sun-farewell",
-				time: "12:00",
-				title: "Pożegnania i zdjęcia",
+				id: "sun-flight",
+				time: "Około 10:00",
+				title: "Wylot",
 				description:
-					"Krótka chwila na wspólne zdjęcia przed wyjazdami.",
-				tag: "Integracja",
-				location: "Lobby",
-			},
-			{
-				id: "sun-transfer",
-				time: "14:00–18:00",
-				title: "Transfery na lotnisko",
-				description:
-					"Wyjazdy zgodnie z godzinami lotów. Pomagamy przy organizacji transportu.",
+					"Dziękujemy, że tworzycie ten wyjazd razem z nami. Wracamy z pięknymi wspomnieniami i ogromną wdzięcznością.",
 				tag: "Logistyka",
-				location: "Parking hotelowy",
+				location: "Lotnisko Chania",
 			},
 		],
 	},

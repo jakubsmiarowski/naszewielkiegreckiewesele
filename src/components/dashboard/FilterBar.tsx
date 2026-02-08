@@ -1,4 +1,11 @@
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 const filters = ["RSVP", "Plan zabawy", "Logistyka", "Atrakcje", "Q&A"];
@@ -39,28 +46,78 @@ export function FilterBar({
 	onSelect?: (value: string) => void;
 }) {
 	const items = filtersOverride ?? filters;
+	const [open, setOpen] = useState(false);
+
+	const activeItem = items.find((item) => item === activeFilter) || items[0];
 
 	return (
-		<div className="flex flex-wrap gap-3 pb-2 border-b border-border">
-			{items.map((filter, index) => {
-				const isActive = activeFilter
-					? filter === activeFilter
-					: index === 0;
-				return (
-				<Button
-					key={filter}
-					variant={isActive ? "default" : "outline"}
-					className={cn(
-						"rounded-full px-5 transition-transform hover:scale-105",
-						!isActive &&
-							"bg-background text-muted-foreground hover:text-primary hover:border-primary border-border",
-					)}
-					onClick={() => onSelect?.(filter)}
-				>
-					{filter}
-				</Button>
-				);
-			})}
-		</div>
+		<>
+			{/* Mobile View - Popover */}
+			<div className="md:hidden w-full pb-4">
+				<Popover open={open} onOpenChange={setOpen}>
+					<PopoverTrigger asChild>
+						<Button
+							variant="outline"
+							role="combobox"
+							aria-expanded={open}
+							className="w-full justify-between bg-background border-border text-foreground hover:bg-muted/50"
+						>
+							{activeItem}
+							<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+						</Button>
+					</PopoverTrigger>
+					<PopoverContent
+						className="w-[--radix-popover-trigger-width] p-0"
+						align="start"
+					>
+						<div className="flex flex-col">
+							{items.map((filter) => (
+								<Button
+									key={filter}
+									variant="ghost"
+									className={cn(
+										"justify-start font-normal rounded-none first:rounded-t-md last:rounded-b-md h-auto py-3 px-4",
+										filter === activeFilter && "bg-muted font-medium",
+									)}
+									onClick={() => {
+										onSelect?.(filter);
+										setOpen(false);
+									}}
+								>
+									<Check
+										className={cn(
+											"mr-2 h-4 w-4",
+											filter === activeFilter ? "opacity-100" : "opacity-0",
+										)}
+									/>
+									{filter}
+								</Button>
+							))}
+						</div>
+					</PopoverContent>
+				</Popover>
+			</div>
+
+			{/* Desktop View - Tabs */}
+			<div className="hidden md:flex flex-wrap gap-3">
+				{items.map((filter, index) => {
+					const isActive = activeFilter ? filter === activeFilter : index === 0;
+					return (
+						<Button
+							key={filter}
+							variant={isActive ? "default" : "outline"}
+							className={cn(
+								"rounded-full px-5 transition-transform hover:scale-105",
+								!isActive &&
+									"bg-background text-muted-foreground hover:text-primary hover:border-primary border-border",
+							)}
+							onClick={() => onSelect?.(filter)}
+						>
+							{filter}
+						</Button>
+					);
+				})}
+			</div>
+		</>
 	);
 }

@@ -2,10 +2,10 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { Calendar } from "lucide-react";
 import { Dialog } from "radix-ui";
 import {
-	forwardRef,
-	useState,
 	type ComponentPropsWithoutRef,
 	type ElementRef,
+	forwardRef,
+	useState,
 } from "react";
 import { Drawer } from "vaul";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 export interface InfoCardData {
 	id: string;
+	anchorId?: string;
 	image: string;
 	category: string;
 	date?: string;
@@ -109,7 +110,11 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 
 	if (isMobile) {
 		return (
-			<div className="relative w-full">
+			<div
+				id={card.anchorId}
+				className="relative w-full scroll-mt-24"
+				data-attraction-anchor={card.anchorId}
+			>
 				{open && (
 					<div className="absolute inset-0 pointer-events-none" aria-hidden>
 						<div className="group flex flex-col bg-card rounded-2xl overflow-hidden shadow-sm border border-border text-left w-full h-full">
@@ -136,7 +141,11 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 	}
 
 	return (
-		<div className="relative w-full">
+		<div
+			id={card.anchorId}
+			className="relative w-full scroll-mt-24"
+			data-attraction-anchor={card.anchorId}
+		>
 			{open && (
 				<div className="absolute inset-0 pointer-events-none" aria-hidden>
 					<div className="group flex flex-col bg-card rounded-2xl overflow-hidden shadow-sm border border-border text-left w-full h-full">
