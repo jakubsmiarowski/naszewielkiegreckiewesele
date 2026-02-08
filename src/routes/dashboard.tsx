@@ -12,6 +12,7 @@ import {
 	DeadlineCountdownWidget,
 	DogSlideshowWidget,
 	EmergencyContactsWidget,
+	ExpandableMapWidget,
 	EventCountdownWidget,
 } from "@/components/dashboard/SidebarWidgets";
 import { type RSVPFormData, RsvpForm } from "@/components/rsvp/RsvpForm";
@@ -182,6 +183,7 @@ function DashboardPage() {
 						onAddToCalendar={handleAddToCalendar}
 					/>
 					<DeadlineCountdownWidget deadline={deadlineDate} />
+					<ExpandableMapWidget />
 					<EmergencyContactsWidget />
 					<DogSlideshowWidget />
 				</aside>

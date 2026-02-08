@@ -1,4 +1,13 @@
-import { ChevronRight, Heart, Mail, Search } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+	ChevronRight,
+	ExternalLink,
+	Heart,
+	Mail,
+	Maximize2,
+	Search,
+	X,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +19,11 @@ import {
 	CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Input } from "@/components/ui/input";
+
+const MAP_QUERY = "Lefka Ori Hotel, Chora Sfakion, Crete";
+const MAP_QUERY_PARAM = encodeURIComponent(MAP_QUERY);
+const MAP_EMBED_URL = `https://www.google.com/maps?q=${MAP_QUERY_PARAM}&output=embed`;
+const MAP_LINK_URL = `https://www.google.com/maps/search/?api=1&query=${MAP_QUERY_PARAM}`;
 
 export function SearchWidget() {
 	return (
@@ -240,6 +254,129 @@ export function DogSlideshowWidget() {
 				</div>
 			</Carousel>
 		</div>
+	);
+}
+
+export function ExpandableMapWidget() {
+	const [isOpen, setIsOpen] = useState(false);
+
+	useEffect(() => {
+		if (!isOpen) return;
+		const originalOverflow = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.body.style.overflow = originalOverflow;
+		};
+	}, [isOpen]);
+
+	useEffect(() => {
+		if (!isOpen) return;
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setIsOpen(false);
+			}
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [isOpen]);
+
+	return (
+		<>
+			<button
+				type="button"
+				onClick={() => setIsOpen(true)}
+				className="w-full text-left bg-background p-6 rounded-2xl shadow-sm border border-border cursor-pointer"
+			>
+				<div className="mb-3 flex items-center justify-between gap-3">
+					<h4 className="text-lg font-bold text-foreground">Mapa miejsca</h4>
+					<Maximize2 className="size-4 text-muted-foreground" />
+				</div>
+				<p className="mb-4 text-sm text-muted-foreground">
+					Lefka Ori, Chora Sfakion, Kreta
+				</p>
+				<div className="overflow-hidden rounded-xl border border-border bg-muted">
+					<iframe
+						title="Mapa Lefka Ori Hotel, Chora Sfakion"
+						src={MAP_EMBED_URL}
+						className="h-48 w-full pointer-events-none"
+						loading="lazy"
+						referrerPolicy="no-referrer-when-downgrade"
+					/>
+				</div>
+				<p className="mt-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+					Kliknij, aby powiększyć mapę
+				</p>
+			</button>
+
+			<AnimatePresence>
+				{isOpen && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+						onClick={() => setIsOpen(false)}
+					>
+						<motion.div
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+						/>
+						<motion.div
+							initial={{ opacity: 0, y: 16, scale: 0.98 }}
+							animate={{ opacity: 1, y: 0, scale: 1 }}
+							exit={{ opacity: 0, y: 8, scale: 0.98 }}
+							transition={{ duration: 0.2, ease: "easeOut" }}
+							role="dialog"
+							aria-modal="true"
+							aria-label="Mapa Lefka Ori w Chora Sfakion"
+							className="relative z-10 w-full max-w-5xl rounded-2xl border border-border bg-background p-4 shadow-2xl sm:p-6"
+							onClick={(event) => event.stopPropagation()}
+						>
+							<div className="mb-4 flex items-start justify-between gap-4">
+								<div>
+									<h4 className="text-xl font-bold text-foreground">
+										Lefka Ori Hotel
+									</h4>
+									<p className="text-sm text-muted-foreground">
+										Chora Sfakion, Crete
+									</p>
+								</div>
+								<button
+									type="button"
+									onClick={() => setIsOpen(false)}
+									className="inline-flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+									aria-label="Zamknij mapę"
+								>
+									<X className="size-4" />
+								</button>
+							</div>
+
+							<div className="overflow-hidden rounded-xl border border-border bg-muted">
+								<iframe
+									title="Duża mapa Lefka Ori Hotel, Chora Sfakion"
+									src={MAP_EMBED_URL}
+									className="h-[55vh] min-h-[320px] w-full"
+									loading="lazy"
+									referrerPolicy="no-referrer-when-downgrade"
+								/>
+							</div>
+
+							<a
+								href={MAP_LINK_URL}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+							>
+								<ExternalLink className="size-4" />
+								Otwórz w Google Maps
+							</a>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
+		</>
 	);
 }
 
