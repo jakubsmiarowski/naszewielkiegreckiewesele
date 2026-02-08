@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kamila &amp; Kuba - Ślub w Grecji</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    backgroundImage: {
+                        'hero-pattern': "linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?q=80&w=2938&auto=format&fit=crop')",
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white font-display overflow-x-hidden">
+<div class="relative flex min-h-screen w-full flex-col group/design-root">
+<!-- Top Navigation -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-all duration-300">
+<div class="layout-container flex h-full grow flex-col max-w-[1280px] mx-auto">
+<div class="flex items-center justify-between px-6 lg:px-10 py-4">
+<!-- Logo -->
+<div class="flex items-center gap-3 text-primary dark:text-white cursor-pointer hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-3xl">favorite</span>
+<h2 class="text-xl font-bold tracking-tight">K &amp; K</h2>
+</div>
+<!-- Desktop Menu -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Strona Główna</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#details">Plan</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#rsvp">RSVP</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#contact">Kontakt</a>
+</nav>
+<!-- Actions -->
+<div class="flex items-center gap-3">
+<button class="hidden sm:flex h-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 px-4 text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined text-[20px] mr-2">qr_code_2</span>
+<span>App</span>
+</button>
+<button class="h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/30 hover:bg-blue-700 hover:shadow-primary/50 transition-all hover:-translate-y-0.5">
+                            RSVP
+                        </button>
+</div>
+</div>
+</div>
+</header>
+<!-- Hero Section -->
+<section class="relative flex h-screen min-h-[600px] w-full items-center justify-center overflow-hidden pt-20">
+<!-- Background Image with Parallax-like feel (static) -->
+<div class="absolute inset-0 z-0 h-full w-full bg-cover bg-center bg-no-repeat bg-hero-pattern scale-105" data-alt="Beautiful sunny view of Santorini white buildings and blue sea" style="transform-origin: center;">
+</div>
+<!-- Content -->
+<div class="relative z-10 flex flex-col items-center justify-center gap-6 px-4 text-center animate-fade-in-up">
+<div class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/20 px-4 py-1.5 backdrop-blur-md shadow-sm">
+<span class="text-xs font-bold uppercase tracking-wider text-white drop-shadow-sm">Pobieramy się!</span>
+</div>
+<h1 class="text-6xl md:text-8xl font-black text-white leading-tight tracking-tighter drop-shadow-lg">
+                    Kamila <span class="text-blue-200">&amp;</span> Kuba
+                </h1>
+<div class="flex flex-col md:flex-row items-center gap-2 md:gap-6 text-white/90">
+<div class="flex items-center gap-2 text-lg font-medium drop-shadow-md">
+<span class="material-symbols-outlined">calendar_month</span>
+<span>12 Sierpnia 2024</span>
+</div>
+<span class="hidden md:block h-1.5 w-1.5 rounded-full bg-white/60"></span>
+<div class="flex items-center gap-2 text-lg font-medium drop-shadow-md">
+<span class="material-symbols-outlined">location_on</span>
+<span>Santorini, Grecja</span>
+</div>
+</div>
+<div class="mt-8 flex flex-col sm:flex-row gap-4">
+<button class="flex h-12 min-w-[160px] items-center justify-center rounded-lg bg-white text-primary font-bold shadow-xl transition-all hover:bg-gray-50 hover:scale-105 hover:shadow-2xl">
+                        Szczegóły
+                    </button>
+<button class="flex h-12 min-w-[160px] items-center justify-center rounded-lg border-2 border-white/40 bg-white/10 text-white font-bold backdrop-blur-sm transition-all hover:bg-white/20 hover:border-white">
+<span class="material-symbols-outlined mr-2">play_circle</span>
+                        Zobacz film
+                    </button>
+</div>
+</div>
+<!-- Scroll Indicator -->
+<div class="absolute bottom-10 z-10 animate-bounce text-white/80">
+<span class="material-symbols-outlined text-4xl">keyboard_arrow_down</span>
+</div>
+</section>
+<!-- Feature Section (Timeline/Plan) -->
+<section class="py-24 px-4 md:px-10 lg:px-20 bg-background-light dark:bg-background-dark" id="details">
+<div class="max-w-[1100px] mx-auto">
+<div class="flex flex-col md:flex-row gap-12 items-start">
+<!-- Text Side -->
+<div class="flex-1 flex flex-col gap-6 sticky top-24">
+<span class="text-primary font-bold tracking-widest uppercase text-sm">Harmonogram</span>
+<h2 class="text-4xl md:text-5xl font-bold text-[#111318] dark:text-white leading-tight">
+                            Nasza wielka grecka przygoda
+                        </h2>
+<p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                            To nie tylko ślub, to wspólne wakacje z najbliższymi. Zaplanowaliśmy trzy dni pełne słońca, wina i miłości. Zobacz, co przygotowaliśmy.
+                        </p>
+<div class="mt-4">
+<button class="inline-flex items-center font-bold text-primary hover:underline">
+                                Pobierz PDF z mapą
+                                <span class="material-symbols-outlined ml-1 text-lg">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Cards Side -->
+<div class="flex-1 w-full grid gap-6">
+<!-- Card 1 -->
+<div class="group flex flex-col gap-4 rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">church</span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-xl font-bold text-[#111318] dark:text-white">Ceremonia</h3>
+<span class="text-sm font-semibold text-primary">16:00 - Kaplica Anastasi</span>
+</div>
+</div>
+<p class="text-gray-600 dark:text-gray-400 pl-[4rem]">
+                                Malownicza ceremonia na klifie z widokiem na kalderę. Prosimy o przybycie 15 minut wcześniej.
+                            </p>
+</div>
+<!-- Card 2 -->
+<div class="group flex flex-col gap-4 rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">wine_bar</span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-xl font-bold text-[#111318] dark:text-white">Wesele</h3>
+<span class="text-sm font-semibold text-primary">18:00 - Winnica Santo Wines</span>
+</div>
+</div>
+<p class="text-gray-600 dark:text-gray-400 pl-[4rem]">
+                                Kolacja pod gołym niebem, degustacja lokalnych win i tańce do białego rana przy greckiej muzyce na żywo.
+                            </p>
+</div>
+<!-- Card 3 -->
+<div class="group flex flex-col gap-4 rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">palm_logo</span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-xl font-bold text-[#111318] dark:text-white">Poprawiny na plaży</h3>
+<span class="text-sm font-semibold text-primary">13:00 (Następnego dnia)</span>
+</div>
+</div>
+<p class="text-gray-600 dark:text-gray-400 pl-[4rem]">
+                                Luźne spotkanie na plaży Perissa. Leżaki, koktajle i relaks po nocy pełnej wrażeń.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Full Width Image / Transition -->
+<div class="h-[400px] w-full bg-cover bg-fixed bg-center relative" data-alt="Romantic sunset over Greek island sea view" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC_cFtjNBeNrZNhGleb54IiMLyRcAO5NMzjHmddOUHgV8LvURR-Rq5Ss8MBiB5ZHho6WwKXjnYXDUT3eaei2LqdfRuG1BKgTsCGv_jsW8i8RQHBXllJ1tuoDcJ1SYfUM_zmJa3KXFXYsKyPqq4IPsznzr10YD7axpiFSzZV6XtQGKiJdx9CK7hMrKSu6LqVr15KX7-ByEtlY7m_61urNdQWluStj9JoK4MlvsqwaOcZeywNep5HJ171u9u3xe4gRbvRsMakQNbP4qM');">
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<h2 class="text-4xl md:text-6xl font-black text-white text-center drop-shadow-lg px-4">
+                     Miłość unosi się w powietrzu
+                 </h2>
+</div>
+</div>
+<!-- CTA Section -->
+<section class="relative py-24 px-4 bg-white dark:bg-gray-900 text-center overflow-hidden" id="rsvp">
+<!-- Decorative circle -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10 max-w-[700px] mx-auto flex flex-col items-center gap-8">
+<div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+<span class="material-symbols-outlined text-3xl">mail</span>
+</div>
+<h2 class="text-4xl md:text-5xl font-black text-[#111318] dark:text-white leading-tight">
+                    Bądźcie z nami!
+                </h2>
+<p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                    To będzie najpiękniejszy dzień naszego życia i nie wyobrażamy go sobie bez Was. Prosimy o potwierdzenie przybycia do <b>1 czerwca 2024</b>, abyśmy mogli dopiąć wszystko na ostatni guzik.
+                </p>
+<div class="flex flex-col sm:flex-row gap-4 w-full justify-center pt-4">
+<button class="flex h-14 min-w-[200px] items-center justify-center rounded-xl bg-primary px-8 text-base font-bold text-white shadow-xl shadow-primary/20 transition-all hover:bg-blue-700 hover:scale-105 hover:shadow-2xl">
+                        Potwierdź obecność
+                    </button>
+<button class="flex h-14 min-w-[200px] items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 px-8 text-base font-bold text-[#111318] dark:text-white transition-all hover:bg-gray-200 dark:hover:bg-gray-700">
+                        Masz pytania?
+                    </button>
+</div>
+<p class="text-sm text-gray-400 mt-4">
+                    Problemy z formularzem? Zadzwoń do nas: +48 500 600 700
+                </p>
+</div>
+</section>
+<!-- Footer -->
+<footer class="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-background-dark py-12">
+<div class="layout-container px-6 flex flex-col items-center justify-center gap-6 text-center">
+<div class="flex items-center gap-2 text-primary dark:text-white opacity-80">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-bold text-lg">K &amp; K</span>
+</div>
+<div class="flex flex-wrap justify-center gap-8 text-sm font-medium text-gray-500">
+<a class="hover:text-primary transition-colors" href="#">Dojazd</a>
+<a class="hover:text-primary transition-colors" href="#">Noclegi</a>
+<a class="hover:text-primary transition-colors" href="#">Prezenty</a>
+<a class="hover:text-primary transition-colors" href="#">Kontakt</a>
+</div>
+<p class="text-xs text-gray-400 mt-4">
+                    © 2024 Kamila &amp; Kuba. Stworzono z miłością.
+                </p>
+</div>
+</footer>
+</div>
+</body></html>

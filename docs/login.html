@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Witamy w Grecji - Logowanie</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"],
+                        "body": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="font-display text-gray-900 bg-background-light dark:bg-background-dark overflow-hidden">
+<!-- Main Container with Background Image -->
+<div class="relative min-h-screen w-full flex items-center justify-center p-4">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center" data-alt="Beautiful sunny view of Santorini Greece white buildings and blue sea" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDvcyBcU701A1Ez3xGLPwWjpJff2S4ikOeAKWFGQawAsSZt2tc8P1RL7asgW3gU9WiQZSaai7Dw72q0e6btj8dL7bSQN4vFvhhb_hvMjisjEbUZZZ6TDODjLiJzq5c4elOQ5N_sy1WpWwNgBS-RITha65guhXsGL5GBFyL38UZoI9FL7W0KrKrbNZ6PDY2ZV688WnNiY9w_2tz5eZ-bad3LJLVtkV2eJ31MkY7HUtausOUTgh3UKDWKhhqyoOcDqdBRPkqB_OdPJ7g');"></div>
+<!-- Gradient Overlay for better readability and focus -->
+<div class="absolute inset-0 bg-primary/20 backdrop-blur-sm bg-gradient-to-t from-black/40 to-primary/10"></div>
+</div>
+<!-- Modal Container -->
+<div class="relative z-10 w-full max-w-[400px] bg-white dark:bg-[#1a202c] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-fade-in-up">
+<!-- Hero Image Section inside Modal -->
+<div class="h-32 w-full bg-cover bg-center relative" data-alt="Minimalist greek olive branch or white architecture detail" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBCnIs0IGKfaEIS2XiB6Zjcp5Qjmo0i-151nCY1jXw9Fl2QP-n2yjNU6vJOE2vcYUwz_uiM2gQVENTq9D5sjDhF6x5Q06rSdqZW_4_-ZFILahqvrLwtlqw3VOXzRHC0WhVb6SQ1mLHz58w068r9ILSV5Akv_3ieqXlan1-TLLa4woROWEJHTSyyoDCp7u1TK762Io7YnZDuAouYsCZkV1NOAUoVTrflNDKL0GB3ZCI3pQcpi4qo6NLbeyROsY3PBd4e8dYY1Rye-J0');">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/90 dark:to-[#1a202c]/90"></div>
+<div class="absolute bottom-0 left-0 right-0 p-6 text-center transform translate-y-2">
+<!-- Decorative Icon mimicking a seal or logo -->
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg text-primary mb-[-24px]">
+<span class="material-symbols-outlined text-3xl">diamond</span>
+</div>
+</div>
+</div>
+<!-- Content Section -->
+<div class="px-8 pt-8 pb-6 text-center flex flex-col items-center">
+<h1 class="text-[#111318] dark:text-white text-2xl font-bold leading-tight mb-2 tracking-tight">
+                    Witamy w Grecji
+                </h1>
+<p class="text-[#616f89] dark:text-gray-400 text-sm font-normal leading-relaxed mb-8 max-w-[260px]">
+                    Zaloguj się, aby zobaczyć szczegóły ślubu, harmonogram oraz mapę dojazdu.
+                </p>
+<!-- Action Button -->
+<div class="w-full">
+<button class="relative w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 text-[#111318] dark:text-white h-12 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md group">
+<!-- Using Material Symbol looking like generic login/social since standard logos aren't in Material Symbols -->
+<span class="material-symbols-outlined text-primary text-[22px]" data-icon="GoogleLogo">account_circle</span>
+<span class="text-base font-bold tracking-[0.015em]">Kontynuuj z Google</span>
+<!-- Decorative arrow appearing on hover -->
+<div class="absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-primary">
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Footer Meta -->
+<div class="bg-gray-50 dark:bg-gray-800/50 py-3 border-t border-gray-100 dark:border-gray-700">
+<p class="text-[#616f89] dark:text-gray-500 text-xs font-medium text-center flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                    Dostęp tylko dla zaproszonych gości
+                </p>
+</div>
+<!-- Greek Pattern Stripe (Decorative) -->
+<div class="h-1.5 w-full bg-primary bg-[linear-gradient(90deg,transparent_50%,rgba(255,255,255,0.3)_50%)] bg-[length:10px_100%]"></div>
+</div>
+</div>
+</body></html>
