@@ -1,15 +1,7 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "naszewielkiegreckiewesele",
-	"compatibility_date": "2025-09-02",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"main": "@tanstack/react-start/server-entry",
-	"vars": {
-		"BETTER_AUTH_SECRET": "6db066a47a137576cb446ad96d827fcb76c81ce63bff557b63df75a6f8372245",
-		"GOOGLE_CLIENT_ID": "412852715275-goi41dsdgd0i7it1jrl9naln56fk8ek3.apps.googleusercontent.com",
-		"GOOGLE_CLIENT_SECRET": "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",
-		"VITE_CONVEX_SITE_URL": "https://compassionate-elephant-886.convex.cloud"
-	}
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "naszewielkiegreckiewesele",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry"
 }
