@@ -1,6 +1,8 @@
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { v } from "convex/values";
+import { requireAdminAccess } from "./adminAuth";
+import { writeAuditLog } from "./audit";
 
 const SETTINGS_KEY = "rsvp";
 const DEFAULT_CARPOOL_DEADLINE = "2026-10-04T23:59";
@@ -502,7 +504,7 @@ export const createOffer = mutation({
     ensurePositiveInteger(args.seatsTotal, "seatsTotal");
 
     const now = Date.now();
-    return await ctx.db.insert("carpoolOffers", {
+    const offerId = await ctx.db.insert("carpoolOffers", {
       driverInvitationId: args.invitationId,
       pickupPoint: normalizeOptional(args.pickupPoint),
       dropoffPoint: normalizeOptional(args.dropoffPoint),
@@ -513,6 +515,18 @@ export const createOffer = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await writeAuditLog(ctx, {
+      action: "carpool.offer.created",
+      actorType: "invitation",
+      actorId: String(args.invitationId),
+      entityType: "carpoolOffer",
+      entityId: offerId,
+      metadata: {
+        seatsTotal: args.seatsTotal,
+        departureDateTime: args.departureDateTime,
+      },
+    });
+    return offerId;
   },
 });
 
@@ -542,6 +556,13 @@ export const updateOffer = mutation({
 
     if (args.status === "cancelled") {
       await cancelOfferAndRequests(ctx, offer._id, "cancelled_by_driver");
+      await writeAuditLog(ctx, {
+        action: "carpool.offer.cancelled",
+        actorType: "invitation",
+        actorId: String(args.invitationId),
+        entityType: "carpoolOffer",
+        entityId: offer._id,
+      });
       return null;
     }
 
@@ -581,6 +602,18 @@ export const updateOffer = mutation({
     }
 
     await ctx.db.patch(args.offerId, patch);
+    await writeAuditLog(ctx, {
+      action: "carpool.offer.updated",
+      actorType: "invitation",
+      actorId: String(args.invitationId),
+      entityType: "carpoolOffer",
+      entityId: args.offerId,
+      metadata: {
+        status: args.status ?? offer.status,
+        seatsTotal: args.seatsTotal ?? offer.seatsTotal,
+        departureDateTime: args.departureDateTime ?? offer.departureDateTime,
+      },
+    });
     return null;
   },
 });
@@ -604,6 +637,13 @@ export const cancelOffer = mutation({
     assertBeforeDeadline(carpoolDeadline);
 
     await cancelOfferAndRequests(ctx, offer._id, "cancelled_by_driver");
+    await writeAuditLog(ctx, {
+      action: "carpool.offer.cancelled",
+      actorType: "invitation",
+      actorId: String(args.invitationId),
+      entityType: "carpoolOffer",
+      entityId: offer._id,
+    });
     return null;
   },
 });
@@ -673,7 +713,7 @@ export const createRequest = mutation({
     }
 
     const now = Date.now();
-    return await ctx.db.insert("carpoolRequests", {
+    const requestId = await ctx.db.insert("carpoolRequests", {
       offerId: args.offerId,
       passengerInvitationId: args.invitationId,
       seatsRequested: args.seatsRequested,
@@ -685,6 +725,19 @@ export const createRequest = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await writeAuditLog(ctx, {
+      action: "carpool.request.created",
+      actorType: "invitation",
+      actorId: String(args.invitationId),
+      entityType: "carpoolRequest",
+      entityId: requestId,
+      metadata: {
+        offerId: args.offerId,
+        seatsRequested: args.seatsRequested,
+        mediationRequested: args.mediationRequested,
+      },
+    });
+    return requestId;
   },
 });
 
@@ -765,6 +818,17 @@ export const respondToRequest = mutation({
       });
     }
 
+    await writeAuditLog(ctx, {
+      action: "carpool.request.responded",
+      actorType: "invitation",
+      actorId: String(args.invitationId),
+      entityType: "carpoolRequest",
+      entityId: args.requestId,
+      metadata: {
+        decision: args.decision,
+      },
+    });
+
     return null;
   },
 });
@@ -796,12 +860,24 @@ export const cancelRequest = mutation({
       respondedAt: Date.now(),
       updatedAt: Date.now(),
     });
+    await writeAuditLog(ctx, {
+      action: "carpool.request.cancelled",
+      actorType: "invitation",
+      actorId: String(args.invitationId),
+      entityType: "carpoolRequest",
+      entityId: args.requestId,
+      metadata: {
+        by: "passenger",
+      },
+    });
     return null;
   },
 });
 
 export const listMediationAlertsForAdmin = query({
-  args: {},
+  args: {
+    adminAccessToken: v.string(),
+  },
   returns: v.array(
     v.object({
       requestId: v.id("carpoolRequests"),
@@ -818,7 +894,8 @@ export const listMediationAlertsForAdmin = query({
       departureDateTime: v.string(),
     })
   ),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
+    await requireAdminAccess(ctx, args.adminAccessToken);
     const requests = await ctx.db
       .query("carpoolRequests")
       .withIndex("by_mediation", (q) =>
@@ -863,10 +940,12 @@ export const listMediationAlertsForAdmin = query({
 
 export const resolveMediationAlert = mutation({
   args: {
+    adminAccessToken: v.string(),
     requestId: v.id("carpoolRequests"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const admin = await requireAdminAccess(ctx, args.adminAccessToken);
     const request = await ctx.db.get(args.requestId);
     if (!request || !request.mediationRequested) {
       throw new Error("Nie znaleziono alertu mediacji.");
@@ -879,12 +958,21 @@ export const resolveMediationAlert = mutation({
       mediationResolvedAt: Date.now(),
       updatedAt: Date.now(),
     });
+    await writeAuditLog(ctx, {
+      action: "carpool.mediation.resolved",
+      actorType: "admin",
+      actorId: admin.email,
+      entityType: "carpoolRequest",
+      entityId: args.requestId,
+    });
     return null;
   },
 });
 
 export const getAdminCarpoolOverview = query({
-  args: {},
+  args: {
+    adminAccessToken: v.string(),
+  },
   returns: v.object({
     offers: v.array(
       v.object({
@@ -911,7 +999,8 @@ export const getAdminCarpoolOverview = query({
       })
     ),
   }),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
+    await requireAdminAccess(ctx, args.adminAccessToken);
     const offers = await ctx.db.query("carpoolOffers").collect();
     const pendingRequests = await ctx.db
       .query("carpoolRequests")

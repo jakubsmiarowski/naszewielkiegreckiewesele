@@ -1,5 +1,8 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getInternalApiKey } from "./adminConfig";
+import { requireAdminAccess } from "./adminAuth";
+import { writeAuditLog } from "./audit";
 import { enforceCarpoolConsistencyAfterInvitationUpdate } from "./carpool";
 
 const RSVP_ATTENDANCE = v.union(v.literal("yes"), v.literal("no"));
@@ -78,7 +81,10 @@ export const getById = query({
 });
 
 export const listForAdmin = query({
-  args: {},
+  args: {
+    adminAccessToken: v.optional(v.string()),
+    internalApiKey: v.optional(v.string()),
+  },
   returns: v.array(
     v.object({
       _id: v.id("invitations"),
@@ -111,7 +117,12 @@ export const listForAdmin = query({
       ),
     })
   ),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
+    const hasInternalAccess =
+      typeof args.internalApiKey === "string" && args.internalApiKey === getInternalApiKey();
+    if (!hasInternalAccess) {
+      await requireAdminAccess(ctx, args.adminAccessToken ?? "");
+    }
     const invitations = await ctx.db.query("invitations").collect();
     const guests = await ctx.db.query("guests").collect();
 
@@ -220,6 +231,18 @@ export const updateRsvp = mutation({
 
     await ctx.db.patch(args.invitationId, patch);
     await enforceCarpoolConsistencyAfterInvitationUpdate(ctx, args.invitationId);
+    await writeAuditLog(ctx, {
+      action: "rsvp.updated",
+      actorType: "invitation",
+      actorId: String(args.invitationId),
+      entityType: "invitation",
+      entityId: args.invitationId,
+      metadata: {
+        aggregateAttendance,
+        transport: patch.transport ?? invitation.transport,
+        carpoolDriverOptIn: patch.carpoolDriverOptIn ?? invitation.carpoolDriverOptIn,
+      },
+    });
     return null;
   },
 });
@@ -427,9 +450,12 @@ function randomShortCode(existing: Set<string>) {
 }
 
 export const seedInvitations = mutation({
-  args: {},
+  args: {
+    adminAccessToken: v.string(),
+  },
   returns: v.number(),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
+    const admin = await requireAdminAccess(ctx, args.adminAccessToken);
     const existing = await ctx.db.query("invitations").take(1);
     if (existing.length > 0) {
       throw new Error("Zaproszenia już istnieją. Usuń je przed seedem.");
@@ -475,6 +501,14 @@ export const seedInvitations = mutation({
 
       count += 1;
     }
+
+    await writeAuditLog(ctx, {
+      action: "invitations.seeded",
+      actorType: "admin",
+      actorId: admin.email,
+      entityType: "invitations",
+      metadata: { count },
+    });
 
     return count;
   },

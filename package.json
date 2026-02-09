@@ -6,6 +6,8 @@
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview",
+    "codex:safe": "bash scripts/codex-safe.sh",
+    "codex:safe:oss": "bash scripts/codex-safe.sh --oss --mode saver",
     "test": "vitest run",
     "deploy": "npm run build && wrangler deploy",
     "deploy:cloudflare": "wrangler deploy",

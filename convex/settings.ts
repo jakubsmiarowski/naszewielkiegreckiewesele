@@ -1,5 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdminAccess } from "./adminAuth";
+import { writeAuditLog } from "./audit";
 
 const DEFAULT_RSVP_DEADLINE = "2026-02-28T23:59";
 const DEFAULT_RSVP_GRACE = "2026-03-31T23:59";
@@ -37,12 +39,14 @@ export const getRsvpSettings = query({
 
 export const updateRsvpSettings = mutation({
   args: {
+    adminAccessToken: v.string(),
     rsvpDeadline: v.string(),
     rsvpGraceDeadline: v.string(),
     carpoolDeadline: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const admin = await requireAdminAccess(ctx, args.adminAccessToken);
     const existing = await ctx.db
       .query("settings")
       .withIndex("by_key", (q) => q.eq("key", SETTINGS_KEY))
@@ -56,6 +60,18 @@ export const updateRsvpSettings = mutation({
         carpoolDeadline: args.carpoolDeadline,
         updatedAt: Date.now(),
       });
+      await writeAuditLog(ctx, {
+        action: "settings.rsvp.created",
+        actorType: "admin",
+        actorId: admin.email,
+        entityType: "settings",
+        entityId: SETTINGS_KEY,
+        metadata: {
+          rsvpDeadline: args.rsvpDeadline,
+          rsvpGraceDeadline: args.rsvpGraceDeadline,
+          carpoolDeadline: args.carpoolDeadline,
+        },
+      });
       return null;
     }
 
@@ -64,6 +80,18 @@ export const updateRsvpSettings = mutation({
       rsvpGraceDeadline: args.rsvpGraceDeadline,
       carpoolDeadline: args.carpoolDeadline,
       updatedAt: Date.now(),
+    });
+    await writeAuditLog(ctx, {
+      action: "settings.rsvp.updated",
+      actorType: "admin",
+      actorId: admin.email,
+      entityType: "settings",
+      entityId: existing._id,
+      metadata: {
+        rsvpDeadline: args.rsvpDeadline,
+        rsvpGraceDeadline: args.rsvpGraceDeadline,
+        carpoolDeadline: args.carpoolDeadline,
+      },
     });
     return null;
   },

@@ -22,9 +22,14 @@ import type { Id } from "../../../convex/_generated/dataModel";
 interface AdminTabProps {
 	invitations: AdminInvitation[];
 	settings: RsvpSettings | null | undefined;
+	adminAccessToken: string | null;
 }
 
-export function AdminTab({ invitations, settings }: AdminTabProps) {
+export function AdminTab({
+	invitations,
+	settings,
+	adminAccessToken,
+}: AdminTabProps) {
 	const updateRelation = useMutation(api.guests.updateGuestRelation);
 	const updateSettings = useMutation(api.settings.updateRsvpSettings);
 	const seedInvitations = useMutation(api.invitations.seedInvitations);
@@ -32,9 +37,12 @@ export function AdminTab({ invitations, settings }: AdminTabProps) {
 	const answerQuestion = useMutation(api.questions.answerQuestion);
 	const mediationAlerts = useQuery(
 		api.carpool.listMediationAlertsForAdmin,
-		{},
+		adminAccessToken ? { adminAccessToken } : "skip",
 	) as CarpoolMediationAlert[] | undefined;
-	const qaQuestions = useQuery(api.questions.listForAdmin, {}) as
+	const qaQuestions = useQuery(
+		api.questions.listForAdmin,
+		adminAccessToken ? { adminAccessToken } : "skip",
+	) as
 		| QaAdminQuestion[]
 		| undefined;
 
@@ -164,8 +172,10 @@ export function AdminTab({ invitations, settings }: AdminTabProps) {
 	};
 
 	const handleSaveSettings = async () => {
+		if (!adminAccessToken) return;
 		try {
 			await updateSettings({
+				adminAccessToken,
 				rsvpDeadline: deadline,
 				rsvpGraceDeadline: graceDeadline,
 				carpoolDeadline,
@@ -185,8 +195,9 @@ export function AdminTab({ invitations, settings }: AdminTabProps) {
 	};
 
 	const handleSeedInvitations = async () => {
+		if (!adminAccessToken) return;
 		try {
-			await seedInvitations({});
+			await seedInvitations({ adminAccessToken });
 			toast({
 				variant: "success",
 				title: "Zaproszenia załadowane",
@@ -205,8 +216,10 @@ export function AdminTab({ invitations, settings }: AdminTabProps) {
 		guestId: string,
 		relation: string | undefined,
 	) => {
+		if (!adminAccessToken) return;
 		try {
 			await updateRelation({
+				adminAccessToken,
 				guestId: guestId as Id<"guests">,
 				relation,
 			});
@@ -224,8 +237,10 @@ export function AdminTab({ invitations, settings }: AdminTabProps) {
 	};
 
 	const handleResolveMediation = async (requestId: string) => {
+		if (!adminAccessToken) return;
 		try {
 			await resolveMediationAlert({
+				adminAccessToken,
 				requestId: requestId as Id<"carpoolRequests">,
 			});
 			toast({
@@ -243,6 +258,7 @@ export function AdminTab({ invitations, settings }: AdminTabProps) {
 	};
 
 	const handleSaveAnswer = async (questionId: string) => {
+		if (!adminAccessToken) return;
 		const answer = (answerDrafts[questionId] ?? "").trim();
 		if (!answer) {
 			toast({
@@ -256,6 +272,7 @@ export function AdminTab({ invitations, settings }: AdminTabProps) {
 		try {
 			setSavingQuestionId(questionId);
 			await answerQuestion({
+				adminAccessToken,
 				questionId: questionId as Id<"qaQuestions">,
 				answer,
 			});

@@ -37,6 +37,10 @@ const outDir = path.resolve(process.cwd(), args["out-dir"] ?? "qr-codes");
 const format = String(args.format ?? "png").toLowerCase();
 const size = args.size ? Number(args.size) : 512;
 const limit = args.limit ? Number(args.limit) : undefined;
+const internalApiKey =
+  args["internal-api-key"] ??
+  process.env.INTERNAL_API_KEY ??
+  "";
 
 if (Number.isNaN(size) || size <= 0) {
   console.error("--size must be a positive number.");
@@ -53,8 +57,17 @@ if (!["png", "svg"].includes(format)) {
   process.exit(1);
 }
 
+if (!internalApiKey) {
+  console.error(
+    "Missing INTERNAL_API_KEY. Provide --internal-api-key or set INTERNAL_API_KEY.",
+  );
+  process.exit(1);
+}
+
 const client = new ConvexHttpClient(convexUrl);
-const invitations = await client.query(api.invitations.listForAdmin, {});
+const invitations = await client.query(api.invitations.listForAdmin, {
+  internalApiKey,
+});
 
 const sortedInvitations = invitations
   .slice()
@@ -187,6 +200,7 @@ Options:
   --format <png|svg>   Output format (default: png)
   --size <px>          PNG size in pixels (default: 512)
   --limit <n>          Only generate first n invitations
+  --internal-api-key   Internal key for admin query access
   --help               Show this help
 `);
 }

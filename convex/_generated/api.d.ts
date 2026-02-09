@@ -12,6 +12,7 @@ import type * as carpool from "../carpool.js";
 import type * as guests from "../guests.js";
 import type * as invitations from "../invitations.js";
 import type * as questions from "../questions.js";
+import type * as security from "../security.js";
 import type * as settings from "../settings.js";
 
 import type {
@@ -25,6 +26,7 @@ declare const fullApi: ApiFromModules<{
   guests: typeof guests;
   invitations: typeof invitations;
   questions: typeof questions;
+  security: typeof security;
   settings: typeof settings;
 }>;
 

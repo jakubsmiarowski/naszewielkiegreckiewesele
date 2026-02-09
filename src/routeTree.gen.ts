@@ -15,6 +15,7 @@ import { Route as AuthVerifyRouteImport } from './routes/auth/verify'
 import { Route as ApiInvitationsSessionRouteImport } from './routes/api/invitations/session'
 import { Route as ApiInvitationsLoginRouteImport } from './routes/api/invitations/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiAdminSessionRouteImport } from './routes/api/admin/session'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -46,11 +47,17 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminSessionRoute = ApiAdminSessionRouteImport.update({
+  id: '/api/admin/session',
+  path: '/api/admin/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/auth/verify': typeof AuthVerifyRoute
+  '/api/admin/session': typeof ApiAdminSessionRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/invitations/login': typeof ApiInvitationsLoginRoute
   '/api/invitations/session': typeof ApiInvitationsSessionRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/auth/verify': typeof AuthVerifyRoute
+  '/api/admin/session': typeof ApiAdminSessionRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/invitations/login': typeof ApiInvitationsLoginRoute
   '/api/invitations/session': typeof ApiInvitationsSessionRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/auth/verify': typeof AuthVerifyRoute
+  '/api/admin/session': typeof ApiAdminSessionRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/invitations/login': typeof ApiInvitationsLoginRoute
   '/api/invitations/session': typeof ApiInvitationsSessionRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/auth/verify'
+    | '/api/admin/session'
     | '/api/auth/$'
     | '/api/invitations/login'
     | '/api/invitations/session'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/auth/verify'
+    | '/api/admin/session'
     | '/api/auth/$'
     | '/api/invitations/login'
     | '/api/invitations/session'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/auth/verify'
+    | '/api/admin/session'
     | '/api/auth/$'
     | '/api/invitations/login'
     | '/api/invitations/session'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   AuthVerifyRoute: typeof AuthVerifyRoute
+  ApiAdminSessionRoute: typeof ApiAdminSessionRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiInvitationsLoginRoute: typeof ApiInvitationsLoginRoute
   ApiInvitationsSessionRoute: typeof ApiInvitationsSessionRoute
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/session': {
+      id: '/api/admin/session'
+      path: '/api/admin/session'
+      fullPath: '/api/admin/session'
+      preLoaderRoute: typeof ApiAdminSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   AuthVerifyRoute: AuthVerifyRoute,
+  ApiAdminSessionRoute: ApiAdminSessionRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiInvitationsLoginRoute: ApiInvitationsLoginRoute,
   ApiInvitationsSessionRoute: ApiInvitationsSessionRoute,

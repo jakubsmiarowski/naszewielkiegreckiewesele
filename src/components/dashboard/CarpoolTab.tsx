@@ -18,6 +18,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 interface CarpoolTabProps {
 	invitationData: InvitationData | null | undefined;
 	isAdmin: boolean;
+	adminAccessToken?: string | null;
 	openCreateOfferToken?: number | null;
 }
 
@@ -69,6 +70,7 @@ const OFFER_NOTES_INPUT_ID = "carpool-offer-notes";
 export function CarpoolTab({
 	invitationData,
 	isAdmin,
+	adminAccessToken,
 	openCreateOfferToken,
 }: CarpoolTabProps) {
 	const invitationId = invitationData?.invitation?._id;
@@ -76,7 +78,7 @@ export function CarpoolTab({
 
 	const adminOverview = useQuery(
 		api.carpool.getAdminCarpoolOverview,
-		isAdmin ? {} : "skip",
+		isAdmin && adminAccessToken ? { adminAccessToken } : "skip",
 	) as CarpoolAdminOverview | undefined;
 	const carpoolData = useQuery(
 		api.carpool.getCarpoolTabData,

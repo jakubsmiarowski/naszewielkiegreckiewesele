@@ -1,5 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdminAccess } from "./adminAuth";
+import { writeAuditLog } from "./audit";
 
 const QUESTION_STATUS = v.union(v.literal("pending"), v.literal("answered"));
 
@@ -44,7 +46,9 @@ export const listPublic = query({
 });
 
 export const listForAdmin = query({
-  args: {},
+  args: {
+    adminAccessToken: v.string(),
+  },
   returns: v.array(
     v.object({
       _id: v.id("qaQuestions"),
@@ -58,7 +62,8 @@ export const listForAdmin = query({
       answeredAt: v.optional(v.number()),
     })
   ),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
+    await requireAdminAccess(ctx, args.adminAccessToken);
     const questions = await ctx.db.query("qaQuestions").collect();
     return questions
       .slice()
@@ -93,16 +98,26 @@ export const submitQuestion = mutation({
 
 export const answerQuestion = mutation({
   args: {
+    adminAccessToken: v.string(),
     questionId: v.id("qaQuestions"),
     answer: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const admin = await requireAdminAccess(ctx, args.adminAccessToken);
     const answer = normalizeRequired(args.answer, "odpowiedź");
     await ctx.db.patch(args.questionId, {
       answer,
       status: "answered",
       answeredAt: Date.now(),
+    });
+    await writeAuditLog(ctx, {
+      action: "qa.answered",
+      actorType: "admin",
+      actorId: admin.email,
+      entityType: "qaQuestion",
+      entityId: args.questionId,
+      metadata: { answerLength: answer.length },
     });
     return null;
   },

@@ -53,6 +53,8 @@ function DashboardPage() {
 	const { data: adminSession, isPending: isAdminPending } =
 		authClient.useSession();
 	const isAdmin = isAdminEmail(adminSession?.user?.email);
+	const [adminAccessToken, setAdminAccessToken] = useState<string | null>(null);
+	const [isAdminTokenLoading, setIsAdminTokenLoading] = useState(false);
 
 	const invitationData = useQuery(
 		api.invitations.getById,
@@ -60,7 +62,7 @@ function DashboardPage() {
 	);
 	const adminInvitations = useQuery(
 		api.invitations.listForAdmin,
-		isAdmin ? {} : "skip",
+		isAdmin && adminAccessToken ? { adminAccessToken } : "skip",
 	);
 	const settings = useQuery(api.settings.getRsvpSettings, {});
 
@@ -86,6 +88,42 @@ function DashboardPage() {
 			navigate({ to: "/" });
 		}
 	}, [invitationId, isAdmin, isAdminPending, isSessionLoading, navigate]);
+
+	useEffect(() => {
+		if (!isAdmin) {
+			setAdminAccessToken(null);
+			setIsAdminTokenLoading(false);
+			return;
+		}
+
+		let isCancelled = false;
+		const loadAdminSession = async () => {
+			setIsAdminTokenLoading(true);
+			try {
+				const response = await fetch("/api/admin/session");
+				if (!response.ok) {
+					throw new Error("forbidden");
+				}
+				const data = (await response.json()) as { adminAccessToken?: string };
+				if (!isCancelled) {
+					setAdminAccessToken(data.adminAccessToken ?? null);
+				}
+			} catch (_error) {
+				if (!isCancelled) {
+					setAdminAccessToken(null);
+				}
+			} finally {
+				if (!isCancelled) {
+					setIsAdminTokenLoading(false);
+				}
+			}
+		};
+
+		loadAdminSession();
+		return () => {
+			isCancelled = true;
+		};
+	}, [isAdmin]);
 
 	const greeting = useMemo(() => {
 		if (!invitationData?.guests) return "Cześć!";
@@ -137,6 +175,29 @@ function DashboardPage() {
 		);
 	}
 
+	if (isAdmin && isAdminTokenLoading) {
+		return (
+			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)]">
+				<div className="flex flex-col items-center gap-4">
+					<div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[var(--color-primary)]" />
+					<p className="text-gray-500 font-medium">Weryfikacja uprawnień...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (isAdmin && !adminAccessToken) {
+		return (
+			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)]">
+				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
+					<p className="text-muted-foreground">
+						Brak aktywnej sesji administratora. Odśwież stronę lub zaloguj się ponownie.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="w-full bg-background min-h-screen">
 			<HeroSection />
@@ -161,6 +222,7 @@ function DashboardPage() {
 						<CarpoolTab
 							invitationData={invitationData}
 							isAdmin={isAdmin}
+							adminAccessToken={adminAccessToken}
 							openCreateOfferToken={openCarpoolCreateToken}
 						/>
 					)}
@@ -168,6 +230,7 @@ function DashboardPage() {
 						<AdminTab
 							invitations={adminInvitations ?? []}
 							settings={settings}
+							adminAccessToken={adminAccessToken}
 						/>
 					)}
 					{activeTab !== "RSVP" &&

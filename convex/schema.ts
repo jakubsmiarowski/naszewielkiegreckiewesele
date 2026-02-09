@@ -141,4 +141,22 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_createdAt", ["createdAt"]),
+
+  pinLoginThrottle: defineTable({
+    key: v.string(),
+    windowStart: v.number(),
+    failureCount: v.number(),
+    blockedUntil: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+
+  auditLogs: defineTable({
+    action: v.string(),
+    actorType: v.union(v.literal("admin"), v.literal("invitation"), v.literal("system")),
+    actorId: v.optional(v.string()),
+    entityType: v.string(),
+    entityId: v.optional(v.string()),
+    metadata: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
 })
