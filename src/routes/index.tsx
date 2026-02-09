@@ -90,7 +90,7 @@ function LandingPage() {
 			{/* Specific Landing Page Header */}
 			<header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
 				<div className="max-w-[1280px] mx-auto">
-					<div className="flex items-center justify-between px-6 lg:px-10 py-6">
+					<div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
 						<div className="flex items-center gap-3 text-white">
 							<span className="material-symbols-outlined text-3xl">
 								favorite
@@ -105,28 +105,28 @@ function LandingPage() {
 			<section className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
 				<div className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat bg-hero-pattern scale-100" />
 
-				<div className="relative z-10 flex flex-col items-center justify-center gap-8 px-4 text-center">
-					<div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-2 backdrop-blur-md">
-						<span className="text-sm font-bold uppercase tracking-[0.2em] text-white">
+				<div className="relative z-10 flex flex-col items-center justify-center gap-6 px-5 pb-16 pt-20 text-center sm:gap-8 sm:px-4 sm:pb-0 sm:pt-0">
+					<div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 backdrop-blur-md sm:px-6">
+						<span className="text-xs font-bold uppercase tracking-[0.2em] text-white sm:text-sm">
 							Zaproszenie na Ślub
 						</span>
 					</div>
 
 					<div className="space-y-4">
-						<h1 className="text-7xl md:text-9xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl">
+						<h1 className="text-6xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl sm:text-7xl md:text-9xl">
 							Kamila <br className="md:hidden" />
 							<span className="text-blue-300">&</span> Kuba
 						</h1>
 
 						<div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-white/95">
-							<div className="flex items-center gap-2 text-xl font-medium tracking-wide">
+							<div className="flex items-center gap-2 text-lg font-medium tracking-wide sm:text-xl">
 								<span className="material-symbols-outlined">
 									calendar_month
 								</span>
 								<span>12 Sierpnia 2024</span>
 							</div>
 							<span className="hidden md:block h-2 w-2 rounded-full bg-blue-400" />
-							<div className="flex items-center gap-2 text-xl font-medium tracking-wide">
+							<div className="flex items-center gap-2 text-lg font-medium tracking-wide sm:text-xl">
 								<span className="material-symbols-outlined">location_on</span>
 								<span>Kreta, Grecja</span>
 							</div>
@@ -134,8 +134,8 @@ function LandingPage() {
 					</div>
 
 					{/* Login Method Selection */}
-					<div className="mt-12 w-full max-w-md bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl glass-card overflow-hidden">
-						<h3 className="text-white font-bold text-lg mb-6">
+					<div className="mt-8 w-full max-w-md overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-xl glass-card sm:mt-12 sm:rounded-3xl sm:p-8">
+						<h3 className="mb-4 text-white font-bold text-lg sm:mb-6">
 							Zaloguj się, aby zobaczyć szczegóły
 						</h3>
 
@@ -218,7 +218,7 @@ function LandingPage() {
 							</AnimatePresence>
 						</div>
 
-						<div className="mt-8 border-t border-white/20 pt-6">
+						<div className="mt-6 border-t border-white/20 pt-5 sm:mt-8 sm:pt-6">
 							<p className="text-white/50 text-xs uppercase tracking-widest mb-3">
 								Panel organizatorów
 							</p>
