@@ -56,6 +56,7 @@ function DashboardPage() {
 	const adminEmail = adminSession?.user?.email ?? null;
 	const [adminAccessToken, setAdminAccessToken] = useState<string | null>(null);
 	const [isAdminTokenLoading, setIsAdminTokenLoading] = useState(false);
+	const [hasCheckedAdminAccess, setHasCheckedAdminAccess] = useState(false);
 	const isAdmin = Boolean(adminAccessToken);
 
 	const invitationData = useQuery(
@@ -94,10 +95,15 @@ function DashboardPage() {
 	}, [activeTab, isAdmin]);
 
 	useEffect(() => {
+		if (isAdminPending) {
+			return;
+		}
+
 		if (
 			!isSessionLoading &&
 			!isAdminPending &&
 			!isAdminTokenLoading &&
+			(adminEmail ? hasCheckedAdminAccess : true) &&
 			!invitationId &&
 			!isAdmin
 		) {
@@ -108,20 +114,28 @@ function DashboardPage() {
 		isAdmin,
 		isAdminPending,
 		isAdminTokenLoading,
+		hasCheckedAdminAccess,
+		adminEmail,
 		isSessionLoading,
 		navigate,
 	]);
 
 	useEffect(() => {
-		if (isAdminPending || !adminEmail) {
+		if (isAdminPending) {
+			return;
+		}
+
+		if (!adminEmail) {
 			setAdminAccessToken(null);
 			setIsAdminTokenLoading(false);
+			setHasCheckedAdminAccess(true);
 			return;
 		}
 
 		let isCancelled = false;
 		const loadAdminSession = async () => {
 			setIsAdminTokenLoading(true);
+			setHasCheckedAdminAccess(false);
 			try {
 				const response = await fetch("/api/admin/session");
 				if (!response.ok) {
@@ -138,6 +152,7 @@ function DashboardPage() {
 			} finally {
 				if (!isCancelled) {
 					setIsAdminTokenLoading(false);
+					setHasCheckedAdminAccess(true);
 				}
 			}
 		};
@@ -203,7 +218,7 @@ function DashboardPage() {
 		);
 	}
 
-	if (adminEmail && isAdminTokenLoading) {
+	if (adminEmail && (isAdminTokenLoading || !hasCheckedAdminAccess)) {
 		return (
 			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)]">
 				<div className="flex flex-col items-center gap-4">
