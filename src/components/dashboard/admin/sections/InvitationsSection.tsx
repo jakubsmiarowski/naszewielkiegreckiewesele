@@ -49,6 +49,8 @@ export function InvitationsSection({
 								<th className="py-2 pr-4">RSVP</th>
 								<th className="py-2 pr-4">Transport</th>
 								<th className="py-2 pr-4">Przylot</th>
+								<th className="py-2 pr-4">Dzieci</th>
+								<th className="py-2 pr-4">Nocleg</th>
 								<th className="py-2 pr-4">+1</th>
 							</tr>
 						</thead>
@@ -173,6 +175,15 @@ export function InvitationsSection({
 											{formatLocalDate(invitation.arrivalDateTime) || "-"}
 										</td>
 										<td className="py-4 pr-4 text-sm text-foreground">
+											{formatChildrenSummary(
+												invitation.childrenCount,
+												invitation.childrenSleepOption,
+											)}
+										</td>
+										<td className="py-4 pr-4 text-sm text-foreground">
+											{formatAccommodationType(invitation.accommodationType)}
+										</td>
+										<td className="py-4 pr-4 text-sm text-foreground">
 											<div className="flex flex-col">
 												{invitation.plusOneAttendance && (
 													<span
@@ -204,4 +215,32 @@ export function InvitationsSection({
 			</div>
 		</>
 	);
+}
+
+function formatChildrenSummary(
+	childrenCount: number | undefined,
+	childrenSleepOption: "extraBed" | "crib" | undefined,
+) {
+	const normalizedChildrenCount =
+		typeof childrenCount === "number" &&
+		Number.isFinite(childrenCount) &&
+		childrenCount > 0
+			? Math.min(3, Math.trunc(childrenCount))
+			: 0;
+	if (normalizedChildrenCount < 1) return "-";
+	const sleepLabel =
+		childrenSleepOption === "extraBed"
+			? "Dostawka"
+			: childrenSleepOption === "crib"
+				? "Łóżeczko"
+				: "Brak";
+	return `${normalizedChildrenCount} (${sleepLabel})`;
+}
+
+function formatAccommodationType(
+	value: "hostProvided" | "selfArranged" | undefined,
+) {
+	if (value === "hostProvided") return "Od nas";
+	if (value === "selfArranged") return "Własny zakres";
+	return "-";
 }

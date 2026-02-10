@@ -10,6 +10,7 @@ import {
 	CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Input } from "@/components/ui/input";
+import { WEDDING_EVENT } from "@/lib/wedding-event";
 
 export function SearchWidget() {
 	return (
@@ -123,8 +124,9 @@ export function EventCountdownWidget({
 	onAddToCalendar: () => void;
 }) {
 	const label = useMemo(() => {
-		if (!eventDate) return "2 Października 2026, Kreta";
-		return eventDate.toLocaleDateString("pl-PL", {
+		const fallbackDate = new Date(WEDDING_EVENT.startIso);
+		const displayDate = eventDate ?? fallbackDate;
+		return displayDate.toLocaleDateString("pl-PL", {
 			day: "2-digit",
 			month: "long",
 			year: "numeric",
@@ -184,7 +186,7 @@ export function EmergencyContactsWidget() {
 			<ul className="flex flex-col gap-3">
 				{contacts.map((contact) => (
 					<li key={contact.name}>
-						<a href="#" className="flex items-center justify-between group">
+						<div className="flex items-center justify-between group">
 							<span className="text-muted-foreground text-sm font-medium group-hover:text-primary transition-colors">
 								{contact.name}
 							</span>
@@ -195,7 +197,7 @@ export function EmergencyContactsWidget() {
 								{contact.phone}
 							</span>
 							<ChevronRight className="hidden" />{" "}
-						</a>
+						</div>
 					</li>
 				))}
 			</ul>

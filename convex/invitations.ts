@@ -7,7 +7,20 @@ import { enforceCarpoolConsistencyAfterInvitationUpdate } from "./carpool";
 
 const RSVP_ATTENDANCE = v.union(v.literal("yes"), v.literal("no"));
 const RSVP_TRANSPORT = v.union(v.literal("own"), v.literal("bus"));
+const RSVP_CHILD_SLEEP_OPTION = v.union(
+  v.literal("extraBed"),
+  v.literal("crib")
+);
+const RSVP_ACCOMMODATION_TYPE = v.union(
+  v.literal("hostProvided"),
+  v.literal("selfArranged")
+);
 const RSVP_GUEST_ATTENDANCES = v.record(v.string(), RSVP_ATTENDANCE);
+
+function normalizeChildrenCount(value: number | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(3, Math.trunc(value)));
+}
 
 export const getIdByToken = query({
   args: { token: v.string() },
@@ -54,6 +67,9 @@ export const getById = query({
       transport: v.optional(RSVP_TRANSPORT),
       carpoolDriverOptIn: v.optional(v.boolean()),
       arrivalDateTime: v.optional(v.string()),
+      childrenCount: v.optional(v.number()),
+      childrenSleepOption: v.optional(RSVP_CHILD_SLEEP_OPTION),
+      accommodationType: v.optional(RSVP_ACCOMMODATION_TYPE),
       message: v.optional(v.string()),
       rsvpUpdatedAt: v.optional(v.number()),
     }),
@@ -104,6 +120,9 @@ export const listForAdmin = query({
       transport: v.optional(RSVP_TRANSPORT),
       carpoolDriverOptIn: v.optional(v.boolean()),
       arrivalDateTime: v.optional(v.string()),
+      childrenCount: v.optional(v.number()),
+      childrenSleepOption: v.optional(RSVP_CHILD_SLEEP_OPTION),
+      accommodationType: v.optional(RSVP_ACCOMMODATION_TYPE),
       message: v.optional(v.string()),
       rsvpUpdatedAt: v.optional(v.number()),
       guests: v.array(
@@ -147,6 +166,9 @@ export const updateRsvp = mutation({
     transport: v.optional(RSVP_TRANSPORT),
     carpoolDriverOptIn: v.optional(v.boolean()),
     arrivalDateTime: v.optional(v.string()),
+    childrenCount: v.optional(v.number()),
+    childrenSleepOption: v.optional(RSVP_CHILD_SLEEP_OPTION),
+    accommodationType: v.optional(RSVP_ACCOMMODATION_TYPE),
     message: v.optional(v.string()),
     plusOneName: v.optional(v.string()),
     plusOneAttendance: v.optional(RSVP_ATTENDANCE),
@@ -206,6 +228,9 @@ export const updateRsvp = mutation({
       patch.carpoolDriverOptIn = false;
       patch.plusOneName = undefined;
       patch.plusOneAttendance = undefined;
+      patch.childrenCount = undefined;
+      patch.childrenSleepOption = undefined;
+      patch.accommodationType = undefined;
     } else {
       if (args.transport !== undefined) {
         patch.transport = args.transport;
@@ -227,6 +252,41 @@ export const updateRsvp = mutation({
       if (args.plusOneName !== undefined) {
         patch.plusOneName = args.plusOneName.trim();
       }
+
+      if (args.childrenCount !== undefined) {
+        if (
+          !Number.isInteger(args.childrenCount) ||
+          args.childrenCount < 0 ||
+          args.childrenCount > 3
+        ) {
+          throw new Error("Liczba dzieci musi być od 0 do 3.");
+        }
+      }
+
+      const effectiveChildrenCount = normalizeChildrenCount(
+        args.childrenCount ?? invitation.childrenCount
+      );
+      patch.childrenCount = effectiveChildrenCount;
+      if (effectiveChildrenCount > 0) {
+        const effectiveSleepOption =
+          args.childrenSleepOption ?? invitation.childrenSleepOption;
+        if (effectiveSleepOption !== "extraBed" && effectiveSleepOption !== "crib") {
+          throw new Error("Wybierz dostawkę lub łóżeczko dla dzieci.");
+        }
+        patch.childrenSleepOption = effectiveSleepOption;
+      } else {
+        patch.childrenSleepOption = undefined;
+      }
+
+      const effectiveAccommodationType =
+        args.accommodationType ?? invitation.accommodationType;
+      if (
+        effectiveAccommodationType !== "hostProvided" &&
+        effectiveAccommodationType !== "selfArranged"
+      ) {
+        throw new Error("Wybierz opcję noclegu.");
+      }
+      patch.accommodationType = effectiveAccommodationType;
     }
 
     await ctx.db.patch(args.invitationId, patch);
@@ -241,6 +301,18 @@ export const updateRsvp = mutation({
         aggregateAttendance,
         transport: patch.transport ?? invitation.transport,
         carpoolDriverOptIn: patch.carpoolDriverOptIn ?? invitation.carpoolDriverOptIn,
+        childrenCount: Object.prototype.hasOwnProperty.call(
+          patch,
+          "childrenCount"
+        )
+          ? patch.childrenCount
+          : invitation.childrenCount,
+        accommodationType: Object.prototype.hasOwnProperty.call(
+          patch,
+          "accommodationType"
+        )
+          ? patch.accommodationType
+          : invitation.accommodationType,
       },
     });
     return null;
@@ -487,6 +559,9 @@ export const seedInvitations = mutation({
         answeredForName: undefined,
         transport: undefined,
         arrivalDateTime: undefined,
+        childrenCount: undefined,
+        childrenSleepOption: undefined,
+        accommodationType: undefined,
         message: undefined,
         rsvpUpdatedAt: undefined,
       });

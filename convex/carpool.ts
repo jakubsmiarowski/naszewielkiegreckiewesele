@@ -72,6 +72,12 @@ function isDriverEligible(invitation: Doc<"invitations">) {
   );
 }
 
+function getChildrenCount(invitation: Doc<"invitations">) {
+  const raw = invitation.childrenCount;
+  if (!Number.isInteger(raw) || raw < 1) return 0;
+  return Math.min(3, raw);
+}
+
 async function getInvitationOrThrow(
   ctx: QueryCtx | MutationCtx,
   invitationId: Id<"invitations">
@@ -119,7 +125,8 @@ async function getPassengerSeatLimit(
     .collect();
   const plusOneCount =
     invitation.hasPlusOne && invitation.plusOneAttendance === "yes" ? 1 : 0;
-  return Math.max(1, guests.length + plusOneCount);
+  const childrenCount = getChildrenCount(invitation);
+  return Math.max(1, guests.length + plusOneCount + childrenCount);
 }
 
 async function getPassengerRequiredSeats(
@@ -128,16 +135,17 @@ async function getPassengerRequiredSeats(
 ) {
   const plusOneCount =
     invitation.hasPlusOne && invitation.plusOneAttendance === "yes" ? 1 : 0;
+  const childrenCount = getChildrenCount(invitation);
 
   if (invitation.answeredForAll === false) {
-    return Math.max(1, 1 + plusOneCount);
+    return Math.max(1, 1 + plusOneCount + childrenCount);
   }
 
   const guests = await ctx.db
     .query("guests")
     .withIndex("by_invitation", (q) => q.eq("invitationId", invitation._id))
     .collect();
-  return Math.max(1, guests.length + plusOneCount);
+  return Math.max(1, guests.length + plusOneCount + childrenCount);
 }
 
 async function cancelOfferAndRequests(

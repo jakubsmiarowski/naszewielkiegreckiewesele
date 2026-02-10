@@ -98,7 +98,7 @@ function InfoOverview() {
 					</h3>
 					<p className="text-muted-foreground mt-2">
 						Widujemy się w Grecji od 30 września do 4 października. Główna
-						uroczystość: 2 października 2026.
+						uroczystość: 1 października 2026.
 					</p>
 				</div>
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">

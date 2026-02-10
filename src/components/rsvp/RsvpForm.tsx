@@ -15,6 +15,9 @@ export interface RSVPFormData {
 	guestAttendances: Record<string, "yes" | "no">;
 	plusOneAttendance?: "yes" | "no";
 	plusOneName?: string;
+	childrenCount: number;
+	childrenSleepOption?: "extraBed" | "crib";
+	accommodationType?: "hostProvided" | "selfArranged";
 	transport: "own" | "bus";
 	carpoolDriverOptIn?: "yes" | "no";
 	arrivalDateTime: string;
@@ -58,6 +61,7 @@ export function RsvpForm({
 	const formIdPrefix = useId();
 	const guestAttendancesId = `${formIdPrefix}-guest-attendances`;
 	const plusOneNameId = `${formIdPrefix}-plus-one-name`;
+	const childrenCountId = `${formIdPrefix}-children-count`;
 	const arrivalDateId = `${formIdPrefix}-arrival-date`;
 	const arrivalTimeId = `${formIdPrefix}-arrival-time`;
 	const messageId = `${formIdPrefix}-message`;
@@ -75,6 +79,7 @@ export function RsvpForm({
 			guestAttendances: {},
 			transport: "own",
 			carpoolDriverOptIn: "no",
+			childrenCount: 0,
 			arrivalDateTime: "",
 			message: "",
 			...defaultValues,
@@ -83,7 +88,11 @@ export function RsvpForm({
 
 	const guestAttendances = watch("guestAttendances") ?? {};
 	const plusOneAttendance = watch("plusOneAttendance");
+	const childrenCount = watch("childrenCount");
+	const childrenSleepOption = watch("childrenSleepOption");
+	const accommodationType = watch("accommodationType");
 	const transport = watch("transport");
+	const normalizedChildrenCount = normalizeChildrenCount(childrenCount);
 	const availableGuests = useMemo(
 		() =>
 			invitationGuests
@@ -155,6 +164,9 @@ export function RsvpForm({
 			setArrivalTime("");
 			setValue("plusOneAttendance", undefined, { shouldValidate: true });
 			setValue("plusOneName", undefined, { shouldValidate: true });
+			setValue("childrenCount", 0, { shouldValidate: true });
+			setValue("childrenSleepOption", undefined, { shouldValidate: true });
+			setValue("accommodationType", undefined, { shouldValidate: true });
 		}
 	}, [hasAnyAttending, setValue]);
 
@@ -163,6 +175,12 @@ export function RsvpForm({
 			setValue("carpoolDriverOptIn", "no", { shouldValidate: true });
 		}
 	}, [hasAnyAttending, transport, setValue]);
+
+	useEffect(() => {
+		if (normalizedChildrenCount === 0 && childrenSleepOption !== undefined) {
+			setValue("childrenSleepOption", undefined, { shouldValidate: true });
+		}
+	}, [childrenSleepOption, normalizedChildrenCount, setValue]);
 
 	const setGuestAttendance = (guestId: string, attendance: "yes" | "no") => {
 		if (!guestSet.has(guestId)) return;
@@ -224,6 +242,14 @@ export function RsvpForm({
 		const payload: RSVPFormData = {
 			...data,
 			guestAttendances: normalizedGuestAttendances,
+			childrenCount: hasAnyAttending
+				? normalizeChildrenCount(data.childrenCount)
+				: 0,
+			childrenSleepOption:
+				hasAnyAttending && normalizeChildrenCount(data.childrenCount) > 0
+					? data.childrenSleepOption
+					: undefined,
+			accommodationType: hasAnyAttending ? data.accommodationType : undefined,
 		};
 
 		if (onSubmit) {
@@ -454,6 +480,191 @@ export function RsvpForm({
 								)}
 							</div>
 						)}
+
+						<div className="flex flex-col gap-3">
+							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
+								Dzieci
+							</h4>
+							<div className="flex flex-col gap-2">
+								<label
+									className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
+									htmlFor={childrenCountId}
+								>
+									Ile dzieci będzie z Wami? (0-3)
+								</label>
+								<Input
+									{...register("childrenCount", {
+										setValueAs: (value) => parseChildrenCount(value),
+										validate: (value) => {
+											if (!hasAnyAttending) return true;
+											const parsed = parseChildrenCount(value);
+											if (
+												!Number.isInteger(parsed) ||
+												parsed < 0 ||
+												parsed > 3
+											) {
+												return "Podaj liczbę dzieci od 0 do 3";
+											}
+											return true;
+										},
+									})}
+									id={childrenCountId}
+									type="number"
+									min={0}
+									max={3}
+									step={1}
+									disabled={disabled}
+									className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
+								/>
+								{errors.childrenCount && (
+									<span className="text-red-500 text-sm">
+										{errors.childrenCount.message}
+									</span>
+								)}
+							</div>
+							{normalizedChildrenCount > 0 && (
+								<div className="flex flex-col gap-3">
+									<p className="text-gray-900 text-xs font-semibold uppercase tracking-wide">
+										Miejsce do spania dla dzieci
+									</p>
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+										<label
+											className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${childrenSleepOption === "extraBed" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
+										>
+											<input
+												{...register("childrenSleepOption", {
+													validate: (value) => {
+														if (
+															!hasAnyAttending ||
+															normalizedChildrenCount < 1
+														) {
+															return true;
+														}
+														if (value !== "extraBed" && value !== "crib") {
+															return "Wybierz dostawkę lub łóżeczko";
+														}
+														return true;
+													},
+												})}
+												type="radio"
+												value="extraBed"
+												className="sr-only"
+												disabled={disabled}
+											/>
+											<span
+												className={`font-medium ${childrenSleepOption === "extraBed" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
+											>
+												Dostawka
+											</span>
+										</label>
+										<label
+											className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${childrenSleepOption === "crib" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
+										>
+											<input
+												{...register("childrenSleepOption", {
+													validate: (value) => {
+														if (
+															!hasAnyAttending ||
+															normalizedChildrenCount < 1
+														) {
+															return true;
+														}
+														if (value !== "extraBed" && value !== "crib") {
+															return "Wybierz dostawkę lub łóżeczko";
+														}
+														return true;
+													},
+												})}
+												type="radio"
+												value="crib"
+												className="sr-only"
+												disabled={disabled}
+											/>
+											<span
+												className={`font-medium ${childrenSleepOption === "crib" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
+											>
+												Łóżeczko
+											</span>
+										</label>
+									</div>
+									{errors.childrenSleepOption && (
+										<span className="text-red-500 text-sm">
+											{errors.childrenSleepOption.message}
+										</span>
+									)}
+								</div>
+							)}
+						</div>
+
+						<div className="flex flex-col gap-3">
+							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
+								Nocleg
+							</h4>
+							<p className="text-sm text-gray-600">
+								Czy organizujemy nocleg, czy planujecie go we własnym zakresie?
+							</p>
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+								<label
+									className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${accommodationType === "hostProvided" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
+								>
+									<input
+										{...register("accommodationType", {
+											validate: (value) => {
+												if (!hasAnyAttending) return true;
+												if (
+													value !== "hostProvided" &&
+													value !== "selfArranged"
+												) {
+													return "Wybierz opcję noclegu";
+												}
+												return true;
+											},
+										})}
+										type="radio"
+										value="hostProvided"
+										className="sr-only"
+										disabled={disabled}
+									/>
+									<span
+										className={`font-medium ${accommodationType === "hostProvided" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
+									>
+										Nocleg od Was
+									</span>
+								</label>
+								<label
+									className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${accommodationType === "selfArranged" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
+								>
+									<input
+										{...register("accommodationType", {
+											validate: (value) => {
+												if (!hasAnyAttending) return true;
+												if (
+													value !== "hostProvided" &&
+													value !== "selfArranged"
+												) {
+													return "Wybierz opcję noclegu";
+												}
+												return true;
+											},
+										})}
+										type="radio"
+										value="selfArranged"
+										className="sr-only"
+										disabled={disabled}
+									/>
+									<span
+										className={`font-medium ${accommodationType === "selfArranged" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
+									>
+										Na własną rękę
+									</span>
+								</label>
+							</div>
+							{errors.accommodationType && (
+								<span className="text-red-500 text-sm">
+									{errors.accommodationType.message}
+								</span>
+							)}
+						</div>
 
 						<div className="h-px bg-gray-100 w-full my-2" />
 
@@ -715,4 +926,20 @@ function formatRoute(pickupPoint?: string, dropoffPoint?: string) {
 	if (pickup) return `Start: ${pickup}`;
 	if (dropoff) return `Cel: ${dropoff}`;
 	return "Trasa do ustalenia";
+}
+
+function parseChildrenCount(value: unknown) {
+	if (typeof value === "number") return value;
+	if (typeof value === "string") {
+		const trimmed = value.trim();
+		if (trimmed.length === 0) return 0;
+		return Number(trimmed);
+	}
+	return 0;
+}
+
+function normalizeChildrenCount(value: unknown) {
+	const parsed = parseChildrenCount(value);
+	if (!Number.isFinite(parsed) || Number.isNaN(parsed)) return 0;
+	return Math.max(0, Math.min(3, Math.trunc(parsed)));
 }

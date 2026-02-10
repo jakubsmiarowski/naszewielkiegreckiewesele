@@ -68,6 +68,13 @@ export default defineSchema({
     transport: v.optional(v.union(v.literal("own"), v.literal("bus"))),
     carpoolDriverOptIn: v.optional(v.boolean()),
     arrivalDateTime: v.optional(v.string()),
+    childrenCount: v.optional(v.number()),
+    childrenSleepOption: v.optional(
+      v.union(v.literal("extraBed"), v.literal("crib"))
+    ),
+    accommodationType: v.optional(
+      v.union(v.literal("hostProvided"), v.literal("selfArranged"))
+    ),
     message: v.optional(v.string()),
     rsvpUpdatedAt: v.optional(v.number()),
   })

@@ -32,6 +32,9 @@ export interface RsvpInvitation {
 	message?: string;
 	plusOneName?: string;
 	plusOneAttendance?: "yes" | "no";
+	childrenCount?: number;
+	childrenSleepOption?: "extraBed" | "crib";
+	accommodationType?: "hostProvided" | "selfArranged";
 	hasPlusOne: boolean;
 }
 
@@ -54,6 +57,9 @@ export interface AdminInvitation {
 	arrivalDateTime?: string;
 	plusOneName?: string;
 	plusOneAttendance?: "yes" | "no";
+	childrenCount?: number;
+	childrenSleepOption?: "extraBed" | "crib";
+	accommodationType?: "hostProvided" | "selfArranged";
 	guests: DashboardGuest[];
 }
 

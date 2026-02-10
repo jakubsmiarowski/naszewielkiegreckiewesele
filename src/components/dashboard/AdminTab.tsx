@@ -113,9 +113,25 @@ export function AdminTab({
 				if (stats.confirmed > 0 && invitation.transport === "bus") {
 					acc.bus += 1;
 				}
+				if (stats.confirmed > 0) {
+					acc.childrenTotal += normalizeChildrenCount(invitation.childrenCount);
+					if (invitation.accommodationType === "hostProvided") {
+						acc.accommodationHostProvided += 1;
+					} else if (invitation.accommodationType === "selfArranged") {
+						acc.accommodationSelfArranged += 1;
+					}
+				}
 				return acc;
 			},
-			{ confirmed: 0, declined: 0, pending: 0, bus: 0 },
+			{
+				confirmed: 0,
+				declined: 0,
+				pending: 0,
+				bus: 0,
+				childrenTotal: 0,
+				accommodationHostProvided: 0,
+				accommodationSelfArranged: 0,
+			},
 		);
 	}, [invitations]);
 
@@ -445,4 +461,9 @@ export function AdminTab({
 			)}
 		</div>
 	);
+}
+
+function normalizeChildrenCount(value: number | undefined) {
+	if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+	return Math.max(0, Math.min(3, Math.trunc(value)));
 }

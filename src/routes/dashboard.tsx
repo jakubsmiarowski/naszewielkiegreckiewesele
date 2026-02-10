@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 import { AdminTab } from "@/components/dashboard/AdminTab";
-import { buildIcsFile } from "@/components/dashboard/buildIcsFile";
+import { importWeddingEventToCalendar } from "@/components/dashboard/buildIcsFile";
 import { CarpoolTab } from "@/components/dashboard/CarpoolTab";
 import { DashboardGreetingCard } from "@/components/dashboard/DashboardGreetingCard";
 import { FilterBar } from "@/components/dashboard/FilterBar";
@@ -24,6 +24,7 @@ import type {
 import { authClient } from "@/lib/auth-client";
 import { buildGreeting } from "@/lib/greetings";
 import { useInvitationSession } from "@/lib/invitation-session";
+import { WEDDING_EVENT } from "@/lib/wedding-event";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -189,7 +190,7 @@ function DashboardPage() {
 	}, [qaQuestions]);
 	const adminActionCount = (mediationAlerts?.length ?? 0) + pendingQaCount;
 
-	const eventDate = useMemo(() => new Date("2026-10-02T16:00"), []);
+	const eventDate = useMemo(() => new Date(WEDDING_EVENT.startIso), []);
 	const deadlineDate = useMemo(() => {
 		const fallback = new Date("2026-02-28T23:59");
 		if (!settings) return fallback;
@@ -197,14 +198,8 @@ function DashboardPage() {
 		return Number.isNaN(parsed.getTime()) ? fallback : parsed;
 	}, [settings]);
 
-	const handleAddToCalendar = () => {
-		const ics = buildIcsFile();
-		const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-		const link = document.createElement("a");
-		link.href = URL.createObjectURL(blob);
-		link.download = "wesele.ics";
-		link.click();
-		URL.revokeObjectURL(link.href);
+	const handleAddToCalendar = async () => {
+		await importWeddingEventToCalendar();
 	};
 
 	const handleOpenAttraction = (anchorId: AttractionAnchorId) => {

@@ -164,6 +164,9 @@ export function RsvpTab({
 				message: invitation.message ?? "",
 				plusOneName: invitation.plusOneName ?? "",
 				plusOneAttendance: invitation.plusOneAttendance,
+				childrenCount: invitation.childrenCount ?? 0,
+				childrenSleepOption: invitation.childrenSleepOption,
+				accommodationType: invitation.accommodationType,
 			}
 		: undefined;
 
@@ -182,6 +185,9 @@ export function RsvpTab({
 		const hasAtLeastOneAttending = Object.values(
 			normalizedGuestAttendances,
 		).some((attendance) => attendance === "yes");
+		const normalizedChildrenCount = hasAtLeastOneAttending
+			? normalizeChildrenCount(data.childrenCount)
+			: 0;
 
 		try {
 			await updateRsvp({
@@ -208,6 +214,22 @@ export function RsvpTab({
 					invitation.hasPlusOne &&
 					data.plusOneAttendance
 						? data.plusOneAttendance
+						: undefined,
+				childrenCount: hasAtLeastOneAttending
+					? normalizedChildrenCount
+					: undefined,
+				childrenSleepOption:
+					hasAtLeastOneAttending &&
+					normalizedChildrenCount > 0 &&
+					(data.childrenSleepOption === "extraBed" ||
+						data.childrenSleepOption === "crib")
+						? data.childrenSleepOption
+						: undefined,
+				accommodationType:
+					hasAtLeastOneAttending &&
+					(data.accommodationType === "hostProvided" ||
+						data.accommodationType === "selfArranged")
+						? data.accommodationType
 						: undefined,
 			});
 			toast({
@@ -283,6 +305,24 @@ export function RsvpTab({
 					<InfoRow
 						label="Przylot"
 						value={formatLocalDate(invitation.arrivalDateTime) || "-"}
+					/>
+					<InfoRow
+						label="Dzieci"
+						value={
+							(invitation.childrenCount ?? 0) > 0
+								? `Tak (${invitation.childrenCount})`
+								: "Nie"
+						}
+					/>
+					{(invitation.childrenCount ?? 0) > 0 && (
+						<InfoRow
+							label="Miejsce dla dzieci"
+							value={formatChildrenSleepOption(invitation.childrenSleepOption)}
+						/>
+					)}
+					<InfoRow
+						label="Nocleg"
+						value={formatAccommodationType(invitation.accommodationType)}
 					/>
 					{invitation.hasPlusOne && (
 						<>
@@ -440,4 +480,26 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 			<p className="font-semibold text-foreground mt-1">{value}</p>
 		</div>
 	);
+}
+
+function normalizeChildrenCount(value: unknown) {
+	const numeric = typeof value === "number" ? value : Number(value);
+	if (!Number.isFinite(numeric) || Number.isNaN(numeric)) return 0;
+	return Math.max(0, Math.min(3, Math.trunc(numeric)));
+}
+
+function formatChildrenSleepOption(
+	value: "extraBed" | "crib" | undefined,
+): string {
+	if (value === "extraBed") return "Dostawka";
+	if (value === "crib") return "Łóżeczko";
+	return "-";
+}
+
+function formatAccommodationType(
+	value: "hostProvided" | "selfArranged" | undefined,
+): string {
+	if (value === "hostProvided") return "Od organizatorów";
+	if (value === "selfArranged") return "Na własną rękę";
+	return "-";
 }
