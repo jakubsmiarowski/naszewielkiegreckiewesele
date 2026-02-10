@@ -57,6 +57,7 @@ function DashboardPage() {
 	const [adminAccessToken, setAdminAccessToken] = useState<string | null>(null);
 	const [isAdminTokenLoading, setIsAdminTokenLoading] = useState(false);
 	const [hasCheckedAdminAccess, setHasCheckedAdminAccess] = useState(false);
+	const [adminAccessError, setAdminAccessError] = useState<string | null>(null);
 	const isAdmin = Boolean(adminAccessToken);
 
 	const invitationData = useQuery(
@@ -104,6 +105,7 @@ function DashboardPage() {
 			!isAdminPending &&
 			!isAdminTokenLoading &&
 			(adminEmail ? hasCheckedAdminAccess : true) &&
+			!adminEmail &&
 			!invitationId &&
 			!isAdmin
 		) {
@@ -129,6 +131,7 @@ function DashboardPage() {
 			setAdminAccessToken(null);
 			setIsAdminTokenLoading(false);
 			setHasCheckedAdminAccess(true);
+			setAdminAccessError(null);
 			return;
 		}
 
@@ -136,18 +139,27 @@ function DashboardPage() {
 		const loadAdminSession = async () => {
 			setIsAdminTokenLoading(true);
 			setHasCheckedAdminAccess(false);
+			setAdminAccessError(null);
 			try {
 				const response = await fetch("/api/admin/session");
 				if (!response.ok) {
-					throw new Error("forbidden");
+					const data = (await response
+						.json()
+						.catch(() => ({ error: "forbidden" }))) as { error?: string };
+					throw new Error(data.error ?? "forbidden");
 				}
 				const data = (await response.json()) as { adminAccessToken?: string };
 				if (!isCancelled) {
 					setAdminAccessToken(data.adminAccessToken ?? null);
 				}
-			} catch (_error) {
+			} catch (error) {
 				if (!isCancelled) {
 					setAdminAccessToken(null);
+					setAdminAccessError(
+						error instanceof Error
+							? error.message
+							: "failed_to_load_admin_access",
+					);
 				}
 			} finally {
 				if (!isCancelled) {
@@ -224,6 +236,29 @@ function DashboardPage() {
 				<div className="flex flex-col items-center gap-4">
 					<div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[var(--color-primary)]" />
 					<p className="text-gray-500 font-medium">Weryfikacja uprawnień...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (adminEmail && hasCheckedAdminAccess && !isAdmin) {
+		return (
+			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)] px-4">
+				<div className="w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-sm space-y-3">
+					<h2 className="text-xl font-bold text-foreground">
+						Brak dostępu administratora
+					</h2>
+					<p className="text-sm text-muted-foreground">
+						Twoja sesja logowania działa, ale backend nie przyznał tokenu
+						administratora.
+					</p>
+					<p className="text-sm text-muted-foreground">
+						Sprawdź `GET /api/admin/session` w Network (status + payload) oraz
+						czy użytkownik istnieje jako aktywny admin w Convex.
+					</p>
+					<p className="text-xs text-muted-foreground">
+						Szczegóły: {adminAccessError ?? "forbidden"}
+					</p>
 				</div>
 			</div>
 		);
