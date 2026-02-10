@@ -82,7 +82,10 @@ function CountdownCard({
 		<div
 			className={`relative overflow-hidden p-6 rounded-2xl shadow-lg text-center ${themeClasses}`}
 		>
-			<div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_right,var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+			<div
+				aria-hidden
+				className="pointer-events-none absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_right,var(--tw-gradient-stops))] from-white via-transparent to-transparent"
+			/>
 			<Heart className="size-10 mx-auto mb-2 fill-current" />
 			<h4 className="text-lg font-bold mb-1">{title}</h4>
 			<p className="opacity-80 text-sm mb-6">{dateLabel}</p>

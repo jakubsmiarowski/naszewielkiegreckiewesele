@@ -18,6 +18,7 @@ export interface RSVPFormData {
 	childrenCount: number;
 	childrenSleepOption?: "extraBed" | "crib";
 	accommodationType?: "hostProvided" | "selfArranged";
+	selectedCarpoolOfferId?: string;
 	transport: "own" | "bus";
 	carpoolDriverOptIn?: "yes" | "no";
 	arrivalDateTime: string;
@@ -37,6 +38,8 @@ export interface RsvpCarpoolSuggestion {
 	dropoffPoint?: string;
 	departureDateTime: string;
 	seatsAvailable: number;
+	myRequestId?: string;
+	myRequestStatus?: string;
 }
 
 interface RsvpFormProps {
@@ -46,7 +49,6 @@ interface RsvpFormProps {
 	disabled?: boolean;
 	invitationGuests: RsvpGuestOption[];
 	carpoolSuggestions?: RsvpCarpoolSuggestion[];
-	onGoToCarpool?: (options?: { openCreateModal?: boolean }) => void;
 }
 
 export function RsvpForm({
@@ -56,7 +58,6 @@ export function RsvpForm({
 	disabled,
 	invitationGuests,
 	carpoolSuggestions = [],
-	onGoToCarpool,
 }: RsvpFormProps) {
 	const formIdPrefix = useId();
 	const guestAttendancesId = `${formIdPrefix}-guest-attendances`;
@@ -91,6 +92,7 @@ export function RsvpForm({
 	const childrenCount = watch("childrenCount");
 	const childrenSleepOption = watch("childrenSleepOption");
 	const accommodationType = watch("accommodationType");
+	const selectedCarpoolOfferId = watch("selectedCarpoolOfferId");
 	const transport = watch("transport");
 	const normalizedChildrenCount = normalizeChildrenCount(childrenCount);
 	const availableGuests = useMemo(
@@ -167,6 +169,7 @@ export function RsvpForm({
 			setValue("childrenCount", 0, { shouldValidate: true });
 			setValue("childrenSleepOption", undefined, { shouldValidate: true });
 			setValue("accommodationType", undefined, { shouldValidate: true });
+			setValue("selectedCarpoolOfferId", undefined, { shouldValidate: true });
 		}
 	}, [hasAnyAttending, setValue]);
 
@@ -175,6 +178,22 @@ export function RsvpForm({
 			setValue("carpoolDriverOptIn", "no", { shouldValidate: true });
 		}
 	}, [hasAnyAttending, transport, setValue]);
+
+	useEffect(() => {
+		if (!hasAnyAttending || transport !== "bus") {
+			setValue("selectedCarpoolOfferId", undefined, { shouldValidate: true });
+		}
+	}, [hasAnyAttending, setValue, transport]);
+
+	useEffect(() => {
+		if (!selectedCarpoolOfferId) return;
+		const selectedOfferExists = carpoolSuggestions.some(
+			(offer) => offer._id === selectedCarpoolOfferId,
+		);
+		if (!selectedOfferExists) {
+			setValue("selectedCarpoolOfferId", undefined, { shouldValidate: true });
+		}
+	}, [carpoolSuggestions, selectedCarpoolOfferId, setValue]);
 
 	useEffect(() => {
 		if (normalizedChildrenCount === 0 && childrenSleepOption !== undefined) {
@@ -250,6 +269,10 @@ export function RsvpForm({
 					? data.childrenSleepOption
 					: undefined,
 			accommodationType: hasAnyAttending ? data.accommodationType : undefined,
+			selectedCarpoolOfferId:
+				hasAnyAttending && data.transport === "bus"
+					? data.selectedCarpoolOfferId
+					: undefined,
 		};
 
 		if (onSubmit) {
@@ -265,6 +288,7 @@ export function RsvpForm({
 	};
 
 	register("guestAttendances");
+	register("selectedCarpoolOfferId");
 
 	return (
 		<div className="flex flex-col gap-6 rounded-2xl bg-white shadow-xl border border-gray-100 overflow-hidden">
@@ -770,38 +794,72 @@ export function RsvpForm({
 										Car Pool - dostępne miejsca
 									</h4>
 									<p className="text-sm text-gray-700">
-										Ktoś z gości ma wolne miejsce w aucie. Możesz wysłać
-										zgłoszenie w zakładce Car Pool.
+										Wybierz jedną ofertę, a po zapisaniu RSVP wyślemy zgłoszenie
+										automatycznie.
 									</p>
 									<ul className="space-y-2">
-										{carpoolSuggestions.map((offer) => (
-											<li
-												key={offer._id}
-												className="rounded-lg border border-gray-200 bg-white px-3 py-2"
-											>
-												<p className="font-medium text-gray-900">
-													{offer.driverDisplayName}:{" "}
-													{formatRoute(offer.pickupPoint, offer.dropoffPoint)}
-												</p>
-												<p className="text-xs text-gray-500">
-													Odjazd: {formatDateTime(offer.departureDateTime)} |
-													Wolne miejsca: {offer.seatsAvailable}
-												</p>
-												<p className="text-xs text-gray-500">
-													Przylot kierowcy:{" "}
-													{formatDateTime(offer.driverArrivalDateTime)}
-												</p>
-											</li>
-										))}
+										{carpoolSuggestions.map((offer) => {
+											const isSelected = selectedCarpoolOfferId === offer._id;
+											const isDisabled = disabled || Boolean(offer.myRequestId);
+											return (
+												<li
+													key={offer._id}
+													className={`rounded-lg border px-3 py-2 transition ${
+														isSelected
+															? "border-[var(--color-primary)] bg-[var(--color-primary)]/10"
+															: "border-gray-200 bg-white"
+													}`}
+												>
+													<button
+														type="button"
+														disabled={isDisabled}
+														onClick={() =>
+															setValue(
+																"selectedCarpoolOfferId",
+																isSelected ? undefined : offer._id,
+																{
+																	shouldDirty: true,
+																	shouldTouch: true,
+																	shouldValidate: true,
+																},
+															)
+														}
+														className="w-full text-left"
+													>
+														<p className="font-medium text-gray-900">
+															{offer.driverDisplayName}:{" "}
+															{formatRoute(
+																offer.pickupPoint,
+																offer.dropoffPoint,
+															)}
+														</p>
+														<p className="text-xs text-gray-500">
+															Odjazd: {formatDateTime(offer.departureDateTime)}{" "}
+															| Wolne miejsca: {offer.seatsAvailable}
+														</p>
+														<p className="text-xs text-gray-500">
+															Przylot kierowcy:{" "}
+															{formatDateTime(offer.driverArrivalDateTime)}
+														</p>
+														{offer.myRequestId && (
+															<p className="text-xs text-amber-600 mt-1">
+																Masz już zgłoszenie do tej oferty
+																{offer.myRequestStatus
+																	? ` (${formatCarpoolRequestStatus(offer.myRequestStatus)})`
+																	: ""}
+																.
+															</p>
+														)}
+													</button>
+												</li>
+											);
+										})}
 									</ul>
-									{onGoToCarpool && (
-										<button
-											type="button"
-											onClick={() => onGoToCarpool()}
-											className="self-start px-4 py-2 rounded-full text-sm font-semibold border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition"
-										>
-											Przejdź do Car Pool
-										</button>
+									{selectedCarpoolOfferId && (
+										<p className="text-xs text-[var(--color-primary)] font-medium">
+											Zgłoszenie zostanie wysłane po kliknięciu "Potwierdź
+											obecność".
+										</p>
 									)}
 								</div>
 							)}
@@ -926,6 +984,16 @@ function formatRoute(pickupPoint?: string, dropoffPoint?: string) {
 	if (pickup) return `Start: ${pickup}`;
 	if (dropoff) return `Cel: ${dropoff}`;
 	return "Trasa do ustalenia";
+}
+
+function formatCarpoolRequestStatus(value: string) {
+	if (value === "pending") return "oczekuje";
+	if (value === "accepted") return "zaakceptowane";
+	if (value === "rejected") return "odrzucone";
+	if (value === "cancelled_by_passenger") return "anulowane przez pasażera";
+	if (value === "cancelled_by_driver") return "anulowane przez kierowcę";
+	if (value === "cancelled_system") return "anulowane systemowo";
+	return value;
 }
 
 function parseChildrenCount(value: unknown) {

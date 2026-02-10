@@ -26,6 +26,7 @@ export function RsvpTab({
 	onGoToCarpool,
 }: RsvpTabProps) {
 	const updateRsvp = useMutation(api.invitations.updateRsvp);
+	const createCarpoolRequest = useMutation(api.carpool.createRequest);
 	const invitation = invitationData?.invitation;
 	const carpoolData = useQuery(
 		api.carpool.getCarpoolTabData,
@@ -122,6 +123,8 @@ export function RsvpTab({
 					dropoffPoint: offer.dropoffPoint,
 					departureDateTime: offer.departureDateTime,
 					seatsAvailable: offer.seatsAvailable,
+					myRequestId: offer.myRequestId,
+					myRequestStatus: offer.myRequestStatus,
 				})),
 		[carpoolData?.openOffers],
 	);
@@ -232,10 +235,56 @@ export function RsvpTab({
 						? data.accommodationType
 						: undefined,
 			});
+
+			let carpoolRequestError: string | null = null;
+			let hasCarpoolRequestBeenCreated = false;
+			if (
+				hasAtLeastOneAttending &&
+				data.transport === "bus" &&
+				data.selectedCarpoolOfferId
+			) {
+				const selectedOffer = carpoolData?.openOffers.find(
+					(offer) =>
+						offer._id === data.selectedCarpoolOfferId &&
+						offer.seatsAvailable > 0,
+				);
+				if (selectedOffer?.myRequestId) {
+					carpoolRequestError = "Masz już zgłoszenie do tej oferty car pool.";
+				} else if (!selectedOffer) {
+					carpoolRequestError =
+						"Wybrana oferta car pool nie jest już dostępna.";
+				} else {
+					try {
+						await createCarpoolRequest({
+							invitationId: invitation._id as Id<"invitations">,
+							offerId: selectedOffer._id as Id<"carpoolOffers">,
+							seatsRequested: calculateRequestedCarpoolSeats({
+								guestAttendances: normalizedGuestAttendances,
+								hasPlusOne: invitation.hasPlusOne,
+								plusOneAttendance: data.plusOneAttendance,
+								childrenCount: normalizedChildrenCount,
+							}),
+							message: "",
+							mediationRequested: false,
+						});
+						hasCarpoolRequestBeenCreated = true;
+					} catch (error) {
+						carpoolRequestError =
+							error instanceof Error ? error.message : "Spróbuj ponownie.";
+					}
+				}
+			}
+
 			toast({
-				variant: "success",
-				title: "RSVP zapisane",
-				description: "Dziękujemy za przesłanie formularza.",
+				variant: carpoolRequestError ? "destructive" : "success",
+				title: carpoolRequestError
+					? "RSVP zapisane, ale car pool nie został wysłany"
+					: "RSVP zapisane",
+				description: carpoolRequestError
+					? carpoolRequestError
+					: hasCarpoolRequestBeenCreated
+						? "Dziękujemy za przesłanie formularza. Zgłoszenie car pool zostało wysłane."
+						: "Dziękujemy za przesłanie formularza.",
 			});
 			setIsEditing(false);
 		} catch (_error) {
@@ -465,7 +514,6 @@ export function RsvpTab({
 			hasPlusOne={invitation.hasPlusOne}
 			invitationGuests={invitationGuests}
 			carpoolSuggestions={carpoolSuggestions}
-			onGoToCarpool={onGoToCarpool}
 			onSubmit={handleSubmit}
 		/>
 	);
@@ -502,4 +550,22 @@ function formatAccommodationType(
 	if (value === "hostProvided") return "Od organizatorów";
 	if (value === "selfArranged") return "Na własną rękę";
 	return "-";
+}
+
+function calculateRequestedCarpoolSeats({
+	guestAttendances,
+	hasPlusOne,
+	plusOneAttendance,
+	childrenCount,
+}: {
+	guestAttendances: Record<string, "yes" | "no">;
+	hasPlusOne: boolean;
+	plusOneAttendance: "yes" | "no" | undefined;
+	childrenCount: number;
+}) {
+	const guestsCount = Object.values(guestAttendances).filter(
+		(attendance) => attendance === "yes",
+	).length;
+	const plusOneCount = hasPlusOne && plusOneAttendance === "yes" ? 1 : 0;
+	return Math.max(1, guestsCount + plusOneCount + childrenCount);
 }
