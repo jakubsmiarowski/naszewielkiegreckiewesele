@@ -42,13 +42,17 @@ export function FilterBar({
 	activeFilter,
 	onSelect,
 	badges,
+	carpoolDriverOptIn,
 }: {
 	filtersOverride?: string[];
 	activeFilter?: string;
 	onSelect?: (value: string) => void;
 	badges?: Partial<Record<string, number>>;
+	carpoolDriverOptIn?: boolean;
 }) {
-	const items = filtersOverride ?? filters;
+	const items = (filtersOverride ?? filters).filter(
+		(item) => item !== "Car Pool" || carpoolDriverOptIn,
+	);
 	const [open, setOpen] = useState(false);
 
 	const activeItem = items.find((item) => item === activeFilter) || items[0];
@@ -125,6 +129,7 @@ export function FilterBar({
 			<div className="hidden md:flex flex-wrap gap-3">
 				{items.map((filter, index) => {
 					const isActive = activeFilter ? filter === activeFilter : index === 0;
+
 					return (
 						<Button
 							key={filter}

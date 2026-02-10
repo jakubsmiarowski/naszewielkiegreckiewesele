@@ -191,50 +191,62 @@ export function RsvpTab({
 		const normalizedChildrenCount = hasAtLeastOneAttending
 			? normalizeChildrenCount(data.childrenCount)
 			: 0;
+		const legacyCompatiblePayload = {
+			invitationId: invitation._id as Id<"invitations">,
+			guestAttendances: normalizedGuestAttendances,
+			transport: hasAtLeastOneAttending ? data.transport : undefined,
+			carpoolDriverOptIn:
+				hasAtLeastOneAttending && data.transport === "own"
+					? data.carpoolDriverOptIn === "yes"
+					: false,
+			arrivalDateTime:
+				hasAtLeastOneAttending && data.arrivalDateTime
+					? data.arrivalDateTime
+					: undefined,
+			message: data.message,
+			plusOneName:
+				hasAtLeastOneAttending &&
+				invitation.hasPlusOne &&
+				data.plusOneAttendance === "yes"
+					? data.plusOneName
+					: undefined,
+			plusOneAttendance:
+				hasAtLeastOneAttending &&
+				invitation.hasPlusOne &&
+				data.plusOneAttendance
+					? data.plusOneAttendance
+					: undefined,
+		};
 
 		try {
-			await updateRsvp({
-				invitationId: invitation._id as Id<"invitations">,
-				guestAttendances: normalizedGuestAttendances,
-				transport: hasAtLeastOneAttending ? data.transport : undefined,
-				carpoolDriverOptIn:
-					hasAtLeastOneAttending && data.transport === "own"
-						? data.carpoolDriverOptIn === "yes"
-						: false,
-				arrivalDateTime:
-					hasAtLeastOneAttending && data.arrivalDateTime
-						? data.arrivalDateTime
+			let usedLegacyRsvpFallback = false;
+			try {
+				await updateRsvp({
+					...legacyCompatiblePayload,
+					childrenCount: hasAtLeastOneAttending
+						? normalizedChildrenCount
 						: undefined,
-				message: data.message,
-				plusOneName:
-					hasAtLeastOneAttending &&
-					invitation.hasPlusOne &&
-					data.plusOneAttendance === "yes"
-						? data.plusOneName
-						: undefined,
-				plusOneAttendance:
-					hasAtLeastOneAttending &&
-					invitation.hasPlusOne &&
-					data.plusOneAttendance
-						? data.plusOneAttendance
-						: undefined,
-				childrenCount: hasAtLeastOneAttending
-					? normalizedChildrenCount
-					: undefined,
-				childrenSleepOption:
-					hasAtLeastOneAttending &&
-					normalizedChildrenCount > 0 &&
-					(data.childrenSleepOption === "extraBed" ||
-						data.childrenSleepOption === "crib")
-						? data.childrenSleepOption
-						: undefined,
-				accommodationType:
-					hasAtLeastOneAttending &&
-					(data.accommodationType === "hostProvided" ||
-						data.accommodationType === "selfArranged")
-						? data.accommodationType
-						: undefined,
-			});
+					childrenSleepOption:
+						hasAtLeastOneAttending &&
+						normalizedChildrenCount > 0 &&
+						(data.childrenSleepOption === "extraBed" ||
+							data.childrenSleepOption === "crib")
+							? data.childrenSleepOption
+							: undefined,
+					accommodationType:
+						hasAtLeastOneAttending &&
+						(data.accommodationType === "hostProvided" ||
+							data.accommodationType === "selfArranged")
+							? data.accommodationType
+							: undefined,
+				});
+			} catch (error) {
+				if (!isLegacyRsvpValidatorError(error)) {
+					throw error;
+				}
+				await updateRsvp(legacyCompatiblePayload);
+				usedLegacyRsvpFallback = true;
+			}
 
 			let carpoolRequestError: string | null = null;
 			let hasCarpoolRequestBeenCreated = false;
@@ -284,7 +296,9 @@ export function RsvpTab({
 					? carpoolRequestError
 					: hasCarpoolRequestBeenCreated
 						? "Dziękujemy za przesłanie formularza. Zgłoszenie car pool zostało wysłane."
-						: "Dziękujemy za przesłanie formularza.",
+						: usedLegacyRsvpFallback
+							? "Dziękujemy za przesłanie formularza. Backend działa w starszej wersji i nie zapisał jeszcze pól dzieci/noclegu."
+							: "Dziękujemy za przesłanie formularza.",
 			});
 			setIsEditing(false);
 		} catch (_error) {
@@ -568,4 +582,14 @@ function calculateRequestedCarpoolSeats({
 	).length;
 	const plusOneCount = hasPlusOne && plusOneAttendance === "yes" ? 1 : 0;
 	return Math.max(1, guestsCount + plusOneCount + childrenCount);
+}
+
+function isLegacyRsvpValidatorError(error: unknown) {
+	if (!(error instanceof Error)) return false;
+	const message = error.message;
+	return (
+		message.includes("extra field `accommodationType`") ||
+		message.includes("extra field `childrenCount`") ||
+		message.includes("extra field `childrenSleepOption`")
+	);
 }

@@ -259,6 +259,8 @@ function DashboardPage() {
 		);
 	}
 
+	console.log(invitationData?.invitation.carpoolDriverOptIn);
+
 	return (
 		<div className="w-full bg-background min-h-screen">
 			<HeroSection />
@@ -271,6 +273,7 @@ function DashboardPage() {
 						activeFilter={activeTab}
 						onSelect={(label) => setActiveTab(label as MainTabId)}
 						badges={isAdmin ? { Admin: adminActionCount } : undefined}
+						carpoolDriverOptIn={invitationData?.invitation.carpoolDriverOptIn}
 					/>
 
 					{activeTab === "RSVP" && (
@@ -280,14 +283,15 @@ function DashboardPage() {
 							onGoToCarpool={handleGoToCarpool}
 						/>
 					)}
-					{activeTab === "Car Pool" && (
-						<CarpoolTab
-							invitationData={invitationData}
-							isAdmin={isAdmin}
-							adminAccessToken={adminAccessToken}
-							openCreateOfferToken={openCarpoolCreateToken}
-						/>
-					)}
+					{activeTab === "Car Pool" &&
+						invitationData?.invitation.carpoolDriverOptIn && (
+							<CarpoolTab
+								invitationData={invitationData}
+								isAdmin={isAdmin}
+								adminAccessToken={adminAccessToken}
+								openCreateOfferToken={openCarpoolCreateToken}
+							/>
+						)}
 					{activeTab === "Admin" && isAdmin && (
 						<AdminTab
 							invitations={adminInvitations ?? []}

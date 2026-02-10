@@ -74,6 +74,7 @@ function isDriverEligible(invitation: Doc<"invitations">) {
 
 function getChildrenCount(invitation: Doc<"invitations">) {
   const raw = invitation.childrenCount;
+  if (raw === undefined) return 0;
   if (!Number.isInteger(raw) || raw < 1) return 0;
   return Math.min(3, raw);
 }
