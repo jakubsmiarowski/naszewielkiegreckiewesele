@@ -4,9 +4,8 @@ import {
 	useNavigate,
 } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
-import { isAdminEmail } from "@/lib/admin";
 import { authClient, signInWithGoogle } from "@/lib/auth-client";
 import { useInvitationSession } from "@/lib/invitation-session";
 
@@ -18,7 +17,8 @@ function LandingPage() {
 	const { invitationId, isLoading: isSessionLoading } = useInvitationSession();
 	const { data: adminSession, isPending: isAdminPending } =
 		authClient.useSession();
-	const isAdmin = isAdminEmail(adminSession?.user?.email);
+	const adminEmail = adminSession?.user?.email ?? null;
+	const pinInputId = useId();
 
 	const [showPinForm, setShowPinForm] = useState(false);
 	const [pinCode, setPinCode] = useState("");
@@ -46,10 +46,27 @@ function LandingPage() {
 	}, [invitationId, isSessionLoading, navigate]);
 
 	useEffect(() => {
-		if (!isAdminPending && isAdmin) {
-			navigate({ to: "/dashboard" });
+		if (isAdminPending || !adminEmail) {
+			return;
 		}
-	}, [isAdmin, isAdminPending, navigate]);
+
+		let isCancelled = false;
+		const checkAdminAccess = async () => {
+			try {
+				const response = await fetch("/api/admin/session");
+				if (!isCancelled && response.ok) {
+					navigate({ to: "/dashboard" });
+				}
+			} catch (_error) {
+				// Non-admin users should stay on landing page.
+			}
+		};
+
+		checkAdminAccess();
+		return () => {
+			isCancelled = true;
+		};
+	}, [adminEmail, isAdminPending, navigate]);
 
 	const handleGoogleLogin = async () => {
 		try {
@@ -175,11 +192,14 @@ function LandingPage() {
 										transition={{ duration: 0.35, ease: "easeOut" }}
 										className="flex flex-col gap-4"
 									>
-										<label className="text-white/70 text-sm" htmlFor="pin">
+										<label
+											className="text-white/70 text-sm"
+											htmlFor={pinInputId}
+										>
 											Kod z zaproszenia
 										</label>
 										<input
-											id="pin"
+											id={pinInputId}
 											value={pinCode}
 											onChange={(e) => {
 												setPinCode(e.target.value);
@@ -228,6 +248,7 @@ function LandingPage() {
 								className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-white text-gray-900 font-bold shadow-lg transition-all hover:bg-gray-50 hover:scale-[1.02] cursor-pointer"
 							>
 								<svg className="w-6 h-6" viewBox="0 0 24 24">
+									<title>Google logo</title>
 									<path
 										d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
 										fill="#4285F4"
@@ -259,6 +280,7 @@ function LandingPage() {
 						viewBox="0 0 1200 120"
 						xmlns="http://www.w3.org/2000/svg"
 					>
+						<title>Dekoracyjna fala</title>
 						<path d="M0,0 Q600,220 1200,0 V120 H0 Z" fill="#F8FAFC" />
 					</svg>
 				</div>

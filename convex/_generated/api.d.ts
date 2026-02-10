@@ -8,6 +8,11 @@
  * @module
  */
 
+import type * as adminAuth from "../adminAuth.js";
+import type * as adminConfig from "../adminConfig.js";
+import type * as adminUsers from "../adminUsers.js";
+import type * as adminUsersStore from "../adminUsersStore.js";
+import type * as audit from "../audit.js";
 import type * as carpool from "../carpool.js";
 import type * as guests from "../guests.js";
 import type * as invitations from "../invitations.js";
@@ -22,6 +27,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminAuth: typeof adminAuth;
+  adminConfig: typeof adminConfig;
+  adminUsers: typeof adminUsers;
+  adminUsersStore: typeof adminUsersStore;
+  audit: typeof audit;
   carpool: typeof carpool;
   guests: typeof guests;
   invitations: typeof invitations;

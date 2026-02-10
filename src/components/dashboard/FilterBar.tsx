@@ -1,5 +1,6 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Popover,
@@ -40,10 +41,12 @@ export function FilterBar({
 	filtersOverride,
 	activeFilter,
 	onSelect,
+	badges,
 }: {
 	filtersOverride?: string[];
 	activeFilter?: string;
 	onSelect?: (value: string) => void;
+	badges?: Partial<Record<string, number>>;
 }) {
 	const items = filtersOverride ?? filters;
 	const [open, setOpen] = useState(false);
@@ -62,7 +65,17 @@ export function FilterBar({
 							aria-expanded={open}
 							className="w-full justify-between bg-background border-border text-foreground hover:bg-muted/50"
 						>
-							{activeItem}
+							<div className="flex items-center gap-2">
+								<span>{activeItem}</span>
+								{(badges?.[activeItem] ?? 0) > 0 && (
+									<Badge
+										variant="destructive"
+										className="min-w-5 justify-center px-1.5 py-0"
+									>
+										{badges?.[activeItem]}
+									</Badge>
+								)}
+							</div>
 							<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 						</Button>
 					</PopoverTrigger>
@@ -84,13 +97,23 @@ export function FilterBar({
 										setOpen(false);
 									}}
 								>
-									<Check
-										className={cn(
-											"mr-2 h-4 w-4",
-											filter === activeFilter ? "opacity-100" : "opacity-0",
-										)}
-									/>
-									{filter}
+									<div className="mr-2 w-4">
+										<Check
+											className={cn(
+												"h-4 w-4",
+												filter === activeFilter ? "opacity-100" : "opacity-0",
+											)}
+										/>
+									</div>
+									<span>{filter}</span>
+									{(badges?.[filter] ?? 0) > 0 && (
+										<Badge
+											variant="destructive"
+											className="ml-auto min-w-5 justify-center px-1.5 py-0"
+										>
+											{badges?.[filter]}
+										</Badge>
+									)}
 								</Button>
 							))}
 						</div>
@@ -113,7 +136,15 @@ export function FilterBar({
 							)}
 							onClick={() => onSelect?.(filter)}
 						>
-							{filter}
+							<span>{filter}</span>
+							{(badges?.[filter] ?? 0) > 0 && (
+								<Badge
+									variant={isActive ? "secondary" : "destructive"}
+									className="min-w-5 justify-center px-1.5 py-0"
+								>
+									{badges?.[filter]}
+								</Badge>
+							)}
 						</Button>
 					);
 				})}

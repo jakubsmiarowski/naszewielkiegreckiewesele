@@ -1,4 +1,5 @@
-import { getAdminTokenSecret, isConfiguredAdminEmail } from "./adminConfig";
+import { getAdminTokenSecret } from "./adminConfig";
+import { isActiveAdminEmail } from "./adminUsersStore";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 
 type AdminAccessPayload = {
@@ -35,7 +36,7 @@ async function signPayload(payload: string, secret: string) {
   return toHex(new Uint8Array(signature));
 }
 
-async function verifyAdminToken(token: string) {
+async function verifyAdminToken(ctx: QueryCtx | MutationCtx, token: string) {
   const separatorIndex = token.lastIndexOf(".");
   if (separatorIndex <= 0 || separatorIndex >= token.length - 1) {
     throw new Error("Nieprawidłowy token admina.");
@@ -62,7 +63,7 @@ async function verifyAdminToken(token: string) {
     throw new Error("Token admina wygasł.");
   }
 
-  if (!isConfiguredAdminEmail(payload.email)) {
+  if (!(await isActiveAdminEmail(ctx, payload.email))) {
     throw new Error("Konto nie ma już uprawnień administratora.");
   }
 
@@ -70,13 +71,13 @@ async function verifyAdminToken(token: string) {
 }
 
 export async function requireAdminAccess(
-  _ctx: QueryCtx | MutationCtx,
+  ctx: QueryCtx | MutationCtx,
   adminAccessToken: string,
 ) {
   if (!adminAccessToken?.trim()) {
     throw new Error("Brak tokenu administratora.");
   }
-  const payload = await verifyAdminToken(adminAccessToken.trim());
+  const payload = await verifyAdminToken(ctx, adminAccessToken.trim());
   return {
     email: payload.email.toLowerCase(),
     issuedAt: payload.issuedAt,

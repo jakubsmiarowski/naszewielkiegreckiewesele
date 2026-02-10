@@ -17,9 +17,10 @@ import {
 } from "@/components/dashboard/SidebarWidgets";
 import type {
 	AttractionAnchorId,
+	CarpoolMediationAlert,
 	MainTabId,
+	QaAdminQuestion,
 } from "@/components/dashboard/types";
-import { isAdminEmail } from "@/lib/admin";
 import { authClient } from "@/lib/auth-client";
 import { buildGreeting } from "@/lib/greetings";
 import { useInvitationSession } from "@/lib/invitation-session";
@@ -52,9 +53,10 @@ function DashboardPage() {
 	const { invitationId, isLoading: isSessionLoading } = useInvitationSession();
 	const { data: adminSession, isPending: isAdminPending } =
 		authClient.useSession();
-	const isAdmin = isAdminEmail(adminSession?.user?.email);
+	const adminEmail = adminSession?.user?.email ?? null;
 	const [adminAccessToken, setAdminAccessToken] = useState<string | null>(null);
 	const [isAdminTokenLoading, setIsAdminTokenLoading] = useState(false);
+	const isAdmin = Boolean(adminAccessToken);
 
 	const invitationData = useQuery(
 		api.invitations.getById,
@@ -62,9 +64,17 @@ function DashboardPage() {
 	);
 	const adminInvitations = useQuery(
 		api.invitations.listForAdmin,
-		isAdmin && adminAccessToken ? { adminAccessToken } : "skip",
+		adminAccessToken ? { adminAccessToken } : "skip",
 	);
 	const settings = useQuery(api.settings.getRsvpSettings, {});
+	const mediationAlerts = useQuery(
+		api.carpool.listMediationAlertsForAdmin,
+		adminAccessToken ? { adminAccessToken } : "skip",
+	) as CarpoolMediationAlert[] | undefined;
+	const qaQuestions = useQuery(
+		api.questions.listForAdmin,
+		adminAccessToken ? { adminAccessToken } : "skip",
+	) as QaAdminQuestion[] | undefined;
 
 	const [activeTab, setActiveTab] = useState<MainTabId>("RSVP");
 	const [focusAttractionId, setFocusAttractionId] =
@@ -84,13 +94,26 @@ function DashboardPage() {
 	}, [activeTab, isAdmin]);
 
 	useEffect(() => {
-		if (!isSessionLoading && !isAdminPending && !invitationId && !isAdmin) {
+		if (
+			!isSessionLoading &&
+			!isAdminPending &&
+			!isAdminTokenLoading &&
+			!invitationId &&
+			!isAdmin
+		) {
 			navigate({ to: "/" });
 		}
-	}, [invitationId, isAdmin, isAdminPending, isSessionLoading, navigate]);
+	}, [
+		invitationId,
+		isAdmin,
+		isAdminPending,
+		isAdminTokenLoading,
+		isSessionLoading,
+		navigate,
+	]);
 
 	useEffect(() => {
-		if (!isAdmin) {
+		if (isAdminPending || !adminEmail) {
 			setAdminAccessToken(null);
 			setIsAdminTokenLoading(false);
 			return;
@@ -123,7 +146,7 @@ function DashboardPage() {
 		return () => {
 			isCancelled = true;
 		};
-	}, [isAdmin]);
+	}, [adminEmail, isAdminPending]);
 
 	const greeting = useMemo(() => {
 		if (!invitationData?.guests) return "Cześć!";
@@ -133,6 +156,11 @@ function DashboardPage() {
 	const tabs = useMemo(() => {
 		return isAdmin ? ADMIN_TABS : GUEST_TABS;
 	}, [isAdmin]);
+	const pendingQaCount = useMemo(() => {
+		if (!qaQuestions) return 0;
+		return qaQuestions.filter((item) => item.status === "pending").length;
+	}, [qaQuestions]);
+	const adminActionCount = (mediationAlerts?.length ?? 0) + pendingQaCount;
 
 	const eventDate = useMemo(() => new Date("2026-10-02T16:00"), []);
 	const deadlineDate = useMemo(() => {
@@ -164,7 +192,7 @@ function DashboardPage() {
 		}
 	};
 
-	if (isSessionLoading && !isAdmin) {
+	if (isSessionLoading || isAdminPending) {
 		return (
 			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)]">
 				<div className="flex flex-col items-center gap-4">
@@ -175,24 +203,12 @@ function DashboardPage() {
 		);
 	}
 
-	if (isAdmin && isAdminTokenLoading) {
+	if (adminEmail && isAdminTokenLoading) {
 		return (
 			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)]">
 				<div className="flex flex-col items-center gap-4">
 					<div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[var(--color-primary)]" />
 					<p className="text-gray-500 font-medium">Weryfikacja uprawnień...</p>
-				</div>
-			</div>
-		);
-	}
-
-	if (isAdmin && !adminAccessToken) {
-		return (
-			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)]">
-				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-					<p className="text-muted-foreground">
-						Brak aktywnej sesji administratora. Odśwież stronę lub zaloguj się ponownie.
-					</p>
 				</div>
 			</div>
 		);
@@ -209,6 +225,7 @@ function DashboardPage() {
 						filtersOverride={tabs}
 						activeFilter={activeTab}
 						onSelect={(label) => setActiveTab(label as MainTabId)}
+						badges={isAdmin ? { Admin: adminActionCount } : undefined}
 					/>
 
 					{activeTab === "RSVP" && (
@@ -231,6 +248,8 @@ function DashboardPage() {
 							invitations={adminInvitations ?? []}
 							settings={settings}
 							adminAccessToken={adminAccessToken}
+							mediationAlerts={mediationAlerts}
+							qaQuestions={qaQuestions}
 						/>
 					)}
 					{activeTab !== "RSVP" &&

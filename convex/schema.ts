@@ -159,4 +159,16 @@ export default defineSchema({
     metadata: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_createdAt", ["createdAt"]),
+
+  adminUsers: defineTable({
+    email: v.string(),
+    isActive: v.boolean(),
+    addedBy: v.optional(v.string()),
+    deactivatedBy: v.optional(v.string()),
+    deactivatedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_email", ["email"])
+    .index("by_active", ["isActive"]),
 })
