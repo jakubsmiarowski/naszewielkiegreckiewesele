@@ -1,5 +1,6 @@
 import type { CarpoolMediationAlert } from "@/components/dashboard/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatRoute } from "../helpers";
 
 interface CarpoolAlertsSectionProps {
@@ -44,13 +45,15 @@ export function CarpoolAlertsSection({
 							<p className="text-sm text-muted-foreground">
 								Miejsca: {alert.seatsRequested}
 							</p>
-							<button
+							<Button
 								type="button"
+								variant="outline"
+								size="sm"
 								onClick={() => onResolveMediation(alert.requestId)}
-								className="mt-3 px-4 py-2 rounded-full text-sm font-semibold border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition"
+								className="mt-3 px-4 py-2 rounded-full text-sm font-semibold border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition h-auto"
 							>
 								Oznacz jako połączone
-							</button>
+							</Button>
 						</li>
 					))}
 				</ul>

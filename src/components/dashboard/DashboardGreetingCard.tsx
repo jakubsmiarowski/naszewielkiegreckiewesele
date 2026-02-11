@@ -13,7 +13,8 @@ export function DashboardGreetingCard({ greeting }: { greeting: string }) {
 				{greeting}
 			</motion.h2>
 			<p className="text-muted-foreground mt-2">
-				Jesteśmy niesamowicie szczęśliwi, że jesteś z nami w tej przygodzie.
+				Witaj na naszej stronie ślubnej! Grecja już czeka, a my nie możemy się
+				doczekać.
 			</p>
 			<div className="mt-4 space-y-6">
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">

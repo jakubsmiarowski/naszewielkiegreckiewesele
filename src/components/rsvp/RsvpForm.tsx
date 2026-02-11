@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
+import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,8 +9,14 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { buildLocalDateTime, parseLocalDateTime } from "@/lib/date-time";
+import {
+	calculateRequestedCarpoolSeats,
+	formatSeatCount,
+} from "@/lib/rsvp-carpool";
 
 export interface RSVPFormData {
 	guestAttendances: Record<string, "yes" | "no">;
@@ -18,10 +25,14 @@ export interface RSVPFormData {
 	childrenCount: number;
 	childrenSleepOption?: "extraBed" | "crib";
 	accommodationType?: "hostProvided" | "selfArranged";
+	needsExtraNightsHelp: boolean;
+	extraNightsFromDate?: string;
+	extraNightsToDate?: string;
 	selectedCarpoolOfferId?: string;
 	transport: "own" | "bus";
 	carpoolDriverOptIn?: "yes" | "no";
 	arrivalDateTime: string;
+	departureDateTime: string;
 	message: string;
 }
 
@@ -64,14 +75,19 @@ export function RsvpForm({
 	const plusOneNameId = `${formIdPrefix}-plus-one-name`;
 	const childrenCountId = `${formIdPrefix}-children-count`;
 	const arrivalDateId = `${formIdPrefix}-arrival-date`;
-	const arrivalTimeId = `${formIdPrefix}-arrival-time`;
+	const departureDateId = `${formIdPrefix}-departure-date`;
+	const extraNightsHelpId = `${formIdPrefix}-extra-nights-help`;
+	const extraNightsFromDateId = `${formIdPrefix}-extra-nights-from-date`;
+	const extraNightsToDateId = `${formIdPrefix}-extra-nights-to-date`;
 	const messageId = `${formIdPrefix}-message`;
 
 	const {
 		register,
+		control,
 		handleSubmit,
 		setValue,
 		watch,
+		getValues,
 		setError,
 		clearErrors,
 		formState: { errors },
@@ -81,7 +97,11 @@ export function RsvpForm({
 			transport: "own",
 			carpoolDriverOptIn: "no",
 			childrenCount: 0,
+			needsExtraNightsHelp: false,
+			extraNightsFromDate: "",
+			extraNightsToDate: "",
 			arrivalDateTime: "",
+			departureDateTime: "",
 			message: "",
 			...defaultValues,
 		},
@@ -92,6 +112,7 @@ export function RsvpForm({
 	const childrenCount = watch("childrenCount");
 	const childrenSleepOption = watch("childrenSleepOption");
 	const accommodationType = watch("accommodationType");
+	const needsExtraNightsHelp = watch("needsExtraNightsHelp");
 	const selectedCarpoolOfferId = watch("selectedCarpoolOfferId");
 	const transport = watch("transport");
 	const normalizedChildrenCount = normalizeChildrenCount(childrenCount);
@@ -113,10 +134,36 @@ export function RsvpForm({
 		() => parseLocalDateTime(defaultValues?.arrivalDateTime),
 		[defaultValues?.arrivalDateTime],
 	);
+	const initialDeparture = useMemo(
+		() => parseLocalDateTime(defaultValues?.departureDateTime),
+		[defaultValues?.departureDateTime],
+	);
+	const initialExtraNightsFromDate = useMemo(() => {
+		const parsed = parseLocalDateTime(defaultValues?.extraNightsFromDate);
+		if (parsed.date) return parsed.date;
+		return initialArrival.date;
+	}, [defaultValues?.extraNightsFromDate, initialArrival.date]);
+	const initialExtraNightsToDate = useMemo(() => {
+		const parsed = parseLocalDateTime(defaultValues?.extraNightsToDate);
+		if (parsed.date) return parsed.date;
+		return initialArrival.date;
+	}, [defaultValues?.extraNightsToDate, initialArrival.date]);
 	const [arrivalDate, setArrivalDate] = useState<Date | undefined>(
 		initialArrival.date,
 	);
 	const [arrivalTime, setArrivalTime] = useState<string>(initialArrival.time);
+	const [departureDate, setDepartureDate] = useState<Date | undefined>(
+		initialDeparture.date,
+	);
+	const [departureTime, setDepartureTime] = useState<string>(
+		initialDeparture.time,
+	);
+	const [extraNightsFromDate, setExtraNightsFromDate] = useState<
+		Date | undefined
+	>(initialExtraNightsFromDate);
+	const [extraNightsToDate, setExtraNightsToDate] = useState<Date | undefined>(
+		initialExtraNightsToDate,
+	);
 	const [openGuestPopoverId, setOpenGuestPopoverId] = useState<string | null>(
 		null,
 	);
@@ -135,12 +182,31 @@ export function RsvpForm({
 	const hasAnyAttending = availableGuests.some(
 		(guest) => guestAttendances[guest.id] === "yes",
 	);
+	const canUseExtraNightsHelp =
+		hasAnyAttending && accommodationType === "hostProvided";
 	const allGuestsAttending =
 		hasAllGuestDecisions &&
 		availableGuests.every((guest) => guestAttendances[guest.id] === "yes");
 	const noGuestAttending =
 		hasAllGuestDecisions &&
 		availableGuests.every((guest) => guestAttendances[guest.id] === "no");
+	const requestedCarpoolSeats = useMemo(
+		() =>
+			calculateRequestedCarpoolSeats({
+				guestAttendances,
+				hasPlusOne: Boolean(hasPlusOne),
+				plusOneAttendance,
+				childrenCount: normalizedChildrenCount,
+			}),
+		[guestAttendances, hasPlusOne, plusOneAttendance, normalizedChildrenCount],
+	);
+	const hasOfferMatchingRequestedSeats = useMemo(
+		() =>
+			carpoolSuggestions.some(
+				(offer) => offer.seatsAvailable >= requestedCarpoolSeats,
+			),
+		[carpoolSuggestions, requestedCarpoolSeats],
+	);
 	const guestAttendancesErrorMessage =
 		typeof errors.guestAttendances?.message === "string"
 			? errors.guestAttendances.message
@@ -159,11 +225,36 @@ export function RsvpForm({
 	}, [arrivalDate, arrivalTime, setValue]);
 
 	useEffect(() => {
+		const nextValue = buildLocalDateTime(departureDate, departureTime);
+		setValue("departureDateTime", nextValue, { shouldValidate: true });
+	}, [departureDate, departureTime, setValue]);
+
+	useEffect(() => {
+		setValue("extraNightsFromDate", formatDateOnlyValue(extraNightsFromDate), {
+			shouldValidate: true,
+		});
+	}, [extraNightsFromDate, setValue]);
+
+	useEffect(() => {
+		setValue("extraNightsToDate", formatDateOnlyValue(extraNightsToDate), {
+			shouldValidate: true,
+		});
+	}, [extraNightsToDate, setValue]);
+
+	useEffect(() => {
 		if (!hasAnyAttending) {
 			setValue("carpoolDriverOptIn", "no", { shouldValidate: true });
 			setValue("arrivalDateTime", "", { shouldValidate: true });
+			setValue("departureDateTime", "", { shouldValidate: true });
+			setValue("needsExtraNightsHelp", false, { shouldValidate: true });
+			setValue("extraNightsFromDate", "", { shouldValidate: true });
+			setValue("extraNightsToDate", "", { shouldValidate: true });
 			setArrivalDate(undefined);
 			setArrivalTime("");
+			setDepartureDate(undefined);
+			setDepartureTime("");
+			setExtraNightsFromDate(undefined);
+			setExtraNightsToDate(undefined);
 			setValue("plusOneAttendance", undefined, { shouldValidate: true });
 			setValue("plusOneName", undefined, { shouldValidate: true });
 			setValue("childrenCount", 0, { shouldValidate: true });
@@ -196,10 +287,63 @@ export function RsvpForm({
 	}, [carpoolSuggestions, selectedCarpoolOfferId, setValue]);
 
 	useEffect(() => {
+		if (transport !== "bus" || !selectedCarpoolOfferId) return;
+		const selectedOffer = carpoolSuggestions.find(
+			(offer) => offer._id === selectedCarpoolOfferId,
+		);
+		if (
+			!selectedOffer ||
+			selectedOffer.seatsAvailable < requestedCarpoolSeats
+		) {
+			setValue("selectedCarpoolOfferId", undefined, { shouldValidate: true });
+		}
+	}, [
+		carpoolSuggestions,
+		requestedCarpoolSeats,
+		selectedCarpoolOfferId,
+		setValue,
+		transport,
+	]);
+
+	useEffect(() => {
 		if (normalizedChildrenCount === 0 && childrenSleepOption !== undefined) {
 			setValue("childrenSleepOption", undefined, { shouldValidate: true });
 		}
 	}, [childrenSleepOption, normalizedChildrenCount, setValue]);
+
+	useEffect(() => {
+		if (accommodationType === "hostProvided") return;
+		setValue("needsExtraNightsHelp", false, { shouldValidate: true });
+		setValue("extraNightsFromDate", "", { shouldValidate: true });
+		setValue("extraNightsToDate", "", { shouldValidate: true });
+		setExtraNightsFromDate(undefined);
+		setExtraNightsToDate(undefined);
+		clearErrors(["extraNightsFromDate", "extraNightsToDate"]);
+	}, [accommodationType, setValue, clearErrors]);
+
+	useEffect(() => {
+		if (!needsExtraNightsHelp) {
+			setExtraNightsFromDate(undefined);
+			setExtraNightsToDate(undefined);
+			setValue("extraNightsFromDate", "", { shouldValidate: true });
+			setValue("extraNightsToDate", "", { shouldValidate: true });
+			clearErrors(["extraNightsFromDate", "extraNightsToDate"]);
+			return;
+		}
+		if (!extraNightsFromDate && arrivalDate) {
+			setExtraNightsFromDate(arrivalDate);
+		}
+		if (!extraNightsToDate && arrivalDate) {
+			setExtraNightsToDate(arrivalDate);
+		}
+	}, [
+		needsExtraNightsHelp,
+		arrivalDate,
+		extraNightsFromDate,
+		extraNightsToDate,
+		setValue,
+		clearErrors,
+	]);
 
 	const setGuestAttendance = (guestId: string, attendance: "yes" | "no") => {
 		if (!guestSet.has(guestId)) return;
@@ -269,6 +413,18 @@ export function RsvpForm({
 					? data.childrenSleepOption
 					: undefined,
 			accommodationType: hasAnyAttending ? data.accommodationType : undefined,
+			needsExtraNightsHelp: canUseExtraNightsHelp
+				? data.needsExtraNightsHelp
+				: false,
+			extraNightsFromDate:
+				canUseExtraNightsHelp && data.needsExtraNightsHelp
+					? data.extraNightsFromDate
+					: undefined,
+			extraNightsToDate:
+				canUseExtraNightsHelp && data.needsExtraNightsHelp
+					? data.extraNightsToDate
+					: undefined,
+			departureDateTime: hasAnyAttending ? data.departureDateTime : "",
 			selectedCarpoolOfferId:
 				hasAnyAttending && data.transport === "bus"
 					? data.selectedCarpoolOfferId
@@ -295,7 +451,7 @@ export function RsvpForm({
 			<div className="bg-white pt-8 px-6 md:px-12 text-center">
 				<h3 className="text-3xl font-bold text-gray-900 mb-3">Formularz</h3>
 				<p className="text-gray-500 max-w-lg mx-auto leading-relaxed">
-					Daj nam znać, czy możemy się z Tobą zobaczyć w Grecji.
+					Daj nam znać o swojej obecności.
 				</p>
 				<div className="w-24 h-1 bg-[var(--color-primary)]/20 mx-auto mt-6 rounded-full" />
 			</div>
@@ -306,7 +462,7 @@ export function RsvpForm({
 			>
 				<div className="flex flex-col gap-3">
 					<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-						Kto będzie z nami?
+						Obecność
 					</h4>
 					<p className="text-sm text-gray-600">
 						Decyzja dla gości: {guestsWithDecisionsCount}/
@@ -319,11 +475,12 @@ export function RsvpForm({
 						readOnly
 					/>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						<button
+						<Button
 							type="button"
+							variant="outline"
 							disabled={disabled || availableGuests.length === 0}
 							onClick={() => setAllGuestAttendances("yes")}
-							className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 bg-white transition-all ${allGuestsAttending ? "border-green-500 bg-green-50 text-green-700" : "border-gray-100 hover:border-green-400/60 text-gray-700"}`}
+							className={`relative h-auto flex-row items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all ${allGuestsAttending ? "border-green-500 bg-green-50 text-green-700 hover:bg-green-50 hover:text-green-700" : "border-gray-100 bg-white text-gray-700 hover:bg-white hover:border-green-400/60"}`}
 						>
 							<span
 								className={`text-xl ${allGuestsAttending ? "text-green-600" : "text-gray-400"}`}
@@ -331,12 +488,13 @@ export function RsvpForm({
 								✓
 							</span>
 							<span className="font-medium">Wszyscy jadą</span>
-						</button>
-						<button
+						</Button>
+						<Button
 							type="button"
+							variant="outline"
 							disabled={disabled || availableGuests.length === 0}
 							onClick={() => setAllGuestAttendances("no")}
-							className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 bg-white transition-all ${noGuestAttending ? "border-red-500 bg-red-50 text-red-700" : "border-gray-100 hover:border-red-400/60 text-gray-700"}`}
+							className={`relative h-auto flex-row items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all ${noGuestAttending ? "border-red-500 bg-red-50 text-red-700 hover:bg-red-50 hover:text-red-700" : "border-gray-100 bg-white text-gray-700 hover:bg-white hover:border-red-400/60"}`}
 						>
 							<span
 								className={`text-xl ${noGuestAttending ? "text-red-500" : "text-gray-400"}`}
@@ -344,7 +502,7 @@ export function RsvpForm({
 								✗
 							</span>
 							<span className="font-medium">Nikt nie jedzie</span>
-						</button>
+						</Button>
 					</div>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 						{availableGuests.map((guest) => {
@@ -360,16 +518,17 @@ export function RsvpForm({
 									}
 								>
 									<PopoverTrigger asChild>
-										<button
+										<Button
 											type="button"
+											variant="outline"
 											disabled={disabled}
-											className={`flex items-start justify-between gap-3 p-3 rounded-xl border-2 transition-all text-left ${isYes ? "border-green-500 bg-green-50" : isNo ? "border-red-500 bg-red-50" : "border-gray-200 bg-gray-50 hover:border-[var(--color-primary)]/60"}`}
+											className={`flex h-auto w-full items-start justify-between gap-3 p-3 rounded-xl border-2 transition-all hover:bg-gray-50/50 ${isYes ? "border-green-500 bg-green-50 hover:bg-green-50 text-foreground" : isNo ? "border-red-500 bg-red-50 hover:bg-red-50 text-foreground" : "border-gray-200 bg-gray-50 hover:border-[var(--color-primary)]/60 text-foreground"}`}
 										>
-											<div className="flex flex-col">
+											<div className="flex flex-col items-start whitespace-normal text-left">
 												<span className="font-medium text-gray-900">
 													{guest.fullName}
 												</span>
-												<span className="text-xs text-gray-500 mt-1">
+												<span className="text-xs text-gray-500 mt-1 font-normal">
 													{isYes
 														? "Będzie"
 														: isNo
@@ -377,38 +536,40 @@ export function RsvpForm({
 															: "Wybierz odpowiedź"}
 												</span>
 											</div>
-											<span
+											{/* <span
 												className={`text-xs font-semibold px-2 py-1 rounded-full ${isYes ? "bg-green-100 text-green-700" : isNo ? "bg-red-100 text-red-700" : "bg-gray-200 text-gray-600"}`}
 											>
 												{isYes ? "TAK" : isNo ? "NIE" : "BRAK"}
-											</span>
-										</button>
+											</span> */}
+										</Button>
 									</PopoverTrigger>
 									<PopoverContent className="w-56 p-3" align="start">
-										<p className="text-xs uppercase tracking-wider text-gray-500 mb-2">
+										{/* <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">
 											{guest.fullName}
-										</p>
+										</p> */}
 										<div className="flex flex-col gap-2">
-											<button
+											<Button
 												type="button"
+												variant="ghost"
 												onClick={() => {
 													setGuestAttendance(guest.id, "yes");
 													setOpenGuestPopoverId(null);
 												}}
-												className="w-full rounded-lg border border-green-500 bg-green-50 px-3 py-2 text-left text-sm font-medium text-green-700 hover:bg-green-100 transition"
+												className="w-full justify-start rounded-lg border border-green-500 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 hover:text-green-800 transition"
 											>
 												Tak, będzie
-											</button>
-											<button
+											</Button>
+											<Button
 												type="button"
+												variant="ghost"
 												onClick={() => {
 													setGuestAttendance(guest.id, "no");
 													setOpenGuestPopoverId(null);
 												}}
-												className="w-full rounded-lg border border-red-500 bg-red-50 px-3 py-2 text-left text-sm font-medium text-red-700 hover:bg-red-100 transition"
+												className="w-full justify-start rounded-lg border border-red-500 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 hover:text-red-800 transition"
 											>
 												Nie, nie będzie
-											</button>
+											</Button>
 										</div>
 									</PopoverContent>
 								</Popover>
@@ -429,48 +590,80 @@ export function RsvpForm({
 								<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
 									Osoba towarzysząca
 								</h4>
-								<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-									<label
-										className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${plusOneAttendance === "yes" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
-									>
-										<input
-											{...register("plusOneAttendance")}
-											type="radio"
-											value="yes"
-											className="sr-only"
-										/>
-										<span
-											className={`text-xl ${plusOneAttendance === "yes" ? "text-[var(--color-primary)]" : "text-gray-400"}`}
+								<Controller
+									control={control}
+									name="plusOneAttendance"
+									render={({ field }) => (
+										<RadioGroup
+											onValueChange={field.onChange}
+											defaultValue={field.value}
+											className="grid grid-cols-1 sm:grid-cols-2 gap-4"
 										>
-											✓
-										</span>
-										<span
-											className={`font-medium ${plusOneAttendance === "yes" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
-										>
-											Tak, będzie
-										</span>
-									</label>
-									<label
-										className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${plusOneAttendance === "no" ? "border-red-500 bg-red-50" : "border-gray-100 hover:border-red-400/50"}`}
-									>
-										<input
-											{...register("plusOneAttendance")}
-											type="radio"
-											value="no"
-											className="sr-only"
-										/>
-										<span
-											className={`text-xl ${plusOneAttendance === "no" ? "text-red-500" : "text-gray-400"}`}
-										>
-											✗
-										</span>
-										<span
-											className={`font-medium ${plusOneAttendance === "no" ? "text-red-600" : "text-gray-700"}`}
-										>
-											Nie, nie może
-										</span>
-									</label>
-								</div>
+											<label
+												className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${
+													field.value === "yes"
+														? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+														: "border-gray-100 hover:border-[var(--color-primary)]/50"
+												}`}
+											>
+												<RadioGroupItem
+													value="yes"
+													id="plusOneAttendance-yes"
+													className="sr-only"
+												/>
+												<span
+													className={`text-xl ${
+														field.value === "yes"
+															? "text-[var(--color-primary)]"
+															: "text-gray-400"
+													}`}
+												>
+													✓
+												</span>
+												<span
+													className={`font-medium ${
+														field.value === "yes"
+															? "text-[var(--color-primary)]"
+															: "text-gray-700"
+													}`}
+												>
+													Tak, będzie
+												</span>
+											</label>
+											<label
+												className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${
+													field.value === "no"
+														? "border-red-500 bg-red-50"
+														: "border-gray-100 hover:border-red-400/50"
+												}`}
+											>
+												<RadioGroupItem
+													value="no"
+													id="plusOneAttendance-no"
+													className="sr-only"
+												/>
+												<span
+													className={`text-xl ${
+														field.value === "no"
+															? "text-red-500"
+															: "text-gray-400"
+													}`}
+												>
+													✗
+												</span>
+												<span
+													className={`font-medium ${
+														field.value === "no"
+															? "text-red-600"
+															: "text-gray-700"
+													}`}
+												>
+													Nie, nie może
+												</span>
+											</label>
+										</RadioGroup>
+									)}
+								/>
 								{plusOneAttendance === "yes" && (
 									<div className="flex flex-col gap-2">
 										<label
@@ -479,7 +672,7 @@ export function RsvpForm({
 										>
 											Imię i nazwisko osoby towarzyszącej
 										</label>
-										<input
+										<Input
 											{...register("plusOneName", {
 												validate: (value) => {
 													if (!hasAnyAttending || plusOneAttendance !== "yes") {
@@ -491,7 +684,7 @@ export function RsvpForm({
 												},
 											})}
 											id={plusOneNameId}
-											className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 px-4 text-gray-900 placeholder-gray-400 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all outline-none"
+											className="h-auto w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 px-4 text-gray-900 placeholder:text-gray-400 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all outline-none"
 											placeholder="Imię i nazwisko"
 											type="text"
 										/>
@@ -514,7 +707,7 @@ export function RsvpForm({
 									className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
 									htmlFor={childrenCountId}
 								>
-									Ile dzieci będzie z Wami? (0-3)
+									Ile dzieci będzie z Wami?
 								</label>
 								<Input
 									{...register("childrenCount", {
@@ -551,66 +744,62 @@ export function RsvpForm({
 									<p className="text-gray-900 text-xs font-semibold uppercase tracking-wide">
 										Miejsce do spania dla dzieci
 									</p>
-									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-										<label
-											className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${childrenSleepOption === "extraBed" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
-										>
-											<input
-												{...register("childrenSleepOption", {
-													validate: (value) => {
-														if (
-															!hasAnyAttending ||
-															normalizedChildrenCount < 1
-														) {
-															return true;
-														}
-														if (value !== "extraBed" && value !== "crib") {
-															return "Wybierz dostawkę lub łóżeczko";
-														}
-														return true;
-													},
-												})}
-												type="radio"
-												value="extraBed"
-												className="sr-only"
-												disabled={disabled}
-											/>
-											<span
-												className={`font-medium ${childrenSleepOption === "extraBed" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
+									<Controller
+										control={control}
+										name="childrenSleepOption"
+										render={({ field }) => (
+											<RadioGroup
+												onValueChange={field.onChange}
+												defaultValue={field.value}
+												className="grid grid-cols-1 sm:grid-cols-2 gap-4"
 											>
-												Dostawka
-											</span>
-										</label>
-										<label
-											className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${childrenSleepOption === "crib" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
-										>
-											<input
-												{...register("childrenSleepOption", {
-													validate: (value) => {
-														if (
-															!hasAnyAttending ||
-															normalizedChildrenCount < 1
-														) {
-															return true;
-														}
-														if (value !== "extraBed" && value !== "crib") {
-															return "Wybierz dostawkę lub łóżeczko";
-														}
-														return true;
-													},
-												})}
-												type="radio"
-												value="crib"
-												className="sr-only"
-												disabled={disabled}
-											/>
-											<span
-												className={`font-medium ${childrenSleepOption === "crib" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
-											>
-												Łóżeczko
-											</span>
-										</label>
-									</div>
+												<label
+													className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${
+														field.value === "extraBed"
+															? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+															: "border-gray-100 hover:border-[var(--color-primary)]/50"
+													}`}
+												>
+													<RadioGroupItem
+														value="extraBed"
+														id="childrenSleepOption-extraBed"
+														className="sr-only"
+													/>
+													<span
+														className={`font-medium ${
+															field.value === "extraBed"
+																? "text-[var(--color-primary)]"
+																: "text-gray-700"
+														}`}
+													>
+														Dostawka
+													</span>
+												</label>
+												<label
+													className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${
+														field.value === "crib"
+															? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+															: "border-gray-100 hover:border-[var(--color-primary)]/50"
+													}`}
+												>
+													<RadioGroupItem
+														value="crib"
+														id="childrenSleepOption-crib"
+														className="sr-only"
+													/>
+													<span
+														className={`font-medium ${
+															field.value === "crib"
+																? "text-[var(--color-primary)]"
+																: "text-gray-700"
+														}`}
+													>
+														Łóżeczko
+													</span>
+												</label>
+											</RadioGroup>
+										)}
+									/>
 									{errors.childrenSleepOption && (
 										<span className="text-red-500 text-sm">
 											{errors.childrenSleepOption.message}
@@ -622,79 +811,7 @@ export function RsvpForm({
 
 						<div className="flex flex-col gap-3">
 							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-								Nocleg
-							</h4>
-							<p className="text-sm text-gray-600">
-								Czy organizujemy nocleg, czy planujecie go we własnym zakresie?
-							</p>
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<label
-									className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${accommodationType === "hostProvided" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
-								>
-									<input
-										{...register("accommodationType", {
-											validate: (value) => {
-												if (!hasAnyAttending) return true;
-												if (
-													value !== "hostProvided" &&
-													value !== "selfArranged"
-												) {
-													return "Wybierz opcję noclegu";
-												}
-												return true;
-											},
-										})}
-										type="radio"
-										value="hostProvided"
-										className="sr-only"
-										disabled={disabled}
-									/>
-									<span
-										className={`font-medium ${accommodationType === "hostProvided" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
-									>
-										Nocleg od Was
-									</span>
-								</label>
-								<label
-									className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${accommodationType === "selfArranged" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-gray-100 hover:border-[var(--color-primary)]/50"}`}
-								>
-									<input
-										{...register("accommodationType", {
-											validate: (value) => {
-												if (!hasAnyAttending) return true;
-												if (
-													value !== "hostProvided" &&
-													value !== "selfArranged"
-												) {
-													return "Wybierz opcję noclegu";
-												}
-												return true;
-											},
-										})}
-										type="radio"
-										value="selfArranged"
-										className="sr-only"
-										disabled={disabled}
-									/>
-									<span
-										className={`font-medium ${accommodationType === "selfArranged" ? "text-[var(--color-primary)]" : "text-gray-700"}`}
-									>
-										Na własną rękę
-									</span>
-								</label>
-							</div>
-							{errors.accommodationType && (
-								<span className="text-red-500 text-sm">
-									{errors.accommodationType.message}
-								</span>
-							)}
-						</div>
-
-						<div className="h-px bg-gray-100 w-full my-2" />
-
-						<div className="flex flex-col gap-3">
-							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-								Data i godzina przylotu
+								Przylot i wylot
 							</h4>
 							<input
 								{...register("arrivalDateTime", {
@@ -705,47 +822,241 @@ export function RsvpForm({
 								})}
 								type="hidden"
 							/>
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<input
+								{...register("departureDateTime", {
+									validate: (value) => {
+										if (!hasAnyAttending) return true;
+										return value ? true : "Podaj datę i godzinę wylotu";
+									},
+								})}
+								type="hidden"
+							/>
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 								<div className="flex flex-col gap-2">
 									<label
 										className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
 										htmlFor={arrivalDateId}
 									>
-										Data
+										Przylot
 									</label>
 									<DatePicker
 										id={arrivalDateId}
 										value={arrivalDate}
 										onChange={setArrivalDate}
-										placeholder="Wybierz datę"
+										withTime
+										timeValue={arrivalTime}
+										onTimeChange={setArrivalTime}
+										placeholder="Wybierz datę i godzinę"
 										className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
 										disabled={disabled}
 									/>
+									{errors.arrivalDateTime && (
+										<span className="text-red-500 text-sm">
+											{errors.arrivalDateTime.message}
+										</span>
+									)}
 								</div>
 								<div className="flex flex-col gap-2">
 									<label
 										className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
-										htmlFor={arrivalTimeId}
+										htmlFor={departureDateId}
 									>
-										Godzina
+										Wylot
 									</label>
-									<Input
-										type="time"
-										id={arrivalTimeId}
-										value={arrivalTime}
-										onChange={(event) => setArrivalTime(event.target.value)}
-										step={60}
+									<DatePicker
+										id={departureDateId}
+										value={departureDate}
+										onChange={setDepartureDate}
+										withTime
+										timeValue={departureTime}
+										onTimeChange={setDepartureTime}
+										placeholder="Wybierz datę i godzinę"
 										className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
 										disabled={disabled}
 									/>
+									{errors.departureDateTime && (
+										<span className="text-red-500 text-sm">
+											{errors.departureDateTime.message}
+										</span>
+									)}
 								</div>
 							</div>
-							{errors.arrivalDateTime && (
+						</div>
+
+						<div className="flex flex-col gap-3">
+							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
+								Nocleg
+							</h4>
+							<p className="text-sm text-gray-600">
+								Czy organizujemy nocleg, czy planujecie go we własnym zakresie?{" "}
+								Od nas macie nocleg 30.09-04.10.
+							</p>
+							<Controller
+								control={control}
+								name="accommodationType"
+								render={({ field }) => (
+									<RadioGroup
+										onValueChange={field.onChange}
+										defaultValue={field.value}
+										className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+									>
+										<label
+											className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${
+												field.value === "hostProvided"
+													? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+													: "border-gray-100 hover:border-[var(--color-primary)]/50"
+											}`}
+										>
+											<RadioGroupItem
+												value="hostProvided"
+												id="accommodationType-hostProvided"
+												className="sr-only"
+											/>
+											<span
+												className={`font-medium ${
+													field.value === "hostProvided"
+														? "text-[var(--color-primary)]"
+														: "text-gray-700"
+												}`}
+											>
+												Nocleg od Was
+											</span>
+										</label>
+										<label
+											className={`relative flex items-center justify-center gap-3 p-4 rounded-xl border-2 cursor-pointer bg-white transition-all ${
+												field.value === "selfArranged"
+													? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+													: "border-gray-100 hover:border-[var(--color-primary)]/50"
+											}`}
+										>
+											<RadioGroupItem
+												value="selfArranged"
+												id="accommodationType-selfArranged"
+												className="sr-only"
+											/>
+											<span
+												className={`font-medium ${
+													field.value === "selfArranged"
+														? "text-[var(--color-primary)]"
+														: "text-gray-700"
+												}`}
+											>
+												Na własną rękę
+											</span>
+										</label>
+									</RadioGroup>
+								)}
+							/>
+							{canUseExtraNightsHelp && (
+								<label
+									className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
+									htmlFor={extraNightsHelpId}
+								>
+									<input
+										{...register("needsExtraNightsHelp")}
+										id={extraNightsHelpId}
+										type="checkbox"
+										disabled={disabled}
+										className="mt-1 h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+									/>
+									<span className="flex flex-col gap-1">
+										<span className="text-sm font-medium text-gray-900">
+											Potrzebujemy pomocy z noclegiem na dodatkowe dni
+										</span>
+										<span className="text-xs text-gray-500">
+											Np. przyjazd przed 30.09 lub wyjazd po 04.10 - zrobimy
+											rezerwację, a Wy opłacicie noclegi.
+										</span>
+									</span>
+								</label>
+							)}
+							<input
+								{...register("extraNightsFromDate", {
+									validate: (value) => {
+										if (!canUseExtraNightsHelp || !needsExtraNightsHelp)
+											return true;
+										if (!value) {
+											return "Wybierz datę Od dla dodatkowego noclegu";
+										}
+										const to = getValues("extraNightsToDate");
+										if (to && value > to) {
+											return "Data Od nie może być późniejsza niż data Do";
+										}
+										return true;
+									},
+								})}
+								type="hidden"
+							/>
+							<input
+								{...register("extraNightsToDate", {
+									validate: (value) => {
+										if (!canUseExtraNightsHelp || !needsExtraNightsHelp)
+											return true;
+										if (!value)
+											return "Wybierz datę Do dla dodatkowego noclegu";
+										const from = getValues("extraNightsFromDate");
+										if (from && value < from) {
+											return "Data Do nie może być wcześniejsza niż data Od";
+										}
+										return true;
+									},
+								})}
+								type="hidden"
+							/>
+							{canUseExtraNightsHelp && needsExtraNightsHelp && (
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-gray-100 bg-white p-3">
+									<div className="flex flex-col gap-2">
+										<label
+											className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
+											htmlFor={extraNightsFromDateId}
+										>
+											Od
+										</label>
+										<DatePicker
+											id={extraNightsFromDateId}
+											value={extraNightsFromDate}
+											onChange={setExtraNightsFromDate}
+											placeholder="Wybierz datę"
+											className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
+											disabled={disabled}
+										/>
+										{errors.extraNightsFromDate && (
+											<span className="text-red-500 text-sm">
+												{errors.extraNightsFromDate.message}
+											</span>
+										)}
+									</div>
+									<div className="flex flex-col gap-2">
+										<label
+											className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
+											htmlFor={extraNightsToDateId}
+										>
+											Do
+										</label>
+										<DatePicker
+											id={extraNightsToDateId}
+											value={extraNightsToDate}
+											onChange={setExtraNightsToDate}
+											placeholder="Wybierz datę"
+											className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
+											disabled={disabled}
+										/>
+										{errors.extraNightsToDate && (
+											<span className="text-red-500 text-sm">
+												{errors.extraNightsToDate.message}
+											</span>
+										)}
+									</div>
+								</div>
+							)}
+							{errors.accommodationType && (
 								<span className="text-red-500 text-sm">
-									{errors.arrivalDateTime.message}
+									{errors.accommodationType.message}
 								</span>
 							)}
 						</div>
+
+						<div className="h-px bg-gray-100 w-full my-2" />
 
 						<div className="grid grid-cols-1 gap-8 w-full">
 							<div className="flex flex-col gap-3 w-full">
@@ -753,38 +1064,48 @@ export function RsvpForm({
 									Transport
 								</h4>
 								<div className="flex flex-col md:flex-row gap-2 justify-between w-full">
-									<label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer w-full">
-										<input
-											{...register("transport")}
-											type="radio"
-											value="own"
-											className="mt-1 border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-										/>
-										<div className="flex flex-col">
-											<span className="font-medium text-gray-900">
-												Wypożyczamy auto
-											</span>
-											<span className="text-xs text-gray-500">
-												Spotkamy się na miejscu
-											</span>
-										</div>
-									</label>
-									<label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer w-full">
-										<input
-											{...register("transport")}
-											type="radio"
-											value="bus"
-											className="mt-1 border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-										/>
-										<div className="flex flex-col">
-											<span className="font-medium text-gray-900">
-												Przyjedź po nas
-											</span>
-											<span className="text-xs text-gray-500">
-												Z głównego hotelu o 14:00
-											</span>
-										</div>
-									</label>
+									<Controller
+										control={control}
+										name="transport"
+										render={({ field }) => (
+											<RadioGroup
+												onValueChange={field.onChange}
+												defaultValue={field.value}
+												className="flex flex-col md:flex-row gap-2 justify-between w-full"
+											>
+												<label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer w-full">
+													<RadioGroupItem
+														value="own"
+														id="transport-own"
+														className="mt-1 border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+													/>
+													<div className="flex flex-col">
+														<span className="font-medium text-gray-900">
+															Wypożyczamy auto
+														</span>
+														<span className="text-xs text-gray-500">
+															Spotkamy się na miejscu
+														</span>
+													</div>
+												</label>
+												<label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer w-full">
+													<RadioGroupItem
+														value="bus"
+														id="transport-bus"
+														className="mt-1 border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+													/>
+													<div className="flex flex-col">
+														<span className="font-medium text-gray-900">
+															Potrzebujemy transportu
+														</span>
+														<span className="text-xs text-gray-500">
+															Z lotniska
+														</span>
+													</div>
+												</label>
+											</RadioGroup>
+										)}
+									/>
 								</div>
 							</div>
 
@@ -794,13 +1115,21 @@ export function RsvpForm({
 										Car Pool - dostępne miejsca
 									</h4>
 									<p className="text-sm text-gray-700">
-										Wybierz jedną ofertę, a po zapisaniu RSVP wyślemy zgłoszenie
-										automatycznie.
+										Twoja grupa potrzebuje{" "}
+										<span className="font-semibold">
+											{formatSeatCount(requestedCarpoolSeats)}
+										</span>
+										. Wybierz jedną ofertę:
 									</p>
 									<ul className="space-y-2">
 										{carpoolSuggestions.map((offer) => {
 											const isSelected = selectedCarpoolOfferId === offer._id;
-											const isDisabled = disabled || Boolean(offer.myRequestId);
+											const hasInsufficientSeats =
+												offer.seatsAvailable < requestedCarpoolSeats;
+											const isDisabled =
+												disabled ||
+												Boolean(offer.myRequestId) ||
+												hasInsufficientSeats;
 											return (
 												<li
 													key={offer._id}
@@ -810,8 +1139,9 @@ export function RsvpForm({
 															: "border-gray-200 bg-white"
 													}`}
 												>
-													<button
+													<Button
 														type="button"
+														variant="ghost"
 														disabled={isDisabled}
 														onClick={() =>
 															setValue(
@@ -824,7 +1154,7 @@ export function RsvpForm({
 																},
 															)
 														}
-														className="w-full text-left"
+														className="h-auto w-full justify-start whitespace-normal p-0 hover:bg-transparent"
 													>
 														<p className="font-medium text-gray-900">
 															{offer.driverDisplayName}:{" "}
@@ -834,13 +1164,16 @@ export function RsvpForm({
 															)}
 														</p>
 														<p className="text-xs text-gray-500">
-															Odjazd: {formatDateTime(offer.departureDateTime)}{" "}
-															| Wolne miejsca: {offer.seatsAvailable}
-														</p>
-														<p className="text-xs text-gray-500">
 															Przylot kierowcy:{" "}
-															{formatDateTime(offer.driverArrivalDateTime)}
+															{formatDateTime(offer.driverArrivalDateTime)} |{" "}
+															Wolne miejsca: {offer.seatsAvailable}
 														</p>
+														{hasInsufficientSeats && (
+															<p className="text-xs text-amber-700 mt-1">
+																Za mało miejsc dla Twojej grupy (
+																{formatSeatCount(requestedCarpoolSeats)}).
+															</p>
+														)}
 														{offer.myRequestId && (
 															<p className="text-xs text-amber-600 mt-1">
 																Masz już zgłoszenie do tej oferty
@@ -850,7 +1183,7 @@ export function RsvpForm({
 																.
 															</p>
 														)}
-													</button>
+													</Button>
 												</li>
 											);
 										})}
@@ -861,6 +1194,13 @@ export function RsvpForm({
 											obecność".
 										</p>
 									)}
+									{!hasOfferMatchingRequestedSeats && (
+										<p className="text-xs text-amber-700 font-medium">
+											Obecnie brak ofert z wystarczającą liczbą miejsc dla
+											Twojej grupy. Wybierz dojazd własny albo spróbuj ponownie
+											za chwilę.
+										</p>
+									)}
 								</div>
 							)}
 
@@ -869,49 +1209,49 @@ export function RsvpForm({
 									<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
 										Car Pool
 									</h4>
-									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-										<label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer w-full">
-											<input
-												{...register("carpoolDriverOptIn", {
-													validate: (value) => {
-														if (!hasAnyAttending || transport !== "own") {
-															return true;
-														}
-														if (value !== "yes" && value !== "no") {
-															return "Wybierz opcję car pool";
-														}
-														return true;
-													},
-												})}
-												type="radio"
-												value="yes"
-												className="mt-1 border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-											/>
-											<div className="flex flex-col">
-												<span className="font-medium text-gray-900">
-													Mam wolne miejsca
-												</span>
-												<span className="text-xs text-gray-500">
-													Mogę zabrać innych gości swoim autem
-												</span>
-											</div>
-										</label>
-										<label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer w-full">
-											<input
-												{...register("carpoolDriverOptIn")}
-												type="radio"
-												value="no"
-												className="mt-1 border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-											/>
-											<div className="flex flex-col">
-												<span className="font-medium text-gray-900">
-													Nie biorę udziału
-												</span>
-												<span className="text-xs text-gray-500">
-													Wybiorę dojazd bez udostępniania miejsc
-												</span>
-											</div>
-										</label>
+									<div className="flex flex-col gap-3 w-full">
+										<Controller
+											control={control}
+											name="carpoolDriverOptIn"
+											render={({ field }) => (
+												<RadioGroup
+													onValueChange={field.onChange}
+													defaultValue={field.value}
+													className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+												>
+													<label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer w-full">
+														<RadioGroupItem
+															value="yes"
+															id="carpoolDriverOptIn-yes"
+															className="mt-1 border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+														/>
+														<div className="flex flex-col">
+															<span className="font-medium text-gray-900">
+																Mam wolne miejsca
+															</span>
+															<span className="text-xs text-gray-500">
+																Mogę zabrać innych gości swoim autem
+															</span>
+														</div>
+													</label>
+													<label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer w-full">
+														<RadioGroupItem
+															value="no"
+															id="carpoolDriverOptIn-no"
+															className="mt-1 border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+														/>
+														<div className="flex flex-col">
+															<span className="font-medium text-gray-900">
+																Nie biorę udziału
+															</span>
+															<span className="text-xs text-gray-500">
+																Nie mam wolnych miejsc
+															</span>
+														</div>
+													</label>
+												</RadioGroup>
+											)}
+										/>
 									</div>
 									{errors.carpoolDriverOptIn && (
 										<span className="text-red-500 text-sm">
@@ -931,20 +1271,19 @@ export function RsvpForm({
 					>
 						Wiadomość dla Pary Młodej
 					</label>
-					<textarea
+					<Textarea
 						{...register("message")}
-						className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 placeholder-gray-400 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all outline-none"
+						className="min-h-[100px] w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 placeholder:text-gray-400 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all outline-none"
 						id={messageId}
 						placeholder="Masz pytania lub chcesz nam coś przekazać?"
-						rows={3}
 					/>
 				</div>
 
 				<div className="pt-4">
-					<button
+					<Button
 						type="submit"
 						disabled={disabled}
-						className="group relative flex w-full items-center justify-center overflow-hidden rounded-xl bg-[var(--color-primary)] py-4 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-600 hover:shadow-blue-600/40 active:scale-[0.98]"
+						className="group relative flex h-auto w-full items-center justify-center overflow-hidden rounded-xl bg-[var(--color-primary)] py-4 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-600 hover:shadow-blue-600/40 active:scale-[0.98]"
 					>
 						<span className="relative z-10 flex items-center gap-2">
 							Potwierdź obecność
@@ -952,7 +1291,7 @@ export function RsvpForm({
 								→
 							</span>
 						</span>
-					</button>
+					</Button>
 					<p className="mt-4 text-center text-xs text-gray-400">
 						Klikając przycisk, wyrażasz zgodę na przetwarzanie danych w celach
 						organizacji wydarzenia.
@@ -972,7 +1311,6 @@ function formatDateTime(value?: string) {
 	const formattedDate = new Intl.DateTimeFormat("pl-PL", {
 		day: "2-digit",
 		month: "2-digit",
-		year: "numeric",
 	}).format(new Date(year, month - 1, day));
 	return timePart ? `${formattedDate} ${timePart}` : formattedDate;
 }
@@ -1010,4 +1348,12 @@ function normalizeChildrenCount(value: unknown) {
 	const parsed = parseChildrenCount(value);
 	if (!Number.isFinite(parsed) || Number.isNaN(parsed)) return 0;
 	return Math.max(0, Math.min(3, Math.trunc(parsed)));
+}
+
+function formatDateOnlyValue(value?: Date) {
+	if (!value) return "";
+	const year = value.getFullYear();
+	const month = String(value.getMonth() + 1).padStart(2, "0");
+	const day = String(value.getDate()).padStart(2, "0");
+	return `${year}-${month}-${day}`;
 }

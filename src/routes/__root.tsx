@@ -1,7 +1,6 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import type { QueryClient } from "@tanstack/react-query";
 import {
-	createRootRouteWithContext,
+	createRootRoute,
 	HeadContent,
 	Scripts,
 	useLocation,
@@ -11,14 +10,9 @@ import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Toaster } from "@/components/ui/toaster";
 import ConvexProvider from "../integrations/convex/provider";
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
-interface MyRouterContext {
-	queryClient: QueryClient;
-}
-
-export const Route = createRootRouteWithContext<MyRouterContext>()({
+export const Route = createRootRoute({
 	head: () => ({
 		meta: [
 			{
@@ -97,18 +91,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					<main className="flex-1 flex flex-col items-center w-full">
 						{children}
 					</main>
-						<FooterWrapper />
-						<Toaster />
-						<TanStackDevtools
-							config={{
-								position: "bottom-right",
+					<FooterWrapper />
+					<Toaster />
+					<TanStackDevtools
+						config={{
+							position: "bottom-right",
 						}}
 						plugins={[
 							{
 								name: "Tanstack Router",
 								render: <TanStackRouterDevtoolsPanel />,
 							},
-							TanStackQueryDevtools,
 						]}
 					/>
 				</ConvexProvider>
@@ -122,8 +115,6 @@ function HeaderWrapper() {
 	const location = useLocation();
 	const isLandingPage = location.pathname === "/";
 
-	// If needed we can hide it on landing page, but the design seems uniform.
-	// Replicating previous logic:
 	if (isLandingPage) return null;
 
 	return <DashboardHeader />;

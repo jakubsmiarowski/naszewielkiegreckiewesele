@@ -6,6 +6,7 @@ import { AdminsSection } from "@/components/dashboard/admin/sections/AdminsSecti
 import { ArrivalsSection } from "@/components/dashboard/admin/sections/ArrivalsSection";
 import { CarpoolAlertsSection } from "@/components/dashboard/admin/sections/CarpoolAlertsSection";
 import { DeadlinesSection } from "@/components/dashboard/admin/sections/DeadlinesSection";
+import { DeparturesSection } from "@/components/dashboard/admin/sections/DeparturesSection";
 import { InvitationsSection } from "@/components/dashboard/admin/sections/InvitationsSection";
 import { OverviewSection } from "@/components/dashboard/admin/sections/OverviewSection";
 import { QaSection } from "@/components/dashboard/admin/sections/QaSection";
@@ -169,6 +170,11 @@ export function AdminTab({
 				id: "arrivals",
 				title: "Przyloty",
 				description: "Lista przylotów pogrupowana po datach.",
+			},
+			{
+				id: "departures",
+				title: "Wyloty",
+				description: "Lista wylotów pogrupowana po datach.",
 			},
 			{
 				id: "invitations",
@@ -449,6 +455,10 @@ export function AdminTab({
 
 			{activeSection === "arrivals" && (
 				<ArrivalsSection invitations={invitations} />
+			)}
+
+			{activeSection === "departures" && (
+				<DeparturesSection invitations={invitations} />
 			)}
 
 			{activeSection === "invitations" && (

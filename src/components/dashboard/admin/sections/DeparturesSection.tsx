@@ -4,45 +4,45 @@ import type { AdminInvitation } from "@/components/dashboard/types";
 import { Button } from "@/components/ui/button";
 import { formatLocalDate } from "@/lib/date-time";
 
-interface ArrivalsSectionProps {
+interface DeparturesSectionProps {
 	invitations: AdminInvitation[];
 }
 
-export function ArrivalsSection({ invitations }: ArrivalsSectionProps) {
-	const [expandedArrivalDates, setExpandedArrivalDates] = useState<
+export function DeparturesSection({ invitations }: DeparturesSectionProps) {
+	const [expandedDepartureDates, setExpandedDepartureDates] = useState<
 		Record<string, boolean>
 	>({});
 
-	const arrivals = useMemo(() => {
+	const departures = useMemo(() => {
 		return invitations
-			.filter((i) => i.arrivalDateTime)
+			.filter((i) => i.departureDateTime)
 			.slice()
 			.sort((a, b) => {
 				return (
-					new Date(a.arrivalDateTime ?? "").getTime() -
-					new Date(b.arrivalDateTime ?? "").getTime()
+					new Date(a.departureDateTime ?? "").getTime() -
+					new Date(b.departureDateTime ?? "").getTime()
 				);
 			});
 	}, [invitations]);
 
-	const arrivalsByDate = useMemo(() => {
+	const departuresByDate = useMemo(() => {
 		const groups: Record<string, AdminInvitation[]> = {};
-		for (const invitation of arrivals) {
-			const dateKey = invitation.arrivalDateTime?.split("T")[0] ?? "unknown";
+		for (const invitation of departures) {
+			const dateKey = invitation.departureDateTime?.split("T")[0] ?? "unknown";
 			if (!groups[dateKey]) {
 				groups[dateKey] = [];
 			}
 			groups[dateKey].push(invitation);
 		}
 		return groups;
-	}, [arrivals]);
+	}, [departures]);
 
-	const sortedArrivalDates = useMemo(() => {
-		return Object.keys(arrivalsByDate).sort();
-	}, [arrivalsByDate]);
+	const sortedDepartureDates = useMemo(() => {
+		return Object.keys(departuresByDate).sort();
+	}, [departuresByDate]);
 
-	const toggleArrivalDate = (date: string) => {
-		setExpandedArrivalDates((previous) => ({
+	const toggleDepartureDate = (date: string) => {
+		setExpandedDepartureDates((previous) => ({
 			...previous,
 			[date]: !previous[date],
 		}));
@@ -50,16 +50,14 @@ export function ArrivalsSection({ invitations }: ArrivalsSectionProps) {
 
 	return (
 		<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-			<h3 className="text-xl font-bold text-foreground mb-4">
-				Przyloty (data)
-			</h3>
-			{arrivals.length === 0 ? (
-				<p className="text-muted-foreground">Brak danych o przylotach.</p>
+			<h3 className="text-xl font-bold text-foreground mb-4">Wyloty (data)</h3>
+			{departures.length === 0 ? (
+				<p className="text-muted-foreground">Brak danych o wylotach.</p>
 			) : (
 				<div className="space-y-3">
-					{sortedArrivalDates.map((date) => {
-						const isExpanded = expandedArrivalDates[date];
-						const group = arrivalsByDate[date];
+					{sortedDepartureDates.map((date) => {
+						const isExpanded = expandedDepartureDates[date];
+						const group = departuresByDate[date];
 						const label =
 							date === "unknown" ? "Nieznana data" : formatLocalDate(date);
 
@@ -70,7 +68,7 @@ export function ArrivalsSection({ invitations }: ArrivalsSectionProps) {
 							>
 								<Button
 									variant="ghost"
-									onClick={() => toggleArrivalDate(date)}
+									onClick={() => toggleDepartureDate(date)}
 									className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition text-left h-auto rounded-none font-normal"
 								>
 									<span className="font-semibold text-foreground">{label}</span>

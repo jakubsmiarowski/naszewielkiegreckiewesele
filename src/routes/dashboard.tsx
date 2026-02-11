@@ -14,6 +14,7 @@ import {
 	DogSlideshowWidget,
 	EmergencyContactsWidget,
 	EventCountdownWidget,
+	GreekPhrasesWidget,
 } from "@/components/dashboard/SidebarWidgets";
 import type {
 	AttractionAnchorId,
@@ -24,6 +25,7 @@ import type {
 import { authClient } from "@/lib/auth-client";
 import { buildGreeting } from "@/lib/greetings";
 import { useInvitationSession } from "@/lib/invitation-session";
+import { useRsvpStats } from "@/lib/rsvp-helpers";
 import { WEDDING_EVENT } from "@/lib/wedding-event";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -65,6 +67,7 @@ function DashboardPage() {
 		api.invitations.getById,
 		invitationId ? { invitationId: invitationId as Id<"invitations"> } : "skip",
 	);
+	const { hasResponded, hasAnyAttending } = useRsvpStats(invitationData);
 	const adminInvitations = useQuery(
 		api.invitations.listForAdmin,
 		adminAccessToken ? { adminAccessToken } : "skip",
@@ -259,8 +262,6 @@ function DashboardPage() {
 		);
 	}
 
-	console.log(invitationData?.invitation.carpoolDriverOptIn);
-
 	return (
 		<div className="w-full bg-background min-h-screen">
 			<HeroSection />
@@ -273,7 +274,10 @@ function DashboardPage() {
 						activeFilter={activeTab}
 						onSelect={(label) => setActiveTab(label as MainTabId)}
 						badges={isAdmin ? { Admin: adminActionCount } : undefined}
-						carpoolDriverOptIn={invitationData?.invitation.carpoolDriverOptIn}
+						showCarpoolTab={
+							invitationData?.invitation.carpoolDriverOptIn ||
+							(hasResponded && hasAnyAttending)
+						}
 					/>
 
 					{activeTab === "RSVP" && (
@@ -284,7 +288,8 @@ function DashboardPage() {
 						/>
 					)}
 					{activeTab === "Car Pool" &&
-						invitationData?.invitation.carpoolDriverOptIn && (
+						(invitationData?.invitation.carpoolDriverOptIn ||
+							(hasResponded && hasAnyAttending)) && (
 							<CarpoolTab
 								invitationData={invitationData}
 								isAdmin={isAdmin}
@@ -321,6 +326,7 @@ function DashboardPage() {
 					/>
 					<DeadlineCountdownWidget deadline={deadlineDate} />
 					<EmergencyContactsWidget />
+					<GreekPhrasesWidget />
 					<DogSlideshowWidget />
 				</aside>
 			</div>

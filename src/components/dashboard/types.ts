@@ -29,12 +29,16 @@ export interface RsvpInvitation {
 	transport?: "own" | "bus";
 	carpoolDriverOptIn?: boolean;
 	arrivalDateTime?: string;
+	departureDateTime?: string;
 	message?: string;
 	plusOneName?: string;
 	plusOneAttendance?: "yes" | "no";
 	childrenCount?: number;
 	childrenSleepOption?: "extraBed" | "crib";
 	accommodationType?: "hostProvided" | "selfArranged";
+	needsExtraNightsHelp?: boolean;
+	extraNightsFromDate?: string;
+	extraNightsToDate?: string;
 	hasPlusOne: boolean;
 }
 
@@ -55,11 +59,15 @@ export interface AdminInvitation {
 	transport?: "own" | "bus";
 	carpoolDriverOptIn?: boolean;
 	arrivalDateTime?: string;
+	departureDateTime?: string;
 	plusOneName?: string;
 	plusOneAttendance?: "yes" | "no";
 	childrenCount?: number;
 	childrenSleepOption?: "extraBed" | "crib";
 	accommodationType?: "hostProvided" | "selfArranged";
+	needsExtraNightsHelp?: boolean;
+	extraNightsFromDate?: string;
+	extraNightsToDate?: string;
 	guests: DashboardGuest[];
 }
 

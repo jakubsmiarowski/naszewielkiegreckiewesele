@@ -1,7 +1,7 @@
-import { ChevronRight, Heart, Mail, Search } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Clock3, Heart, type LucideIcon, Mail, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
 	Carousel,
 	CarouselContent,
@@ -10,6 +10,7 @@ import {
 	CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Input } from "@/components/ui/input";
+import { greekPhraseCards } from "@/data/plan-timeline";
 import { WEDDING_EVENT } from "@/lib/wedding-event";
 
 export function SearchWidget() {
@@ -57,6 +58,7 @@ function CountdownCard({
 	title,
 	dateLabel,
 	targetDate,
+	icon: Icon,
 	buttonLabel,
 	onButtonClick,
 	theme = "primary",
@@ -64,6 +66,7 @@ function CountdownCard({
 	title: string;
 	dateLabel: string;
 	targetDate: Date | null;
+	icon: LucideIcon;
 	buttonLabel?: string;
 	onButtonClick?: () => void;
 	theme?: "primary" | "sunset";
@@ -86,7 +89,7 @@ function CountdownCard({
 				aria-hidden
 				className="pointer-events-none absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_right,var(--tw-gradient-stops))] from-white via-transparent to-transparent"
 			/>
-			<Heart className="size-10 mx-auto mb-2 fill-current" />
+			<Icon className="size-10 mx-auto mb-2" />
 			<h4 className="text-lg font-bold mb-1">{title}</h4>
 			<p className="opacity-80 text-sm mb-6">{dateLabel}</p>
 			<div className="grid grid-cols-3 gap-2 mb-4">
@@ -139,8 +142,9 @@ export function EventCountdownWidget({
 	return (
 		<CountdownCard
 			title="Wielki Dzień"
-			dateLabel={`${label}, Kreta`}
+			dateLabel={`${label}`}
 			targetDate={eventDate}
+			icon={Heart}
 			buttonLabel="Dodaj do kalendarza"
 			onButtonClick={onAddToCalendar}
 			theme="primary"
@@ -167,39 +171,36 @@ export function DeadlineCountdownWidget({
 			title="Dajcie nam znać do"
 			dateLabel={label}
 			targetDate={deadline}
+			icon={Clock3}
 			theme="sunset"
 		/>
 	);
 }
 
-// emergency contacts widget
 export function EmergencyContactsWidget() {
 	const contacts = [
-		{ name: "Kamila", phone: "123456789", role: "bride" },
-		{ name: "Kuba", phone: "123456789", role: "groom" },
-		{ name: "Magda", phone: "123456789", role: "maid of honor" },
-		{ name: "Matuesz", phone: "123456789", role: "best man" },
+		{ name: "Kamila", phone: "739 046 625", role: "Panna Młoda" },
+		{ name: "Kuba", phone: "501 604 101", role: "Pan Młody" },
+		{ name: "Magda", phone: "501 604 101", role: "Świadek" },
+		{ name: "Matuesz", phone: "501 604 101", role: "Świadek" },
 	];
 
 	return (
 		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">
-			<h4 className="text-lg font-bold text-foreground mb-4">
-				Emergency Contacts
-			</h4>
+			<h4 className="text-lg font-bold text-foreground mb-4">Ważne kontakty</h4>
 			<ul className="flex flex-col gap-3">
 				{contacts.map((contact) => (
 					<li key={contact.name}>
-						<div className="flex items-center justify-between group">
-							<span className="text-muted-foreground text-sm font-medium group-hover:text-primary transition-colors">
+						<div className="grid grid-cols-3 items-center gap-2 group">
+							<span className="text-muted-foreground text-sm font-medium transition-colors">
 								{contact.name}
 							</span>
-							<span className="bg-muted text-muted-foreground text-xs font-bold px-2 py-1 rounded-md">
+							<span className="text-muted-foreground text-sm font-medium rounde-md justify-self-center">
 								{contact.role.charAt(0).toUpperCase() + contact.role.slice(1)}
 							</span>
-							<span className="bg-muted text-muted-foreground text-xs font-bold px-2 py-1 rounded-md">
+							<span className="text-muted-foreground text-sm font-medium rounded-md justify-self-end">
 								{contact.phone}
 							</span>
-							<ChevronRight className="hidden" />{" "}
 						</div>
 					</li>
 				))}
@@ -208,7 +209,81 @@ export function EmergencyContactsWidget() {
 	);
 }
 
-// widget with picture slides of dogs
+export function GreekPhrasesWidget() {
+	const prefersReducedMotion = useReducedMotion();
+	const [activePhraseIndex, setActivePhraseIndex] = useState(0);
+
+	useEffect(() => {
+		if (greekPhraseCards.length < 2) {
+			return;
+		}
+
+		const interval = window.setInterval(() => {
+			setActivePhraseIndex((currentIndex) => {
+				return (currentIndex + 1) % greekPhraseCards.length;
+			});
+		}, 10000);
+
+		return () => window.clearInterval(interval);
+	}, []);
+
+	const activePhrase = greekPhraseCards[activePhraseIndex];
+	if (!activePhrase) {
+		return null;
+	}
+
+	return (
+		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">
+			<div className="mb-4 flex items-center justify-between gap-2">
+				<h4 className="text-lg font-bold text-foreground">
+					Greckie powiedzonka
+				</h4>
+				<span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+					{activePhraseIndex + 1}/{greekPhraseCards.length}
+				</span>
+			</div>
+
+			<div className="rounded-xl border border-border/80 bg-muted/20 p-3">
+				<div className="relative min-h-[236px] overflow-hidden">
+					<AnimatePresence mode="wait" initial={false}>
+						<motion.div
+							key={activePhrase.id}
+							initial={{ opacity: 0, x: prefersReducedMotion ? 0 : 40 }}
+							animate={{ opacity: 1, x: 0 }}
+							exit={{ opacity: 0, x: prefersReducedMotion ? 0 : -40 }}
+							transition={{ duration: 0.35, ease: "easeOut" }}
+							className="absolute inset-0 flex flex-col gap-3"
+						>
+							<div className="rounded-lg border border-border bg-background p-3">
+								<p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+									Po polsku
+								</p>
+								<p className="mt-2 text-sm font-medium leading-relaxed text-foreground">
+									{activePhrase.polish}
+								</p>
+							</div>
+
+							<div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
+								<p className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+									Po grecku
+								</p>
+								<p className="mt-2 text-sm font-semibold leading-relaxed text-foreground">
+									{activePhrase.greek}
+								</p>
+								{activePhrase.isApproximate && (
+									<p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+										Luźne tłumaczenie
+									</p>
+								)}
+							</div>
+						</motion.div>
+					</AnimatePresence>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 export function DogSlideshowWidget() {
 	const dogImages = [
 		"https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&h=600",
@@ -220,21 +295,17 @@ export function DogSlideshowWidget() {
 
 	return (
 		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">
-			<h4 className="text-lg font-bold text-foreground mb-4">Nasze Pieski</h4>
+			<h4 className="text-lg font-bold text-foreground mb-4">Album</h4>
 			<Carousel className="w-full">
-				<CarouselContent>
+				<CarouselContent className="-ml-0">
 					{dogImages.map((src, index) => (
-						<CarouselItem key={src}>
-							<div className="p-1">
-								<Card className="border-none shadow-none">
-									<CardContent className="flex aspect-square items-center justify-center p-0 overflow-hidden rounded-xl">
-										<img
-											src={src}
-											alt={`Dog ${index + 1}`}
-											className="object-cover w-full h-full"
-										/>
-									</CardContent>
-								</Card>
+						<CarouselItem key={src} className="pl-0">
+							<div className="overflow-hidden rounded-xl aspect-square">
+								<img
+									src={src}
+									alt={`Dog ${index + 1}`}
+									className="object-cover w-full h-full"
+								/>
 							</div>
 						</CarouselItem>
 					))}

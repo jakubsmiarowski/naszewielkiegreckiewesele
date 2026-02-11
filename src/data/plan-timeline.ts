@@ -22,6 +22,13 @@ export type PlanDay = {
 	events: PlanEvent[];
 };
 
+export type GreekPhraseCard = {
+	id: string;
+	polish: string;
+	greek: string;
+	isApproximate?: boolean;
+};
+
 export const planTimelineDays: PlanDay[] = [
 	{
 		id: "2026-09-30",
@@ -31,10 +38,10 @@ export const planTimelineDays: PlanDay[] = [
 		events: [
 			{
 				id: "wed-flight",
-				time: "20:00",
+				time: "17:30",
 				title: "Wylot i późny przylot do Chanii",
 				description:
-					"W środę jest tylko jeden lot około 20:00, więc na miejscu w Chanii będziemy mniej więcej o 23:00. Do Chory Sfakion dotrzemy późno.",
+					"W środę jest tylko jeden lot o 17:30, więc na miejscu będziecie o 21:25. Do Chory Sfakion dotrzecie późno.",
 				tag: "Logistyka",
 				location: "Chania / Chora Sfakion",
 			},
@@ -43,7 +50,7 @@ export const planTimelineDays: PlanDay[] = [
 				time: "Wieczór",
 				title: "Luźne spotkanie dla osób na miejscu",
 				description:
-					"Jeśli jesteście już na Krecie, spotkajmy się bez presji na spokojny wieczór i wspólne wejście w klimat wyjazdu.",
+					"Jeśli jesteście już na Krecie, spotkajmy się i spędźmy wspólnie czas.",
 				tag: "Integracja",
 				location: "Według uznania",
 			},
@@ -57,30 +64,33 @@ export const planTimelineDays: PlanDay[] = [
 		events: [
 			{
 				id: "thu-free-time",
-				time: "Do 15:00",
+				time: "Do 14:00",
 				title: "Czas wolny",
 				description:
-					"Przed popołudniowym spotkaniem mamy spokojny czas dla siebie. My będziemy się szykować, a Wy możecie wypocząć, pospacerować albo spędzić dzień tak, jak lubicie.",
+					"Zanim spotkamy się po południu, macie moment oddechu. My zajmiemy się przygotowaniami, a Wam zostawiamy czas na relaks, zwiedzanie lub leniwe plażowanie.",
 				tag: "Relaks",
 				location: "Według uznania",
 			},
 			{
 				id: "thu-ceremony",
-				time: "16:00",
-				title: "Krótka ceremonia",
+				time: "15:00",
+				title: "Ślub",
 				description:
-					"Spotykamy się w starym porcie lub na plaży niedaleko knajpy. Ceremonię poprowadzi Mateusz (bestman) albo urzędnik/konsul z Aten.",
+					"Spotykamy się w starym porcie lub na plaży niedaleko restauracji. Ceremonię poprowadzi Ojciec Mateusz albo urzędnik.",
+				// "Spotykamy się w starym porcie lub na plaży niedaleko knajpy. Ceremonię poprowadzi Mateusz (bestman) albo urzędnik/konsul z Aten.",
 				tag: "Ceremonia",
-				location: "Stary port / plaża przy knajpie",
+				location: "Stary port / plaża",
 			},
 			{
 				id: "thu-party",
-				time: "Po ceremonii",
-				title: "Zdjęcia i wspólne świętowanie",
+				time: "Po uroczystości",
+				title: "Wesele",
 				description:
-					"Po krótkiej sesji zdjęciowej przechodzimy do knajpy na biesiadowanie, toast i zabawę. Chcemy, żeby to był nasz wspólny, radosny wieczór.",
-				tag: "Wesele",
-				location: "Knajpa weselna",
+					// https://www.youtube.com/watch?v=MFKqiFG6HVs&list=PLrrQclmFn_7cfbELsVdc1F5SoKdNWCIWf&index=3
+					// "Przechodzimy do restauracji na biesiadowanie, toast i zabawę. Chcemy, żeby to był nasz wspólny, radosny wieczór.",
+					"Zapraszamy dalej na wspólne biesiadowanie, tańce i śpiewy — Kawałek tekstu z mamma mia",
+				tag: "Przyjęcie",
+				location: "Restauracja Lefka Ori",
 			},
 		],
 	},
@@ -92,21 +102,20 @@ export const planTimelineDays: PlanDay[] = [
 		events: [
 			{
 				id: "fri-slow-start",
-				time: "Od rana",
+				time: "Rano",
 				title: "Spokojny start dnia",
-				description:
-					"Startujemy na luzie, bez budzika i bez presji czasu. To dzień na odpoczynek po weselu i łapanie oddechu.",
+				description: "Bez budzika z mimoską w ręku i uśmiechem na twarzy.",
 				tag: "Relaks",
-				location: "Chora Sfakion",
+				location: "Według uznania",
 			},
 			{
 				id: "fri-afterparty",
 				time: "Popołudnie",
-				title: "Poprawiny na wzgórzu",
+				title: "Poprawiny",
 				description:
-					"Jeśli będziecie mieć ochotę, idziemy do pobliskiego baru na wzgórzu na poprawiny. A jeśli ktoś woli wolniejsze tempo, pełna dowolność.",
+					"Jeśli będziecie mieć ochotę, idziemy do pobliskiego baru z widokiem na morze. A jeśli ktoś woli wolniejsze tempo, może wybrać relaks po swojemu.",
 				tag: "Integracja",
-				location: "Bar na wzgórzu (opcjonalnie)",
+				location: "Bar",
 			},
 		],
 	},
@@ -121,7 +130,7 @@ export const planTimelineDays: PlanDay[] = [
 				time: "W ciągu dnia",
 				title: "Opcjonalna wycieczka do Loutro",
 				description:
-					"Możemy zrobić wspólną wyprawę do Loutro i odkryć jedną z najpiękniejszych zatok. Jeśli taki plan Was kręci, chętnie organizujemy to razem.",
+					"Możemy zrobić wspólną wyprawę do malowniczego miasteczka i odkryć jedną z najpiękniejszych zatok. Jeśli taki plan Wam pasuje, chętnie zorganizujemy to razem.",
 				tag: "Atrakcje",
 				location: "Loutro (opcjonalnie)",
 				attractionAnchorId: ATTRACTION_ANCHORS.loutroSaturdayTrip,
@@ -130,9 +139,9 @@ export const planTimelineDays: PlanDay[] = [
 			{
 				id: "sat-free-time",
 				time: "Alternatywnie",
-				title: "Plaża i lokalne atrakcje",
+				title: "Plaża i atrakcje",
 				description:
-					"Jeśli wolicie spokojniejszy dzień, możemy zostać na miejscu i postawić na plażowanie oraz lokalne atrakcje w okolicy. Decydujemy wspólnie.",
+					"Jeśli wolicie spokojniejszy dzień, możemy zostać na miejscu i postawić na plażowanie oraz zwiedzanie wyspy.",
 				tag: "Relaks",
 				location: "Okolica Chory Sfakion",
 			},
@@ -146,22 +155,68 @@ export const planTimelineDays: PlanDay[] = [
 		events: [
 			{
 				id: "sun-breakfast",
-				time: "Wcześnie rano",
-				title: "Wspólne śniadanie i pożegnanie",
+				time: "Rano",
+				title: "Powrót do Poldonu",
 				description:
-					"W niedzielę jest tylko jeden lot około 10:00, więc spotykamy się na szybkie śniadanie i spokojnie żegnamy przed drogą do domów.",
+					"W niedzielę jest tylko wczesny lot, więc spotykamy się na pożegnanie przed dalszą drogą.",
 				tag: "Pożegnanie",
-				location: "Domki / okolica",
+				location: "Chora Sfakion",
 			},
 			{
 				id: "sun-flight",
-				time: "Około 10:00",
+				time: "10:10",
 				title: "Wylot",
-				description:
-					"Dziękujemy, że tworzycie ten wyjazd razem z nami. Wracamy z pięknymi wspomnieniami i ogromną wdzięcznością.",
+				description: "Dziękujemy, za wspolnie spedzony czas!",
 				tag: "Logistyka",
 				location: "Lotnisko Chania",
 			},
 		],
+	},
+];
+
+export const greekPhraseCards: GreekPhraseCard[] = [
+	{
+		id: "good-morning",
+		polish: "Dzień dobry",
+		greek: "Καλημέρα (Kaliméra)",
+	},
+	{
+		id: "dont-ask",
+		polish: "Nie pytaj, bo kociej mordy dostaniesz.",
+		greek: "Μη ρωτάς, θα έχουμε μπελάδες. (Mi rotás, tha échoume beládes.)",
+		isApproximate: true,
+	},
+	{
+		id: "good-evening",
+		polish: "Dobry wieczór",
+		greek: "Καλησπέρα (Kalispéra)",
+	},
+	{
+		id: "boar-forest",
+		polish: "Pytasz dzika, czy sra w lesie?",
+		greek:
+			"Ρωτάς αν ο ήλιος βγαίνει κάθε μέρα; (Rotás an o ílios vgaínei káthe méra;)",
+		isApproximate: true,
+	},
+	{
+		id: "thank-you-very-much",
+		polish: "Bardzo dziękuję",
+		greek: "Ευχαριστώ πολύ (Efcharistó polý)",
+	},
+	{
+		id: "dont-care",
+		polish: "Mam cię w dupie.",
+		greek: "Σε έχω γραμμένο. (Se écho gramméno.)",
+		isApproximate: true,
+	},
+	{
+		id: "cheers",
+		polish: "Na zdrowie!",
+		greek: "Στην υγειά μας! (Stin ygeiá mas!)",
+	},
+	{
+		id: "small-kebab",
+		polish: "Poproszę małego kebaba.",
+		greek: "Ένα μικρό κεμπάπ, παρακαλώ. (Éna mikró kebáp, parakaló.)",
 	},
 ];

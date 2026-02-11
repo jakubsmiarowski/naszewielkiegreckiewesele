@@ -1,5 +1,7 @@
 import type { QaAdminQuestion } from "@/components/dashboard/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface QaSectionProps {
 	qaQuestions?: QaAdminQuestion[];
@@ -62,13 +64,15 @@ export function QaSection({
 												{new Date(item.createdAt).toLocaleString("pl-PL")}
 											</p>
 										</div>
-										<button
+										<Button
 											type="button"
+											variant="outline"
+											size="sm"
 											onClick={() => onToggleAnsweredCard(item._id)}
-											className="shrink-0 px-3 py-1.5 rounded-full border border-[var(--color-primary)] text-[var(--color-primary)] text-xs font-semibold hover:bg-[var(--color-primary)]/10 transition"
+											className="shrink-0 px-3 py-1.5 rounded-full border-[var(--color-primary)] text-[var(--color-primary)] text-xs font-semibold hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition h-auto"
 										>
 											Rozwiń
-										</button>
+										</Button>
 									</div>
 								</li>
 							);
@@ -88,13 +92,15 @@ export function QaSection({
 											{new Date(item.createdAt).toLocaleString("pl-PL")}
 										</p>
 										{isAnswered && (
-											<button
+											<Button
 												type="button"
+												variant="outline"
+												size="sm"
 												onClick={() => onToggleAnsweredCard(item._id)}
-												className="px-3 py-1 rounded-full border border-[var(--color-primary)] text-[var(--color-primary)] text-xs font-semibold hover:bg-[var(--color-primary)]/10 transition"
+												className="px-3 py-1 rounded-full border-[var(--color-primary)] text-[var(--color-primary)] text-xs font-semibold hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition h-auto"
 											>
 												Zwiń
-											</button>
+											</Button>
 										)}
 									</div>
 								</div>
@@ -104,25 +110,25 @@ export function QaSection({
 								<p className="text-xs text-muted-foreground mt-1">
 									Od: {item.askerDisplayName ?? "Gość"}
 								</p>
-								<textarea
+								<Textarea
 									value={answerDrafts[item._id] ?? ""}
 									onChange={(event) =>
 										onAnswerDraftChange(item._id, event.target.value)
 									}
 									rows={3}
 									placeholder="Wpisz odpowiedź dla gości..."
-									className="mt-3 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+									className="mt-3 w-full rounded-xl bg-white px-3 py-2 text-sm text-foreground shadow-xs focus-visible:ring-[var(--color-primary)] border-input"
 								/>
-								<button
+								<Button
 									type="button"
 									onClick={() => onSaveAnswer(item._id)}
 									disabled={savingQuestionId === item._id}
-									className="mt-3 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-70 transition"
+									className="mt-3 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary)]/90 disabled:opacity-70 transition h-auto"
 								>
 									{savingQuestionId === item._id
 										? "Zapisywanie..."
 										: "Zapisz odpowiedź"}
-								</button>
+								</Button>
 							</li>
 						);
 					})}

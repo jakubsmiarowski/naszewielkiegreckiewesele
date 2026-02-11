@@ -22,6 +22,32 @@ function normalizeChildrenCount(value: number | undefined) {
   return Math.max(0, Math.min(3, Math.trunc(value)));
 }
 
+function normalizeDateTime(value: string | undefined) {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizeDateOnly(value: string | undefined) {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    throw new Error("Podaj poprawny zakres dat dodatkowego noclegu.");
+  }
+  const [year, month, day] = trimmed.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    throw new Error("Podaj poprawny zakres dat dodatkowego noclegu.");
+  }
+  return trimmed;
+}
+
 export const getIdByToken = query({
   args: { token: v.string() },
   returns: v.union(v.id("invitations"), v.null()),
@@ -67,9 +93,13 @@ export const getById = query({
       transport: v.optional(RSVP_TRANSPORT),
       carpoolDriverOptIn: v.optional(v.boolean()),
       arrivalDateTime: v.optional(v.string()),
+      departureDateTime: v.optional(v.string()),
       childrenCount: v.optional(v.number()),
       childrenSleepOption: v.optional(RSVP_CHILD_SLEEP_OPTION),
       accommodationType: v.optional(RSVP_ACCOMMODATION_TYPE),
+      needsExtraNightsHelp: v.optional(v.boolean()),
+      extraNightsFromDate: v.optional(v.string()),
+      extraNightsToDate: v.optional(v.string()),
       message: v.optional(v.string()),
       rsvpUpdatedAt: v.optional(v.number()),
     }),
@@ -120,9 +150,13 @@ export const listForAdmin = query({
       transport: v.optional(RSVP_TRANSPORT),
       carpoolDriverOptIn: v.optional(v.boolean()),
       arrivalDateTime: v.optional(v.string()),
+      departureDateTime: v.optional(v.string()),
       childrenCount: v.optional(v.number()),
       childrenSleepOption: v.optional(RSVP_CHILD_SLEEP_OPTION),
       accommodationType: v.optional(RSVP_ACCOMMODATION_TYPE),
+      needsExtraNightsHelp: v.optional(v.boolean()),
+      extraNightsFromDate: v.optional(v.string()),
+      extraNightsToDate: v.optional(v.string()),
       message: v.optional(v.string()),
       rsvpUpdatedAt: v.optional(v.number()),
       guests: v.array(
@@ -166,9 +200,13 @@ export const updateRsvp = mutation({
     transport: v.optional(RSVP_TRANSPORT),
     carpoolDriverOptIn: v.optional(v.boolean()),
     arrivalDateTime: v.optional(v.string()),
+    departureDateTime: v.optional(v.string()),
     childrenCount: v.optional(v.number()),
     childrenSleepOption: v.optional(RSVP_CHILD_SLEEP_OPTION),
     accommodationType: v.optional(RSVP_ACCOMMODATION_TYPE),
+    needsExtraNightsHelp: v.optional(v.boolean()),
+    extraNightsFromDate: v.optional(v.string()),
+    extraNightsToDate: v.optional(v.string()),
     message: v.optional(v.string()),
     plusOneName: v.optional(v.string()),
     plusOneAttendance: v.optional(RSVP_ATTENDANCE),
@@ -225,12 +263,16 @@ export const updateRsvp = mutation({
     if (aggregateAttendance !== "yes") {
       patch.transport = undefined;
       patch.arrivalDateTime = undefined;
+      patch.departureDateTime = undefined;
       patch.carpoolDriverOptIn = false;
       patch.plusOneName = undefined;
       patch.plusOneAttendance = undefined;
       patch.childrenCount = undefined;
       patch.childrenSleepOption = undefined;
       patch.accommodationType = undefined;
+      patch.needsExtraNightsHelp = undefined;
+      patch.extraNightsFromDate = undefined;
+      patch.extraNightsToDate = undefined;
     } else {
       if (args.transport !== undefined) {
         patch.transport = args.transport;
@@ -243,9 +285,21 @@ export const updateRsvp = mutation({
         patch.carpoolDriverOptIn = args.carpoolDriverOptIn === true;
       }
 
-      if (args.arrivalDateTime !== undefined) {
-        patch.arrivalDateTime = args.arrivalDateTime;
+      const effectiveArrivalDateTime = normalizeDateTime(
+        args.arrivalDateTime ?? invitation.arrivalDateTime
+      );
+      if (!effectiveArrivalDateTime) {
+        throw new Error("Podaj datę i godzinę przylotu.");
       }
+      patch.arrivalDateTime = effectiveArrivalDateTime;
+
+      const effectiveDepartureDateTime = normalizeDateTime(
+        args.departureDateTime ?? invitation.departureDateTime
+      );
+      if (!effectiveDepartureDateTime) {
+        throw new Error("Podaj datę i godzinę wylotu.");
+      }
+      patch.departureDateTime = effectiveDepartureDateTime;
       if (args.plusOneAttendance !== undefined) {
         patch.plusOneAttendance = args.plusOneAttendance;
       }
@@ -287,6 +341,34 @@ export const updateRsvp = mutation({
         throw new Error("Wybierz opcję noclegu.");
       }
       patch.accommodationType = effectiveAccommodationType;
+      if (effectiveAccommodationType === "hostProvided") {
+        const needsExtraNightsHelp =
+          args.needsExtraNightsHelp ?? invitation.needsExtraNightsHelp ?? false;
+        patch.needsExtraNightsHelp = needsExtraNightsHelp;
+        if (needsExtraNightsHelp) {
+          const extraNightsFromDate = normalizeDateOnly(
+            args.extraNightsFromDate ?? invitation.extraNightsFromDate
+          );
+          const extraNightsToDate = normalizeDateOnly(
+            args.extraNightsToDate ?? invitation.extraNightsToDate
+          );
+          if (!extraNightsFromDate || !extraNightsToDate) {
+            throw new Error("Wybierz daty Od i Do dla dodatkowego noclegu.");
+          }
+          if (extraNightsToDate < extraNightsFromDate) {
+            throw new Error("Data Do dodatkowego noclegu nie może być wcześniejsza niż Od.");
+          }
+          patch.extraNightsFromDate = extraNightsFromDate;
+          patch.extraNightsToDate = extraNightsToDate;
+        } else {
+          patch.extraNightsFromDate = undefined;
+          patch.extraNightsToDate = undefined;
+        }
+      } else {
+        patch.needsExtraNightsHelp = false;
+        patch.extraNightsFromDate = undefined;
+        patch.extraNightsToDate = undefined;
+      }
     }
 
     await ctx.db.patch(args.invitationId, patch);
@@ -301,6 +383,8 @@ export const updateRsvp = mutation({
         aggregateAttendance,
         transport: patch.transport ?? invitation.transport,
         carpoolDriverOptIn: patch.carpoolDriverOptIn ?? invitation.carpoolDriverOptIn,
+        arrivalDateTime: patch.arrivalDateTime ?? invitation.arrivalDateTime,
+        departureDateTime: patch.departureDateTime ?? invitation.departureDateTime,
         childrenCount: Object.prototype.hasOwnProperty.call(
           patch,
           "childrenCount"
@@ -313,6 +397,24 @@ export const updateRsvp = mutation({
         )
           ? patch.accommodationType
           : invitation.accommodationType,
+        needsExtraNightsHelp: Object.prototype.hasOwnProperty.call(
+          patch,
+          "needsExtraNightsHelp"
+        )
+          ? patch.needsExtraNightsHelp
+          : invitation.needsExtraNightsHelp,
+        extraNightsFromDate: Object.prototype.hasOwnProperty.call(
+          patch,
+          "extraNightsFromDate"
+        )
+          ? patch.extraNightsFromDate
+          : invitation.extraNightsFromDate,
+        extraNightsToDate: Object.prototype.hasOwnProperty.call(
+          patch,
+          "extraNightsToDate"
+        )
+          ? patch.extraNightsToDate
+          : invitation.extraNightsToDate,
       },
     });
     return null;
@@ -559,9 +661,13 @@ export const seedInvitations = mutation({
         answeredForName: undefined,
         transport: undefined,
         arrivalDateTime: undefined,
+        departureDateTime: undefined,
         childrenCount: undefined,
         childrenSleepOption: undefined,
         accommodationType: undefined,
+        needsExtraNightsHelp: undefined,
+        extraNightsFromDate: undefined,
+        extraNightsToDate: undefined,
         message: undefined,
         rsvpUpdatedAt: undefined,
       });

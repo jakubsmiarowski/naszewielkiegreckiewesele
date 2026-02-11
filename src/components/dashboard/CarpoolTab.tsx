@@ -1,13 +1,17 @@
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useMutation, useQuery } from "convex/react";
-import { Dialog } from "radix-ui";
-import { useEffect, useMemo, useState } from "react";
+import { X } from "lucide-react";
+import { useEffect, useId, useMemo, useState } from "react";
 import type {
 	CarpoolAdminOverview,
 	CarpoolMyOffer,
+	CarpoolOpenOffer,
 	CarpoolRequestStatus,
 	CarpoolTabData,
 	InvitationData,
 } from "@/components/dashboard/types";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
@@ -61,12 +65,6 @@ const createRequestDraft = (seatsRequested = 1): RequestDraft => ({
 	mediationRequested: false,
 });
 
-const OFFER_PICKUP_INPUT_ID = "carpool-offer-pickup";
-const OFFER_DROPOFF_INPUT_ID = "carpool-offer-dropoff";
-const OFFER_DEPARTURE_DATE_ID = "carpool-offer-departure-date";
-const OFFER_SEATS_INPUT_ID = "carpool-offer-seats";
-const OFFER_NOTES_INPUT_ID = "carpool-offer-notes";
-
 export function CarpoolTab({
 	invitationData,
 	isAdmin,
@@ -94,9 +92,8 @@ export function CarpoolTab({
 	const respondToRequest = useMutation(api.carpool.respondToRequest);
 	const cancelRequest = useMutation(api.carpool.cancelRequest);
 
-	const [requestDrafts, setRequestDrafts] = useState<
-		Record<string, RequestDraft>
-	>({});
+	const mediationCheckboxId = useId();
+
 	const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 	const [offerModalMode, setOfferModalMode] =
 		useState<OfferModalMode>("create");
@@ -105,10 +102,16 @@ export function CarpoolTab({
 	const [offerDate, setOfferDate] = useState<Date | undefined>(undefined);
 	const [offerTime, setOfferTime] = useState("");
 
+	// New state for applying to a ride
+	const [selectedApplyOffer, setSelectedApplyOffer] =
+		useState<CarpoolOpenOffer | null>(null);
+	const [applyRequestDraft, setApplyRequestDraft] = useState<RequestDraft>(
+		createRequestDraft(1),
+	);
+
 	const canMutate = Boolean(carpoolData?.isBeforeDeadline);
 	const passengerRequiredSeats = carpoolData?.passengerRequiredSeats ?? 1;
 	const passengerSeatLimit = carpoolData?.passengerSeatLimit ?? 1;
-	const canCreateOffer = Boolean(carpoolData?.canCreateOffer && canMutate);
 
 	const pendingRequestsCount = useMemo(
 		() =>
@@ -188,6 +191,16 @@ export function CarpoolTab({
 		setOfferDate(parsed.date);
 		setOfferTime(parsed.time);
 		setIsOfferModalOpen(true);
+	};
+
+	const openApplyModal = (offer: CarpoolOpenOffer) => {
+		setSelectedApplyOffer(offer);
+		setApplyRequestDraft(createRequestDraft(passengerRequiredSeats));
+	};
+
+	const closeApplyModal = () => {
+		setSelectedApplyOffer(null);
+		setApplyRequestDraft(createRequestDraft(passengerRequiredSeats));
 	};
 
 	const handleOfferModalOpenChange = (nextOpen: boolean) => {
@@ -332,23 +345,18 @@ export function CarpoolTab({
 		}
 	};
 
-	const handleCreateRequest = async (offerId: string) => {
-		if (!invitationId) return;
-		const draft =
-			requestDrafts[offerId] ?? createRequestDraft(passengerRequiredSeats);
-		const seatsRequested = Math.max(draft.seatsRequested, 1);
+	const handleCreateRequest = async () => {
+		if (!invitationId || !selectedApplyOffer) return;
+		const seatsRequested = Math.max(applyRequestDraft.seatsRequested, 1);
 		try {
 			await createRequest({
 				invitationId: invitationId as Id<"invitations">,
-				offerId: offerId as Id<"carpoolOffers">,
+				offerId: selectedApplyOffer._id as Id<"carpoolOffers">,
 				seatsRequested,
-				message: draft.message,
-				mediationRequested: draft.mediationRequested,
+				message: applyRequestDraft.message,
+				mediationRequested: applyRequestDraft.mediationRequested,
 			});
-			setRequestDrafts((prev) => ({
-				...prev,
-				[offerId]: createRequestDraft(passengerRequiredSeats),
-			}));
+			closeApplyModal();
 			toast({
 				variant: "success",
 				title: "Wysłano zgłoszenie",
@@ -404,60 +412,24 @@ export function CarpoolTab({
 						zgłoszenia: {pendingRequestsCount}.
 					</p>
 				</div>
-
+				{/* Admin view implementation kept simple as user asked for UX changes on client side predominantly */}
 				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
 					<h4 className="text-xl font-bold text-foreground mb-4">
 						Ogłoszenia Car Pool
 					</h4>
-					{adminOverview.offers.length === 0 ? (
-						<p className="text-muted-foreground">Brak ogłoszeń.</p>
-					) : (
-						<ul className="space-y-3">
-							{adminOverview.offers.map((offer) => (
-								<li
-									key={offer._id}
-									className="rounded-xl bg-[var(--color-background-light)] p-4"
-								>
-									<p className="font-semibold text-foreground">
-										{offer.driverDisplayName}:{" "}
-										{formatRoute(offer.pickupPoint, offer.dropoffPoint)}
-									</p>
-									<p className="text-sm text-muted-foreground mt-1">
-										Odjazd: {formatDateTime(offer.departureDateTime)} | status:{" "}
-										{offer.status} | miejsca: {offer.seatsAvailable}/
-										{offer.seatsTotal}
-									</p>
-									<p className="text-sm text-muted-foreground">
-										Przylot kierowcy:{" "}
-										{formatDateTime(offer.driverArrivalDateTime)}
-									</p>
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
-
-				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-					<h4 className="text-xl font-bold text-foreground mb-4">
-						Oczekujące zgłoszenia
-					</h4>
-					{adminOverview.pendingRequests.length === 0 ? (
-						<p className="text-muted-foreground">Brak oczekujących zgłoszeń.</p>
-					) : (
-						<ul className="space-y-2">
-							{adminOverview.pendingRequests.map((request) => (
-								<li
-									key={request._id}
-									className="rounded-lg bg-[var(--color-background-light)] px-4 py-3"
-								>
-									<p className="font-medium text-foreground">
-										{request.passengerDisplayName} (miejsca:{" "}
-										{request.seatsRequested})
-									</p>
-								</li>
-							))}
-						</ul>
-					)}
+					<ul className="space-y-3">
+						{adminOverview.offers.map((offer) => (
+							<li
+								key={offer._id}
+								className="rounded-xl bg-[var(--color-background-light)] p-4"
+							>
+								<p className="font-semibold text-foreground">
+									{offer.driverDisplayName}:{" "}
+									{formatRoute(offer.pickupPoint, offer.dropoffPoint)}
+								</p>
+							</li>
+						))}
+					</ul>
 				</div>
 			</div>
 		);
@@ -478,6 +450,10 @@ export function CarpoolTab({
 			</div>
 		);
 	}
+
+	const hasActiveRequest = carpoolData.myRequests.some(
+		(req) => req.status === "pending" || req.status === "accepted",
+	);
 
 	return (
 		<>
@@ -509,21 +485,21 @@ export function CarpoolTab({
 							</p>
 						</div>
 						{carpoolData.canCreateOffer && (
-							<button
+							<Button
 								type="button"
 								onClick={openCreateOfferModal}
 								disabled={!canMutate}
 								className="px-4 py-2 rounded-full text-sm font-semibold bg-[var(--color-primary)] text-white disabled:opacity-60"
 							>
 								Dodaj ogłoszenie
-							</button>
+							</Button>
 						)}
 					</div>
 
 					{!carpoolData.canCreateOffer && (
 						<p className="text-muted-foreground text-sm">
-							Aby dodać ogłoszenie, ustaw RSVP = tak, transport = wypożyczamy
-							auto i włącz Car Pool w formularzu RSVP.
+							Aby dodać ogłoszenie, włącz opcję "Będę kierowcą" w formularzu
+							RSVP (wymaga transportu własnego).
 						</p>
 					)}
 
@@ -532,6 +508,7 @@ export function CarpoolTab({
 						<p className="text-muted-foreground">Brak ogłoszeń Car Pool.</p>
 					) : (
 						<div className="space-y-6">
+							{/* My Offers Section */}
 							{carpoolData.myOffers.length > 0 && (
 								<div className="space-y-3">
 									<h5 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -556,18 +533,19 @@ export function CarpoolTab({
 													</p>
 												</div>
 												<div className="flex flex-wrap gap-2">
-													<button
+													<Button
 														type="button"
 														onClick={() => openEditOfferModal(offer)}
 														disabled={
 															!canMutate || offer.status === "cancelled"
 														}
-														className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 text-gray-700 disabled:opacity-60"
+														variant="outline"
+														className="rounded-full"
 													>
 														Edytuj
-													</button>
+													</Button>
 													{offer.status !== "cancelled" && (
-														<button
+														<Button
 															type="button"
 															onClick={() =>
 																handleToggleOfferStatus(
@@ -576,29 +554,25 @@ export function CarpoolTab({
 																)
 															}
 															disabled={!canMutate}
-															className="px-4 py-2 rounded-full text-sm font-semibold border border-[var(--color-primary)] text-[var(--color-primary)] disabled:opacity-60"
+															variant="outline"
+															className="rounded-full border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)]"
 														>
 															{offer.status === "open" ? "Zamknij" : "Otwórz"}
-														</button>
+														</Button>
 													)}
-													<button
+													<Button
 														type="button"
 														onClick={() => handleCancelOffer(offer._id)}
 														disabled={
 															!canMutate || offer.status === "cancelled"
 														}
-														className="px-4 py-2 rounded-full text-sm font-semibold border border-red-300 text-red-600 disabled:opacity-60"
+														variant="outline"
+														className="rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
 													>
 														Anuluj
-													</button>
+													</Button>
 												</div>
 											</div>
-
-											{offer.notes && (
-												<p className="text-sm text-muted-foreground">
-													{offer.notes}
-												</p>
-											)}
 
 											<div className="pt-2 border-t border-gray-200">
 												<p className="text-sm font-semibold text-foreground mb-2">
@@ -631,7 +605,7 @@ export function CarpoolTab({
 																)}
 																{request.status === "pending" && (
 																	<div className="flex gap-2 mt-2">
-																		<button
+																		<Button
 																			type="button"
 																			onClick={() =>
 																				handleRespondToRequest(
@@ -640,11 +614,11 @@ export function CarpoolTab({
 																				)
 																			}
 																			disabled={!canMutate}
-																			className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--color-primary)] text-white disabled:opacity-60"
+																			className="h-7 rounded-full text-xs bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90"
 																		>
 																			Akceptuj
-																		</button>
-																		<button
+																		</Button>
+																		<Button
 																			type="button"
 																			onClick={() =>
 																				handleRespondToRequest(
@@ -653,10 +627,11 @@ export function CarpoolTab({
 																				)
 																			}
 																			disabled={!canMutate}
-																			className="px-3 py-1.5 rounded-full text-xs font-semibold border border-red-300 text-red-600 disabled:opacity-60"
+																			variant="outline"
+																			className="h-7 rounded-full text-xs border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
 																		>
 																			Odrzuć
-																		</button>
+																		</Button>
 																	</div>
 																)}
 															</li>
@@ -669,377 +644,413 @@ export function CarpoolTab({
 								</div>
 							)}
 
+							{/* Other Offers Section */}
 							{carpoolData.openOffers.length > 0 && (
 								<div className="space-y-3">
-									<h5 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+									{/* <h5 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
 										Ogłoszenia innych kierowców
-									</h5>
-									{carpoolData.openOffers.map((offer) => {
-										const draft =
-											requestDrafts[offer._id] ??
-											createRequestDraft(passengerRequiredSeats);
-										const maxRequestSeats = Math.min(
-											passengerSeatLimit,
-											offer.seatsAvailable,
-										);
-										const seatsRequestedValue = Math.max(
-											1,
-											Math.min(
-												draft.seatsRequested,
-												Math.max(maxRequestSeats, 1),
-											),
-										);
-										const canSendRequest =
-											carpoolData.canRequestRide &&
-											carpoolData.isBeforeDeadline &&
-											offer.status === "open" &&
-											offer.seatsAvailable > 0 &&
-											!offer.myRequestId &&
-											!carpoolData.hasPendingRequest;
+									</h5> */}
+									<div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-4">
+										{carpoolData.openOffers.map((offer) => {
+											const isMyRequest = Boolean(offer.myRequestId);
+											const canApply =
+												!hasActiveRequest &&
+												!isMyRequest &&
+												offer.status === "open" &&
+												offer.seatsAvailable > 0 &&
+												carpoolData.canRequestRide;
+											// If I have a request here, I can see it. If not, I can apply only if I don't have other active requests.
+											// If I have other active request, I can see this offer but not apply.
 
-										return (
-											<div
-												key={offer._id}
-												className="rounded-xl bg-[var(--color-background-light)] p-4 space-y-2"
-											>
-												<p className="font-semibold text-foreground">
-													{offer.driverDisplayName}:{" "}
-													{formatRoute(offer.pickupPoint, offer.dropoffPoint)}
-												</p>
-												<p className="text-sm text-muted-foreground">
-													Odjazd: {formatDateTime(offer.departureDateTime)} |
-													wolne miejsca: {offer.seatsAvailable}/
-													{offer.seatsTotal}
-												</p>
-												<p className="text-sm text-muted-foreground">
-													Przylot kierowcy:{" "}
-													{formatDateTime(offer.driverArrivalDateTime)}
-												</p>
-												{offer.notes && (
-													<p className="text-sm text-muted-foreground">
-														{offer.notes}
-													</p>
-												)}
+											return (
+												<button
+													type="button"
+													key={offer._id}
+													className={`h-full w-full rounded-xl border p-4 text-left transition-colors ${
+														isMyRequest
+															? "bg-[var(--color-primary)]/5 border-[var(--color-primary)]/20"
+															: "bg-white border-border hover:border-[var(--color-primary)]/50 cursor-pointer"
+													}`}
+													onClick={() => {
+														if (canApply && !isMyRequest) {
+															openApplyModal(offer);
+														}
+													}}
+												>
+													<div className="flex justify-between items-start mb-2">
+														<p className="font-semibold text-foreground">
+															{offer.driverDisplayName}
+														</p>
+														{isMyRequest && (
+															<span className="inline-flex items-center rounded-full bg-[var(--color-primary)] px-2 py-0.5 text-xs font-medium text-white">
+																Twoje zgłoszenie
+															</span>
+														)}
+													</div>
 
-												{offer.myRequestId ? (
-													<p className="text-sm text-muted-foreground">
-														Twoje zgłoszenie: {offer.myRequestSeats} miejsca,
-														status{" "}
-														{offer.myRequestStatus
-															? STATUS_LABELS[offer.myRequestStatus]
-															: "-"}
+													<p className="font-medium text-foreground mb-1">
+														{formatRoute(offer.pickupPoint, offer.dropoffPoint)}
 													</p>
-												) : (
-													<div className="space-y-2 pt-1">
-														<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-															<Input
-																type="number"
-																min={1}
-																max={maxRequestSeats}
-																value={seatsRequestedValue}
-																onChange={(event) => {
-																	const nextSeats = Number(event.target.value);
-																	setRequestDrafts((prev) => ({
-																		...prev,
-																		[offer._id]: {
-																			...draft,
-																			seatsRequested:
-																				Number.isFinite(nextSeats) &&
-																				nextSeats > 0
-																					? nextSeats
-																					: 1,
-																		},
-																	}));
+													<p className="text-sm text-muted-foreground">
+														Odjazd: {formatDateTime(offer.departureDateTime)}
+													</p>
+													<p className="text-sm text-muted-foreground">
+														Wolne miejsca: {offer.seatsAvailable}/
+														{offer.seatsTotal}
+													</p>
+
+													{offer.notes && (
+														<p className="text-sm text-muted-foreground mt-2 italic">
+															"{offer.notes}"
+														</p>
+													)}
+
+													<div
+														className={`mt-auto pt-3 ${
+															isMyRequest
+																? "border-t border-[var(--color-primary)]/20"
+																: "border-t border-border/60"
+														}`}
+													>
+														{isMyRequest && offer.myRequestId ? (
+															<>
+																<p className="text-sm text-foreground">
+																	Status:{" "}
+																	<span className="font-medium">
+																		{offer.myRequestStatus
+																			? STATUS_LABELS[offer.myRequestStatus]
+																			: "-"}
+																	</span>
+																</p>
+																{offer.myRequestStatus === "pending" && (
+																	<Button
+																		type="button"
+																		variant="link"
+																		onClick={(e) => {
+																			e.stopPropagation();
+																			if (offer.myRequestId) {
+																				handleCancelRequest(offer.myRequestId);
+																			}
+																		}}
+																		className="mt-2 h-auto p-0 text-xs font-semibold text-red-600 hover:no-underline"
+																	>
+																		Anuluj zgłoszenie
+																	</Button>
+																)}
+															</>
+														) : canApply ? (
+															<Button
+																type="button"
+																disabled={!canApply}
+																onClick={(e) => {
+																	e.stopPropagation();
+																	openApplyModal(offer);
 																}}
-																disabled={!canSendRequest}
-															/>
-															<label className="flex items-center gap-2 text-sm text-gray-700 rounded-lg border border-gray-200 bg-white px-3 py-2">
-																<input
-																	type="checkbox"
-																	checked={draft.mediationRequested}
-																	onChange={(event) =>
-																		setRequestDrafts((prev) => ({
-																			...prev,
-																			[offer._id]: {
-																				...draft,
-																				mediationRequested:
-																					event.target.checked,
-																			},
-																		}))
-																	}
-																	disabled={!canSendRequest}
-																/>
-																Potrzebuję pośrednictwa organizatora
-															</label>
-														</div>
-														<textarea
-															rows={2}
-															value={draft.message}
-															onChange={(event) =>
-																setRequestDrafts((prev) => ({
-																	...prev,
-																	[offer._id]: {
-																		...draft,
-																		message: event.target.value,
-																	},
-																}))
-															}
-															placeholder="Wiadomość do kierowcy (opcjonalnie)"
-															className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-															disabled={!canSendRequest}
-														/>
-														<button
-															type="button"
-															onClick={() => handleCreateRequest(offer._id)}
-															disabled={!canSendRequest}
-															className="px-4 py-2 rounded-full text-sm font-semibold bg-[var(--color-primary)] text-white disabled:opacity-60"
-														>
-															Wyślij zgłoszenie
-														</button>
-														{carpoolData.hasPendingRequest && (
-															<p className="text-xs text-amber-600">
-																Masz już jedno oczekujące zgłoszenie. Najpierw
-																poczekaj na decyzję lub je anuluj.
+																className="w-full rounded-full bg-[var(--color-primary)] text-white hover:opacity-90 disabled:opacity-50"
+															>
+																Zgłoś się
+															</Button>
+														) : (
+															<p className="text-xs text-muted-foreground">
+																{hasActiveRequest
+																	? "Masz już aktywne zgłoszenie do innej oferty."
+																	: "Ta oferta jest obecnie niedostępna."}
 															</p>
 														)}
 													</div>
-												)}
-											</div>
-										);
-									})}
+												</button>
+											);
+										})}
+									</div>
 								</div>
 							)}
 						</div>
 					)}
 				</div>
-
-				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
-					<h4 className="text-xl font-bold text-foreground">Moje zgłoszenia</h4>
-					{carpoolData.myRequests.length === 0 ? (
-						<p className="text-muted-foreground">Brak wysłanych zgłoszeń.</p>
-					) : (
-						<ul className="space-y-3">
-							{carpoolData.myRequests.map((request) => (
-								<li
-									key={request._id}
-									className="rounded-xl bg-[var(--color-background-light)] p-4"
-								>
-									<p className="font-semibold text-foreground">
-										{request.driverDisplayName}:{" "}
-										{formatRoute(
-											request.offer.pickupPoint,
-											request.offer.dropoffPoint,
-										)}
-									</p>
-									<p className="text-sm text-muted-foreground mt-1">
-										Odjazd: {formatDateTime(request.offer.departureDateTime)} |
-										miejsca: {request.seatsRequested} | status:{" "}
-										{STATUS_LABELS[request.status]}
-									</p>
-									{request.mediationRequested &&
-										!request.mediationResolvedAt && (
-											<p className="text-xs text-amber-600 mt-1">
-												Zgłoszono potrzebę pośrednictwa organizatora.
-											</p>
-										)}
-									{(request.status === "pending" ||
-										request.status === "accepted") && (
-										<button
-											type="button"
-											onClick={() => handleCancelRequest(request._id)}
-											disabled={!canMutate}
-											className="mt-2 px-4 py-2 rounded-full text-sm font-semibold border border-red-300 text-red-600 disabled:opacity-60"
-										>
-											Anuluj zgłoszenie
-										</button>
-									)}
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
 			</div>
 
-			<Dialog.Root
+			{/* Apply Modal */}
+			<DialogPrimitive.Root
+				open={Boolean(selectedApplyOffer)}
+				onOpenChange={(open) => {
+					if (!open) closeApplyModal();
+				}}
+			>
+				<DialogPrimitive.Portal>
+					<DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+					<DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg">
+						{selectedApplyOffer && (
+							<>
+								<div className="flex flex-col space-y-1.5 text-center sm:text-left">
+									<h2 className="text-lg font-semibold leading-none tracking-tight">
+										Zgłoś się do przejazdu
+									</h2>
+									<p className="text-sm text-muted-foreground">
+										Kierowca: {selectedApplyOffer.driverDisplayName}
+									</p>
+								</div>
+
+								<div className="grid gap-4 py-4">
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div className="space-y-2">
+											<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+												Liczba miejsc
+											</label>
+											<Input
+												type="number"
+												min={1}
+												max={Math.min(
+													passengerSeatLimit,
+													selectedApplyOffer.seatsAvailable,
+												)}
+												value={applyRequestDraft.seatsRequested}
+												onChange={(e) =>
+													setApplyRequestDraft((prev) => ({
+														...prev,
+														seatsRequested: Number(e.target.value),
+													}))
+												}
+											/>
+										</div>
+										<div className="flex items-center space-x-2 pt-6">
+											<Checkbox
+												id={mediationCheckboxId}
+												checked={applyRequestDraft.mediationRequested}
+												onCheckedChange={(checked) =>
+													setApplyRequestDraft((prev) => ({
+														...prev,
+														mediationRequested: checked as boolean,
+													}))
+												}
+											/>
+											<label
+												htmlFor="mediation"
+												className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+											>
+												Potrzebuję pomocy
+											</label>
+										</div>
+									</div>
+									<div className="space-y-2">
+										<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+											Wiadomość do kierowcy (opcjonalnie)
+										</label>
+										<textarea
+											className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+											value={applyRequestDraft.message}
+											onChange={(e) =>
+												setApplyRequestDraft((prev) => ({
+													...prev,
+													message: e.target.value,
+												}))
+											}
+										/>
+									</div>
+								</div>
+
+								<div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+									<Button
+										type="button"
+										onClick={closeApplyModal}
+										variant="outline"
+										className="mt-2 sm:mt-0"
+									>
+										Anuluj
+									</Button>
+									<Button
+										type="button"
+										onClick={handleCreateRequest}
+										className="bg-[var(--color-primary)] text-white hover:opacity-90"
+									>
+										Wyślij zgłoszenie
+									</Button>
+								</div>
+								<DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+									<X className="h-4 w-4" />
+									<span className="sr-only">Close</span>
+								</DialogPrimitive.Close>
+							</>
+						)}
+					</DialogPrimitive.Content>
+				</DialogPrimitive.Portal>
+			</DialogPrimitive.Root>
+
+			<DialogPrimitive.Root
 				open={isOfferModalOpen}
 				onOpenChange={handleOfferModalOpenChange}
 			>
-				<Dialog.Portal>
-					<Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-					<Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(720px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-white p-6 shadow-2xl">
-						<Dialog.Title className="text-xl font-bold text-foreground">
-							{offerModalMode === "create"
-								? "Dodaj ogłoszenie"
-								: "Edytuj ogłoszenie"}
-						</Dialog.Title>
-						<Dialog.Description className="text-sm text-muted-foreground mt-1">
-							Podaj szczegóły przejazdu. Skąd i dokąd są opcjonalne.
-						</Dialog.Description>
+				<DialogPrimitive.Portal>
+					<DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+					<DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg">
+						<div className="flex flex-col space-y-1.5 text-center sm:text-left">
+							<h2 className="text-lg font-semibold leading-none tracking-tight">
+								{offerModalMode === "create"
+									? "Dodaj ogłoszenie"
+									: "Edytuj ogłoszenie"}
+							</h2>
+							<p className="text-sm text-muted-foreground">
+								Szczegóły przejazdu.
+							</p>
+						</div>
 
-						<div className="mt-5 space-y-4">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-								<div className="space-y-1">
+						<div className="my-4 space-y-4">
+							<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-2">
 									<label
-										htmlFor={OFFER_PICKUP_INPUT_ID}
-										className="text-sm font-medium text-foreground"
+										htmlFor="pickup"
+										className="text-sm font-medium leading-none"
 									>
-										Skąd (opcjonalnie)
+										Skąd
 									</label>
 									<Input
-										id={OFFER_PICKUP_INPUT_ID}
+										id="pickup"
+										placeholder="np. Lotnisko Chania"
 										value={offerDraft.pickupPoint}
-										onChange={(event) =>
+										onChange={(e) =>
 											setOfferDraft((prev) => ({
 												...prev,
-												pickupPoint: event.target.value,
+												pickupPoint: e.target.value,
 											}))
 										}
-										placeholder="np. lotnisko Chania"
-										disabled={!canMutate}
-										className="h-11"
 									/>
 								</div>
-								<div className="space-y-1">
+								<div className="space-y-2">
 									<label
-										htmlFor={OFFER_DROPOFF_INPUT_ID}
-										className="text-sm font-medium text-foreground"
+										htmlFor="dropoff"
+										className="text-sm font-medium leading-none"
 									>
-										Dokąd (opcjonalnie)
+										Dokąd
 									</label>
 									<Input
-										id={OFFER_DROPOFF_INPUT_ID}
+										id="dropoff"
+										placeholder="np. Hotel"
 										value={offerDraft.dropoffPoint}
-										onChange={(event) =>
+										onChange={(e) =>
 											setOfferDraft((prev) => ({
 												...prev,
-												dropoffPoint: event.target.value,
+												dropoffPoint: e.target.value,
 											}))
 										}
-										placeholder="np. Lefka Ori Hotel"
-										disabled={!canMutate}
-										className="h-11"
 									/>
 								</div>
 							</div>
-
-							<div className="space-y-1">
-								<label
-									htmlFor={OFFER_DEPARTURE_DATE_ID}
-									className="text-sm font-medium text-foreground"
-								>
-									Kiedy jedziesz?
-								</label>
-								<div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_160px] gap-3">
+							<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<label className="text-sm font-medium leading-none">
+										Data
+									</label>
 									<DatePicker
-										id={OFFER_DEPARTURE_DATE_ID}
 										value={offerDate}
 										onChange={setOfferDate}
-										placeholder="Wybierz datę"
-										disabled={!canMutate}
-										className="h-11 rounded-xl border-gray-200 bg-gray-50 px-4"
+										className="w-full"
 									/>
+								</div>
+								<div className="space-y-2">
+									<label
+										htmlFor="time"
+										className="text-sm font-medium leading-none"
+									>
+										Godzina
+									</label>
 									<Input
+										id="time"
 										type="time"
 										value={offerTime}
-										onChange={(event) => setOfferTime(event.target.value)}
-										disabled={!canMutate}
-										className="h-11 rounded-xl border-gray-200 bg-gray-50 px-4"
+										onChange={(e) => setOfferTime(e.target.value)}
 									/>
 								</div>
 							</div>
-
-							<div className="space-y-1">
+							<div className="space-y-2">
 								<label
-									htmlFor={OFFER_SEATS_INPUT_ID}
-									className="text-sm font-medium text-foreground"
+									htmlFor="seats"
+									className="text-sm font-medium leading-none"
 								>
 									Liczba miejsc
 								</label>
 								<Input
-									id={OFFER_SEATS_INPUT_ID}
+									id="seats"
 									type="number"
 									min={1}
+									max={8}
 									value={offerDraft.seatsTotal}
-									onChange={(event) =>
+									onChange={(e) =>
 										setOfferDraft((prev) => ({
 											...prev,
-											seatsTotal: event.target.value,
+											seatsTotal: e.target.value,
 										}))
 									}
-									disabled={!canMutate}
-									className="h-11"
 								/>
 							</div>
-
-							<div className="space-y-1">
+							<div className="space-y-2">
 								<label
-									htmlFor={OFFER_NOTES_INPUT_ID}
-									className="text-sm font-medium text-foreground"
+									htmlFor="notes"
+									className="text-sm font-medium leading-none"
 								>
-									Dodatkowe informacje (opcjonalnie)
+									Notatki
 								</label>
 								<textarea
-									id={OFFER_NOTES_INPUT_ID}
-									rows={3}
+									id="notes"
+									className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+									placeholder="Dodatkowe informacje..."
 									value={offerDraft.notes}
-									onChange={(event) =>
+									onChange={(e) =>
 										setOfferDraft((prev) => ({
 											...prev,
-											notes: event.target.value,
+											notes: e.target.value,
 										}))
 									}
-									placeholder="Np. mogę podjechać pod inny hotel"
-									className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm"
-									disabled={!canMutate}
 								/>
 							</div>
 						</div>
 
-						<div className="mt-6 flex flex-wrap justify-end gap-2">
-							<button
+						<div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+							<Button
 								type="button"
+								variant="outline"
 								onClick={() => handleOfferModalOpenChange(false)}
-								className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 text-gray-700"
+								className="mt-2 sm:mt-0"
 							>
 								Anuluj
-							</button>
-							<button
+							</Button>
+							<Button
 								type="button"
 								onClick={handleSubmitOffer}
-								disabled={
-									!canMutate || (offerModalMode === "create" && !canCreateOffer)
-								}
-								className="px-4 py-2 rounded-full text-sm font-semibold bg-[var(--color-primary)] text-white disabled:opacity-60"
+								className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90"
 							>
-								{offerModalMode === "create" ? "Dodaj ogłoszenie" : "Zapisz"}
-							</button>
+								Zapisz
+							</Button>
 						</div>
-					</Dialog.Content>
-				</Dialog.Portal>
-			</Dialog.Root>
+						<DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+							<X className="h-4 w-4" />
+							<span className="sr-only">Close</span>
+						</DialogPrimitive.Close>
+					</DialogPrimitive.Content>
+				</DialogPrimitive.Portal>
+			</DialogPrimitive.Root>
 		</>
 	);
 }
 
-function formatDateTime(value?: string) {
-	if (!value) return "-";
-	const [datePart, timePart] = value.split("T");
-	if (!datePart) return value;
-	const [year, month, day] = datePart.split("-").map(Number);
-	if (!year || !month || !day) return value;
-	const formattedDate = new Intl.DateTimeFormat("pl-PL", {
-		day: "2-digit",
-		month: "2-digit",
-		year: "numeric",
-	}).format(new Date(year, month - 1, day));
-	return timePart ? `${formattedDate} ${timePart}` : formattedDate;
+function formatRoute(
+	pickup: string | null | undefined,
+	dropoff: string | null | undefined,
+) {
+	const p = pickup?.trim() || "Start";
+	const d = dropoff?.trim() || "Cel";
+	return `${p} ➝ ${d}`;
 }
 
-function formatRoute(pickupPoint?: string, dropoffPoint?: string) {
-	const pickup = pickupPoint?.trim();
-	const dropoff = dropoffPoint?.trim();
-	if (pickup && dropoff) return `${pickup} -> ${dropoff}`;
-	if (pickup) return `Start: ${pickup}`;
-	if (dropoff) return `Cel: ${dropoff}`;
-	return "Trasa do ustalenia";
+function formatDateTime(iso: string | null | undefined) {
+	if (!iso) return "-";
+	try {
+		const date = new Date(iso);
+		return date.toLocaleString("pl-PL", {
+			day: "numeric",
+			month: "short",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	} catch {
+		return iso;
+	}
 }

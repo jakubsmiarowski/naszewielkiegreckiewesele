@@ -250,7 +250,15 @@ input:focus, select:focus, textarea:focus {
 }
 
 @layer base {
+  *,
+  ::before,
+  ::after {
+    @apply border-border;
+  }
+
   body {
     letter-spacing: var(--tracking-normal);
   }
+}
+@layer utilities {
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { buildLocalDateTime, parseLocalDateTime } from "@/lib/date-time";
@@ -42,13 +43,13 @@ export function DeadlinesSection({
 					onChange={onCarpoolDeadlineChange}
 				/>
 			</div>
-			<button
+			<Button
 				type="button"
 				onClick={onSave}
-				className="mt-4 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white font-semibold"
+				className="mt-4 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary)]/90 h-auto"
 			>
 				Zapisz terminy
-			</button>
+			</Button>
 		</div>
 	);
 }

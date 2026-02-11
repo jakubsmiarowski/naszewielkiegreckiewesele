@@ -1,9 +1,4 @@
-import { useLocation } from "@tanstack/react-router";
-
 export function DashboardFooter() {
-	const location = useLocation();
-	const isLandingPage = location.pathname === "/";
-
 	return (
 		<footer className="bg-background-light py-20 px-6">
 			<div className="max-w-4xl mx-auto flex flex-col items-center gap-10 text-center">

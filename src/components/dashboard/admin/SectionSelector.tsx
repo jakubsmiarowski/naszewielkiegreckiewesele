@@ -51,14 +51,14 @@ export function SectionSelector({
 							{sections.map((section) => {
 								const isActive = section.id === activeSection;
 								return (
-									<button
+									<Button
 										key={section.id}
-										type="button"
+										variant="ghost"
 										onClick={() => {
 											onSelect(section.id);
 											setIsOpen(false);
 										}}
-										className={`flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2 text-left transition ${
+										className={`flex w-full items-start justify-between gap-3 rounded-lg px-3 py-2 text-left transition h-auto font-normal ${
 											isActive
 												? "bg-[var(--color-primary)]/10"
 												: "hover:bg-muted/70"
@@ -81,7 +81,7 @@ export function SectionSelector({
 													{section.pendingCount}
 												</Badge>
 											)}
-									</button>
+									</Button>
 								);
 							})}
 						</div>

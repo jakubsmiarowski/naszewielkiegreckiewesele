@@ -1,6 +1,4 @@
-import { Link } from "@tanstack/react-router";
-import { Heart, Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
 
 export function DashboardHeader() {
 	return (
@@ -13,32 +11,6 @@ export function DashboardHeader() {
 					Kamila & Kuba
 				</h2>
 			</div>
-			{/* Desktop Menu */}
-			<div className="hidden lg:flex flex-1 justify-end gap-8">
-				<div className="flex items-center gap-9">
-					<Link
-						to="/"
-						className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium leading-normal"
-					>
-						Strona Główna
-					</Link>
-					<Link
-						to="/dashboard"
-						className="text-primary text-sm font-bold leading-normal"
-					>
-						Dashboard
-					</Link>
-				</div>
-				<Button className="rounded-full px-6 font-bold" size="default" asChild>
-					<Link to="/dashboard">
-						<span className="truncate">Przejdź do dashboardu</span>
-					</Link>
-				</Button>
-			</div>
-			{/* Mobile Menu Icon */}
-			<Button variant="ghost" size="icon" className="lg:hidden text-foreground">
-				<Menu className="size-6" />
-			</Button>
 		</header>
 	);
 }

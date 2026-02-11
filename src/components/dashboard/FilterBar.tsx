@@ -42,16 +42,16 @@ export function FilterBar({
 	activeFilter,
 	onSelect,
 	badges,
-	carpoolDriverOptIn,
+	showCarpoolTab,
 }: {
 	filtersOverride?: string[];
 	activeFilter?: string;
 	onSelect?: (value: string) => void;
 	badges?: Partial<Record<string, number>>;
-	carpoolDriverOptIn?: boolean;
+	showCarpoolTab?: boolean;
 }) {
 	const items = (filtersOverride ?? filters).filter(
-		(item) => item !== "Car Pool" || carpoolDriverOptIn,
+		(item) => item !== "Car Pool" || showCarpoolTab,
 	);
 	const [open, setOpen] = useState(false);
 
@@ -60,7 +60,7 @@ export function FilterBar({
 	return (
 		<>
 			{/* Mobile View - Popover */}
-			<div className="md:hidden w-full pb-4">
+			<div className="md:hidden w-full">
 				<Popover open={open} onOpenChange={setOpen}>
 					<PopoverTrigger asChild>
 						<Button

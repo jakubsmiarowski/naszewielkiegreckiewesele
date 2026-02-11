@@ -161,15 +161,20 @@ function InfoLogisticsTemplate() {
 							<li>Zabranie się z kimś z innych gości.</li>
 						</ul>
 					</div>
-					<div>
-						<h4 className="text-sm font-semibold uppercase tracking-widest text-foreground">
-							Hotel
-						</h4>
-						<p className="mt-2">
-							Noclegi planujemy w dwóch pensjonatach. W jednym z nich znajduje
-							się restauracja, w której odbędzie się wesele.
-						</p>
-					</div>
+						<div>
+							<h4 className="text-sm font-semibold uppercase tracking-widest text-foreground">
+								Hotel
+							</h4>
+							<p className="mt-2">
+								Noclegi planujemy w dwóch pensjonatach. W jednym z nich znajduje
+								się restauracja, w której odbędzie się wesele.
+							</p>
+							<p className="mt-2">
+								Jeśli planujesz przylot wcześniej lub wylot później i
+								potrzebujesz wsparcia z rezerwacją dodatkowych noclegów, zaznacz
+								to w formularzu RSVP.
+							</p>
+						</div>
 					<div>
 						<h4 className="text-sm font-semibold uppercase tracking-widest text-foreground">
 							Koszty

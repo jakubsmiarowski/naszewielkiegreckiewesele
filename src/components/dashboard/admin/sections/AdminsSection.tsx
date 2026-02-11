@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AdminUserRecord } from "../types";
 
@@ -41,16 +42,16 @@ export function AdminsSection({
 						placeholder="nowy-admin@domena.pl"
 					/>
 				</div>
-				<button
+				<Button
 					type="button"
 					onClick={onAddAdmin}
 					disabled={
 						Boolean(adminMutationEmail) || newAdminEmail.trim().length < 5
 					}
-					className="h-9 rounded-full bg-[var(--color-primary)] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+					className="h-9 rounded-full bg-[var(--color-primary)] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70 hover:bg-[var(--color-primary)]/90"
 				>
 					Dodaj admina
-				</button>
+				</Button>
 			</div>
 
 			<div className="mt-5 space-y-2">
@@ -72,14 +73,16 @@ export function AdminsSection({
 									Status: {admin.isActive ? "aktywny" : "nieaktywny"}
 								</p>
 							</div>
-							<button
+							<Button
 								type="button"
+								variant="outline"
+								size="sm"
 								onClick={() => onSetAdminStatus(admin.email, !admin.isActive)}
 								disabled={adminMutationEmail === admin.email}
-								className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+								className={`rounded-full px-3 py-1.5 text-xs font-semibold transition h-auto ${
 									admin.isActive
-										? "border border-red-300 text-red-700 hover:bg-red-50"
-										: "border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+										? "border border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800"
+										: "border border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
 								} disabled:cursor-not-allowed disabled:opacity-70`}
 							>
 								{adminMutationEmail === admin.email
@@ -87,7 +90,7 @@ export function AdminsSection({
 									: admin.isActive
 										? "Dezaktywuj"
 										: "Przywróć"}
-							</button>
+							</Button>
 						</div>
 					))
 				)}

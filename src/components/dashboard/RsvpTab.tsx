@@ -9,8 +9,14 @@ import {
 	type RsvpCarpoolSuggestion,
 	RsvpForm,
 } from "@/components/rsvp/RsvpForm";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { formatLocalDate } from "@/lib/date-time";
+import {
+	calculateRequestedCarpoolSeats,
+	formatCarpoolRequestError,
+	formatSeatCount,
+} from "@/lib/rsvp-carpool";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -164,12 +170,16 @@ export function RsvpTab({
 				transport: invitation.transport ?? "own",
 				carpoolDriverOptIn: invitation.carpoolDriverOptIn ? "yes" : "no",
 				arrivalDateTime: invitation.arrivalDateTime ?? "",
+				departureDateTime: invitation.departureDateTime ?? "",
 				message: invitation.message ?? "",
 				plusOneName: invitation.plusOneName ?? "",
 				plusOneAttendance: invitation.plusOneAttendance,
 				childrenCount: invitation.childrenCount ?? 0,
 				childrenSleepOption: invitation.childrenSleepOption,
 				accommodationType: invitation.accommodationType,
+				needsExtraNightsHelp: invitation.needsExtraNightsHelp ?? false,
+				extraNightsFromDate: invitation.extraNightsFromDate ?? "",
+				extraNightsToDate: invitation.extraNightsToDate ?? "",
 			}
 		: undefined;
 
@@ -188,6 +198,8 @@ export function RsvpTab({
 		const hasAtLeastOneAttending = Object.values(
 			normalizedGuestAttendances,
 		).some((attendance) => attendance === "yes");
+		const canUseExtraNightsHelp =
+			hasAtLeastOneAttending && data.accommodationType === "hostProvided";
 		const normalizedChildrenCount = hasAtLeastOneAttending
 			? normalizeChildrenCount(data.childrenCount)
 			: 0;
@@ -223,6 +235,21 @@ export function RsvpTab({
 			try {
 				await updateRsvp({
 					...legacyCompatiblePayload,
+					departureDateTime:
+						hasAtLeastOneAttending && data.departureDateTime
+							? data.departureDateTime
+							: undefined,
+					needsExtraNightsHelp: canUseExtraNightsHelp
+						? data.needsExtraNightsHelp
+						: false,
+					extraNightsFromDate:
+						canUseExtraNightsHelp && data.needsExtraNightsHelp
+							? data.extraNightsFromDate
+							: undefined,
+					extraNightsToDate:
+						canUseExtraNightsHelp && data.needsExtraNightsHelp
+							? data.extraNightsToDate
+							: undefined,
 					childrenCount: hasAtLeastOneAttending
 						? normalizedChildrenCount
 						: undefined,
@@ -255,6 +282,12 @@ export function RsvpTab({
 				data.transport === "bus" &&
 				data.selectedCarpoolOfferId
 			) {
+				const requestedSeats = calculateRequestedCarpoolSeats({
+					guestAttendances: normalizedGuestAttendances,
+					hasPlusOne: invitation.hasPlusOne,
+					plusOneAttendance: data.plusOneAttendance,
+					childrenCount: normalizedChildrenCount,
+				});
 				const selectedOffer = carpoolData?.openOffers.find(
 					(offer) =>
 						offer._id === data.selectedCarpoolOfferId &&
@@ -265,24 +298,24 @@ export function RsvpTab({
 				} else if (!selectedOffer) {
 					carpoolRequestError =
 						"Wybrana oferta car pool nie jest już dostępna.";
+				} else if (selectedOffer.seatsAvailable < requestedSeats) {
+					carpoolRequestError = `Wybrana oferta ma ${formatSeatCount(selectedOffer.seatsAvailable)}, a Twoja grupa potrzebuje ${formatSeatCount(requestedSeats)}. Wybierz inną ofertę car pool.`;
 				} else {
 					try {
 						await createCarpoolRequest({
 							invitationId: invitation._id as Id<"invitations">,
 							offerId: selectedOffer._id as Id<"carpoolOffers">,
-							seatsRequested: calculateRequestedCarpoolSeats({
-								guestAttendances: normalizedGuestAttendances,
-								hasPlusOne: invitation.hasPlusOne,
-								plusOneAttendance: data.plusOneAttendance,
-								childrenCount: normalizedChildrenCount,
-							}),
+							seatsRequested: requestedSeats,
 							message: "",
 							mediationRequested: false,
 						});
 						hasCarpoolRequestBeenCreated = true;
 					} catch (error) {
-						carpoolRequestError =
-							error instanceof Error ? error.message : "Spróbuj ponownie.";
+						carpoolRequestError = formatCarpoolRequestError({
+							error,
+							requestedSeats,
+							seatsAvailable: selectedOffer.seatsAvailable,
+						});
 					}
 				}
 			}
@@ -338,43 +371,72 @@ export function RsvpTab({
 						Twoja odpowiedź
 					</h3>
 					{canEdit && (
-						<button
+						<Button
 							type="button"
 							onClick={() => setIsEditing(true)}
-							className="px-4 py-2 rounded-full text-sm font-semibold bg-[var(--color-primary)] text-white shadow hover:bg-[var(--color-primary-dark)] transition"
+							className="rounded-full px-4 py-2 font-semibold shadow transition"
 						>
 							Edytuj
-						</button>
+						</Button>
 					)}
+				</div>
+
+				<div className="rounded-xl bg-[var(--color-background-light)] p-4">
+					<p className="text-xs uppercase tracking-widest text-muted-foreground">
+						Obecność
+					</p>
+					<ul className="mt-2 space-y-1.5">
+						{invitationGuests.map((guest) => {
+							const attendance = guestAttendanceMap[guest.id];
+							const isAttending = attendance === "yes";
+							return (
+								<li
+									key={guest.id}
+									className="flex items-center justify-between gap-3 text-sm"
+								>
+									<span className="text-foreground">{guest.fullName}</span>
+									<span
+										className={
+											isAttending
+												? "font-medium text-green-600"
+												: "text-muted-foreground"
+										}
+									>
+										{isAttending ? "Tak" : "-"}
+									</span>
+								</li>
+							);
+						})}
+					</ul>
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<InfoRow
-						label="Obecność"
-						value={`Tak: ${attendanceStats.confirmed} / Nie: ${attendanceStats.declined}`}
-					/>
-					<InfoRow
-						label="Brak odpowiedzi"
-						value={String(attendanceStats.pending)}
-					/>
-					<InfoRow
 						label="Transport"
-						value={invitation.transport === "bus" ? "Bus" : "Własny"}
+						value={
+							invitation.transport === "bus"
+								? "Potrzebujemy transportu"
+								: "Własny"
+						}
 					/>
 					<InfoRow
 						label="Car Pool (kierowca)"
-						value={invitation.carpoolDriverOptIn ? "Tak" : "Nie"}
+						value={invitation.carpoolDriverOptIn ? "Tak" : "-"}
 					/>
 					<InfoRow
 						label="Przylot"
 						value={formatLocalDate(invitation.arrivalDateTime) || "-"}
 					/>
 					<InfoRow
+						label="Wylot"
+						value={formatLocalDate(invitation.departureDateTime) || "-"}
+					/>
+					<InfoRow
 						label="Dzieci"
 						value={
 							(invitation.childrenCount ?? 0) > 0
 								? `Tak (${invitation.childrenCount})`
-								: "Nie"
+								: "-"
 						}
 					/>
 					{(invitation.childrenCount ?? 0) > 0 && (
@@ -387,11 +449,24 @@ export function RsvpTab({
 						label="Nocleg"
 						value={formatAccommodationType(invitation.accommodationType)}
 					/>
+					<InfoRow
+						label="Pomoc z noclegiem (dodatkowe dni)"
+						value={invitation.needsExtraNightsHelp ? "Tak" : "-"}
+					/>
+					{invitation.needsExtraNightsHelp && (
+						<InfoRow
+							label="Zakres dodatkowych noclegów"
+							value={formatExtraNightsRange(
+								invitation.extraNightsFromDate,
+								invitation.extraNightsToDate,
+							)}
+						/>
+					)}
 					{invitation.hasPlusOne && (
 						<>
 							<InfoRow
 								label="+1 obecność"
-								value={invitation.plusOneAttendance ?? "-"}
+								value={formatAttendanceValue(invitation.plusOneAttendance)}
 							/>
 							<InfoRow
 								label="+1 imię i nazwisko"
@@ -399,40 +474,6 @@ export function RsvpTab({
 							/>
 						</>
 					)}
-				</div>
-
-				<div className="rounded-xl bg-[var(--color-background-light)] p-4">
-					<p className="text-xs uppercase tracking-widest text-muted-foreground">
-						Obecność osób
-					</p>
-					<ul className="mt-2 space-y-1.5">
-						{invitationGuests.map((guest) => {
-							const attendance = guestAttendanceMap[guest.id];
-							return (
-								<li
-									key={guest.id}
-									className="flex items-center justify-between gap-3 text-sm"
-								>
-									<span className="text-foreground">{guest.fullName}</span>
-									<span
-										className={
-											attendance === "yes"
-												? "font-medium text-green-600"
-												: attendance === "no"
-													? "font-medium text-red-600"
-													: "text-muted-foreground"
-										}
-									>
-										{attendance === "yes"
-											? "Tak"
-											: attendance === "no"
-												? "Nie"
-												: "Brak odpowiedzi"}
-									</span>
-								</li>
-							);
-						})}
-					</ul>
 				</div>
 
 				{invitation.message && (
@@ -464,13 +505,14 @@ export function RsvpTab({
 								</p>
 							</div>
 							{onGoToCarpool && (
-								<button
+								<Button
 									type="button"
 									onClick={() => onGoToCarpool()}
-									className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition"
+									variant="outline"
+									className="shrink-0 rounded-full border-[var(--color-primary)] px-4 py-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
 								>
 									Pokaż oferty
-								</button>
+								</Button>
 							)}
 						</div>
 					)}
@@ -494,27 +536,28 @@ export function RsvpTab({
 									</p>
 								) : (
 									<p className="text-foreground mt-1">
-										Masz aktywną gotowość do zabierania gości. Dodaj pierwsze
-										ogłoszenie Car Pool.
+										Masz miejsca w aucie? Dodaj ogłoszenie i pomóż innym
+										dojechać na ślub.
 									</p>
 								)}
 							</div>
 							{onGoToCarpool && (
-								<button
+								<Button
 									type="button"
 									onClick={() =>
 										onGoToCarpool({
 											openCreateModal: isCarpoolDataReady && !hasMyCarpoolOffer,
 										})
 									}
-									className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition"
+									variant="outline"
+									className="shrink-0 rounded-full border-[var(--color-primary)] px-4 py-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
 								>
 									{!isCarpoolDataReady
 										? "Otwórz Car Pool"
 										: hasMyCarpoolOffer
 											? "Otwórz Car Pool"
 											: "Dodaj ogłoszenie"}
-								</button>
+								</Button>
 							)}
 						</div>
 					)}
@@ -566,22 +609,18 @@ function formatAccommodationType(
 	return "-";
 }
 
-function calculateRequestedCarpoolSeats({
-	guestAttendances,
-	hasPlusOne,
-	plusOneAttendance,
-	childrenCount,
-}: {
-	guestAttendances: Record<string, "yes" | "no">;
-	hasPlusOne: boolean;
-	plusOneAttendance: "yes" | "no" | undefined;
-	childrenCount: number;
-}) {
-	const guestsCount = Object.values(guestAttendances).filter(
-		(attendance) => attendance === "yes",
-	).length;
-	const plusOneCount = hasPlusOne && plusOneAttendance === "yes" ? 1 : 0;
-	return Math.max(1, guestsCount + plusOneCount + childrenCount);
+function formatExtraNightsRange(fromDate?: string, toDate?: string): string {
+	if (!fromDate && !toDate) return "-";
+	if (fromDate && toDate) {
+		const from = formatLocalDate(fromDate);
+		const to = formatLocalDate(toDate);
+		return from === to ? from : `${from} - ${to}`;
+	}
+	return formatLocalDate(fromDate ?? toDate) || "-";
+}
+
+function formatAttendanceValue(value: "yes" | "no" | undefined): string {
+	return value === "yes" ? "Tak" : "-";
 }
 
 function isLegacyRsvpValidatorError(error: unknown) {
@@ -590,6 +629,10 @@ function isLegacyRsvpValidatorError(error: unknown) {
 	return (
 		message.includes("extra field `accommodationType`") ||
 		message.includes("extra field `childrenCount`") ||
-		message.includes("extra field `childrenSleepOption`")
+		message.includes("extra field `childrenSleepOption`") ||
+		message.includes("extra field `departureDateTime`") ||
+		message.includes("extra field `needsExtraNightsHelp`") ||
+		message.includes("extra field `extraNightsFromDate`") ||
+		message.includes("extra field `extraNightsToDate`")
 	);
 }

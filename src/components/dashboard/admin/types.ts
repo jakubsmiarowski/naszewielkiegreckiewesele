@@ -15,6 +15,7 @@ export type AdminSectionId =
 	| "carpool"
 	| "qa"
 	| "arrivals"
+	| "departures"
 	| "invitations";
 
 export interface AdminSectionMeta {

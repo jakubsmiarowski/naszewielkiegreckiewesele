@@ -1,4 +1,12 @@
 import type { AdminInvitation } from "@/components/dashboard/types";
+import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { formatLocalDate } from "@/lib/date-time";
 import { RELATION_OPTIONS } from "@/lib/greetings";
 import { getInvitationAttendanceStats } from "../helpers";
@@ -23,13 +31,13 @@ export function InvitationsSection({
 					<p className="text-muted-foreground">
 						Brak zaproszeń w bazie. Możesz je teraz załadować z listy.
 					</p>
-					<button
+					<Button
 						type="button"
 						onClick={onSeedInvitations}
-						className="mt-4 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white font-semibold"
+						className="mt-4 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary)]/90 h-auto"
 					>
 						Załaduj zaproszenia
-					</button>
+					</Button>
 				</div>
 			)}
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm overflow-x-auto">
@@ -49,6 +57,7 @@ export function InvitationsSection({
 								<th className="py-2 pr-4">RSVP</th>
 								<th className="py-2 pr-4">Transport</th>
 								<th className="py-2 pr-4">Przylot</th>
+								<th className="py-2 pr-4">Wylot</th>
 								<th className="py-2 pr-4">Dzieci</th>
 								<th className="py-2 pr-4">Nocleg</th>
 								<th className="py-2 pr-4">+1</th>
@@ -109,22 +118,26 @@ export function InvitationsSection({
 											<div className="space-y-2">
 												{invitation.guests.map((guest) => (
 													<div key={guest._id}>
-														<select
+														<Select
 															value={guest.relation ?? ""}
-															onChange={(event) =>
-																onRelationChange(
-																	guest._id,
-																	event.target.value || undefined,
-																)
+															onValueChange={(val) =>
+																onRelationChange(guest._id, val || undefined)
 															}
-															className="text-xs rounded-md border border-gray-200 bg-white px-2 py-1.5 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all w-32"
 														>
-															{RELATION_OPTIONS.map((option) => (
-																<option key={option.value} value={option.value}>
-																	{option.label}
-																</option>
-															))}
-														</select>
+															<SelectTrigger className="text-xs rounded-md border border-gray-200 bg-white px-2 py-1.5 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all w-32 h-auto min-h-[unset]">
+																<SelectValue />
+															</SelectTrigger>
+															<SelectContent>
+																{RELATION_OPTIONS.map((option) => (
+																	<SelectItem
+																		key={option.value}
+																		value={option.value}
+																	>
+																		{option.label}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
 													</div>
 												))}
 											</div>
@@ -135,14 +148,14 @@ export function InvitationsSection({
 											</code>
 										</td>
 										<td className="py-4 pr-4">
-											<button
-												type="button"
+											<Button
+												variant="link"
 												onClick={() => onCopyInvitationLink(invitation.qrToken)}
-												className="text-xs font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline flex items-center gap-1"
+												className="text-xs font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline flex items-center gap-1 p-0 h-auto"
 											>
 												<span className="i-lucide-link h-3 w-3" />
 												Kopiuj link
-											</button>
+											</Button>
 										</td>
 										<td className="py-4 pr-4">
 											<div className="flex flex-col gap-0.5">
@@ -174,6 +187,9 @@ export function InvitationsSection({
 										<td className="py-4 pr-4 text-sm text-foreground whitespace-nowrap">
 											{formatLocalDate(invitation.arrivalDateTime) || "-"}
 										</td>
+										<td className="py-4 pr-4 text-sm text-foreground whitespace-nowrap">
+											{formatLocalDate(invitation.departureDateTime) || "-"}
+										</td>
 										<td className="py-4 pr-4 text-sm text-foreground">
 											{formatChildrenSummary(
 												invitation.childrenCount,
@@ -181,7 +197,12 @@ export function InvitationsSection({
 											)}
 										</td>
 										<td className="py-4 pr-4 text-sm text-foreground">
-											{formatAccommodationType(invitation.accommodationType)}
+											{formatAccommodationType(
+												invitation.accommodationType,
+												invitation.needsExtraNightsHelp,
+												invitation.extraNightsFromDate,
+												invitation.extraNightsToDate,
+											)}
 										</td>
 										<td className="py-4 pr-4 text-sm text-foreground">
 											<div className="flex flex-col">
@@ -239,8 +260,30 @@ function formatChildrenSummary(
 
 function formatAccommodationType(
 	value: "hostProvided" | "selfArranged" | undefined,
+	needsExtraNightsHelp: boolean | undefined,
+	extraNightsFromDate?: string,
+	extraNightsToDate?: string,
 ) {
-	if (value === "hostProvided") return "Od nas";
-	if (value === "selfArranged") return "Własny zakres";
-	return "-";
+	const base =
+		value === "hostProvided"
+			? "Od nas"
+			: value === "selfArranged"
+				? "Własny zakres"
+				: "-";
+	if (!needsExtraNightsHelp) return base;
+	const from = formatLocalDate(extraNightsFromDate);
+	const to = formatLocalDate(extraNightsToDate);
+	const range =
+		from && to
+			? from === to
+				? from
+				: `${from} - ${to}`
+			: from || to || undefined;
+	return base === "-"
+		? range
+			? `Pomoc: ${range}`
+			: "Pomoc: dodatkowe dni"
+		: range
+			? `${base} + pomoc: ${range}`
+			: `${base} + pomoc: dodatkowe dni`;
 }
