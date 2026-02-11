@@ -14,13 +14,31 @@ import { getInvitationAttendanceStats } from "../helpers";
 interface InvitationsSectionProps {
 	invitations: AdminInvitation[];
 	onSeedInvitations: () => void;
+	onResetRsvpForAllInvitations?: () => void;
+	showResetRsvpForAllButton?: boolean;
+	isResettingRsvpForAll?: boolean;
 	onRelationChange: (guestId: string, relation: string | undefined) => void;
 	onCopyInvitationLink: (token: string) => void;
+}
+
+export const EMPTY_RELATION_SELECT_VALUE = "__none__";
+
+export function toRelationSelectValue(relation: string | undefined) {
+	return relation && relation.length > 0
+		? relation
+		: EMPTY_RELATION_SELECT_VALUE;
+}
+
+export function fromRelationSelectValue(value: string) {
+	return value === EMPTY_RELATION_SELECT_VALUE ? undefined : value;
 }
 
 export function InvitationsSection({
 	invitations,
 	onSeedInvitations,
+	onResetRsvpForAllInvitations,
+	showResetRsvpForAllButton = false,
+	isResettingRsvpForAll = false,
 	onRelationChange,
 	onCopyInvitationLink,
 }: InvitationsSectionProps) {
@@ -41,7 +59,22 @@ export function InvitationsSection({
 				</div>
 			)}
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm overflow-x-auto">
-				<h3 className="text-xl font-bold text-foreground mb-4">Zaproszenia</h3>
+				<div className="mb-4 flex items-center justify-between gap-3">
+					<h3 className="text-xl font-bold text-foreground">Zaproszenia</h3>
+					{showResetRsvpForAllButton && onResetRsvpForAllInvitations && (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onResetRsvpForAllInvitations}
+							disabled={isResettingRsvpForAll}
+							className="h-auto rounded-full border-red-200 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 hover:text-red-800"
+						>
+							{isResettingRsvpForAll
+								? "Resetowanie RSVP..."
+								: "Reset RSVP (dev)"}
+						</Button>
+					)}
+				</div>
 				{invitations.length === 0 ? (
 					<p className="text-sm text-muted-foreground">
 						Brak zaproszeń do wyświetlenia.
@@ -119,9 +152,12 @@ export function InvitationsSection({
 												{invitation.guests.map((guest) => (
 													<div key={guest._id}>
 														<Select
-															value={guest.relation ?? ""}
-															onValueChange={(val) =>
-																onRelationChange(guest._id, val || undefined)
+															value={toRelationSelectValue(guest.relation)}
+															onValueChange={(value) =>
+																onRelationChange(
+																	guest._id,
+																	fromRelationSelectValue(value),
+																)
 															}
 														>
 															<SelectTrigger className="text-xs rounded-md border border-gray-200 bg-white px-2 py-1.5 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all w-32 h-auto min-h-[unset]">
@@ -130,8 +166,14 @@ export function InvitationsSection({
 															<SelectContent>
 																{RELATION_OPTIONS.map((option) => (
 																	<SelectItem
-																		key={option.value}
-																		value={option.value}
+																		key={
+																			option.value ||
+																			EMPTY_RELATION_SELECT_VALUE
+																		}
+																		value={
+																			option.value ||
+																			EMPTY_RELATION_SELECT_VALUE
+																		}
 																	>
 																		{option.label}
 																	</SelectItem>

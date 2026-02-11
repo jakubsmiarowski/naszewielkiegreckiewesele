@@ -43,6 +43,9 @@ export function AdminTab({
 	const updateRelation = useMutation(api.guests.updateGuestRelation);
 	const updateSettings = useMutation(api.settings.updateRsvpSettings);
 	const seedInvitations = useMutation(api.invitations.seedInvitations);
+	const resetRsvpForAllInvitations = useMutation(
+		api.invitations.resetRsvpForAllInvitations,
+	);
 	const resolveMediationAlert = useMutation(api.carpool.resolveMediationAlert);
 	const answerQuestion = useMutation(api.questions.answerQuestion);
 	const addAdmin = useMutation(api.adminUsers.addAdmin);
@@ -66,12 +69,14 @@ export function AdminTab({
 	const [adminMutationEmail, setAdminMutationEmail] = useState<string | null>(
 		null,
 	);
+	const [isResettingRsvpData, setIsResettingRsvpData] = useState(false);
 	const [savingQuestionId, setSavingQuestionId] = useState<string | null>(null);
 	const [expandedAnsweredIds, setExpandedAnsweredIds] = useState<
 		Record<string, boolean>
 	>({});
 	const [activeSection, setActiveSection] = useState<AdminSectionId>("admins");
 	const newAdminEmailId = useId();
+	const isDevelopment = import.meta.env.DEV;
 
 	useEffect(() => {
 		if (settings?.rsvpDeadline) {
@@ -305,6 +310,36 @@ export function AdminTab({
 		}
 	};
 
+	const handleResetRsvpForAllInvitations = async () => {
+		if (!adminAccessToken || !isDevelopment || isResettingRsvpData) return;
+		if (
+			typeof window !== "undefined" &&
+			!window.confirm(
+				"To wyczyści wszystkie odpowiedzi RSVP i pola logistyczne dla każdego zaproszenia. Kontynuować?",
+			)
+		) {
+			return;
+		}
+
+		try {
+			setIsResettingRsvpData(true);
+			const resetCount = await resetRsvpForAllInvitations({ adminAccessToken });
+			toast({
+				variant: "success",
+				title: "Dane RSVP zresetowane",
+				description: `Przywrócono ${resetCount} zaproszeń do stanu początkowego RSVP.`,
+			});
+		} catch (_error) {
+			toast({
+				variant: "destructive",
+				title: "Nie udało się zresetować RSVP",
+				description: "Spróbuj ponownie za chwilę.",
+			});
+		} finally {
+			setIsResettingRsvpData(false);
+		}
+	};
+
 	const handleRelationChange = async (
 		guestId: string,
 		relation: string | undefined,
@@ -465,6 +500,9 @@ export function AdminTab({
 				<InvitationsSection
 					invitations={invitations}
 					onSeedInvitations={handleSeedInvitations}
+					onResetRsvpForAllInvitations={handleResetRsvpForAllInvitations}
+					showResetRsvpForAllButton={isDevelopment}
+					isResettingRsvpForAll={isResettingRsvpData}
 					onRelationChange={handleRelationChange}
 					onCopyInvitationLink={handleCopyInvitationLink}
 				/>

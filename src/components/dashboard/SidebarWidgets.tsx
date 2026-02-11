@@ -195,7 +195,7 @@ export function EmergencyContactsWidget() {
 							<span className="text-muted-foreground text-sm font-medium transition-colors">
 								{contact.name}
 							</span>
-							<span className="text-muted-foreground text-sm font-medium rounde-md justify-self-center">
+							<span className="text-muted-foreground text-sm font-medium rounde-md justify-self-left">
 								{contact.role.charAt(0).toUpperCase() + contact.role.slice(1)}
 							</span>
 							<span className="text-muted-foreground text-sm font-medium rounded-md justify-self-end">

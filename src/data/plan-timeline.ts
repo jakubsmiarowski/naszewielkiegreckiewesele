@@ -166,7 +166,7 @@ export const planTimelineDays: PlanDay[] = [
 				id: "sun-flight",
 				time: "10:10",
 				title: "Wylot",
-				description: "Dziękujemy, za wspolnie spedzony czas!",
+				description: "Dziękujemy, za wspólnie spędzony czas!",
 				tag: "Logistyka",
 				location: "Lotnisko Chania",
 			},

@@ -694,3 +694,48 @@ export const seedInvitations = mutation({
     return count;
   },
 });
+
+export const resetRsvpForAllInvitations = mutation({
+  args: {
+    adminAccessToken: v.string(),
+  },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const admin = await requireAdminAccess(ctx, args.adminAccessToken);
+    const invitations = await ctx.db.query("invitations").collect();
+
+    for (const invitation of invitations) {
+      await ctx.db.patch(invitation._id, {
+        plusOneName: undefined,
+        plusOneAttendance: undefined,
+        attendance: undefined,
+        guestAttendances: undefined,
+        answeredForAll: undefined,
+        answeredForName: undefined,
+        transport: undefined,
+        carpoolDriverOptIn: undefined,
+        arrivalDateTime: undefined,
+        departureDateTime: undefined,
+        childrenCount: undefined,
+        childrenSleepOption: undefined,
+        accommodationType: undefined,
+        needsExtraNightsHelp: undefined,
+        extraNightsFromDate: undefined,
+        extraNightsToDate: undefined,
+        message: undefined,
+        rsvpUpdatedAt: undefined,
+      });
+      await enforceCarpoolConsistencyAfterInvitationUpdate(ctx, invitation._id);
+    }
+
+    await writeAuditLog(ctx, {
+      action: "invitations.rsvp_reset_all",
+      actorType: "admin",
+      actorId: admin.email,
+      entityType: "invitations",
+      metadata: { count: invitations.length },
+    });
+
+    return invitations.length;
+  },
+});
