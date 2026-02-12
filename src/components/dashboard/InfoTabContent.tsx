@@ -91,12 +91,12 @@ function InfoOverview() {
 
 	return (
 		<div className="space-y-6">
-			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-6">
+			<div className="rounded-2xl border border-border bg-white p-4 shadow-sm space-y-5 sm:p-6 sm:space-y-6">
 				<div>
-					<h3 className="text-2xl font-bold text-foreground">
+					<h3 className="text-xl font-bold text-foreground sm:text-2xl">
 						Nasze Wielkie Greckie Wesele
 					</h3>
-					<p className="text-muted-foreground mt-2">
+					<p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
 						Widujemy się w Grecji od 30 września do 4 października. Główna
 						uroczystość: 1 października 2026.
 					</p>
@@ -117,7 +117,7 @@ function InfoOverview() {
 						</p>
 					</div>
 				</div>
-				<p className="text-muted-foreground">
+				<p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
 					Jeśli potrzebujesz pomocy z podróżą lub noclegiem, daj nam znać w
 					formularzu RSVP.
 				</p>
@@ -148,12 +148,14 @@ function InfoPlanTemplate({
 function InfoLogisticsTemplate() {
 	return (
 		<div className="space-y-6">
-			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
-				<h3 className="text-2xl font-bold text-foreground">Logistyka</h3>
-				<div className="space-y-4 text-muted-foreground">
+			<div className="rounded-2xl border border-border bg-white p-4 shadow-sm space-y-4 sm:p-6">
+				<h3 className="text-xl font-bold text-foreground sm:text-2xl">
+					Logistyka
+				</h3>
+				<div className="space-y-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
 					<div>
-						<h4 className="text-sm font-semibold uppercase tracking-widest text-foreground">
-							Dojazd na miejsce
+						<h4 className="text-xs font-semibold uppercase tracking-widest text-foreground sm:text-sm">
+							Środki transportu
 						</h4>
 						<ul className="mt-2 space-y-2">
 							<li>Bus z lotniska.</li>
@@ -161,20 +163,20 @@ function InfoLogisticsTemplate() {
 							<li>Zabranie się z kimś z innych gości.</li>
 						</ul>
 					</div>
-						<div>
-							<h4 className="text-sm font-semibold uppercase tracking-widest text-foreground">
-								Hotel
-							</h4>
-							<p className="mt-2">
-								Noclegi planujemy w dwóch pensjonatach. W jednym z nich znajduje
-								się restauracja, w której odbędzie się wesele.
-							</p>
-							<p className="mt-2">
-								Jeśli planujesz przylot wcześniej lub wylot później i
-								potrzebujesz wsparcia z rezerwacją dodatkowych noclegów, zaznacz
-								to w formularzu RSVP.
-							</p>
-						</div>
+					<div>
+						<h4 className="text-sm font-semibold uppercase tracking-widest text-foreground">
+							Hotel
+						</h4>
+						<p className="mt-2">
+							Noclegi planujemy w dwóch pensjonatach. W jednym z nich znajduje
+							się restauracja, w której odbędzie się wesele.
+						</p>
+						<p className="mt-2">
+							Jeśli planujesz przylot wcześniej lub wylot później i potrzebujesz
+							wsparcia z rezerwacją dodatkowych noclegów, zaznacz to w
+							formularzu RSVP.
+						</p>
+					</div>
 					<div>
 						<h4 className="text-sm font-semibold uppercase tracking-widest text-foreground">
 							Koszty
@@ -190,9 +192,16 @@ function InfoLogisticsTemplate() {
 					</div>
 				</div>
 			</div>
-			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
+			<div className="rounded-2xl border border-border bg-white p-4 shadow-sm space-y-4 sm:p-6">
 				<div>
-					<h3 className="text-xl font-bold text-foreground">Lefka Ori Hotel</h3>
+					<a
+						href={MAP_LINK_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex text-lg font-bold text-foreground hover:underline sm:text-xl"
+					>
+						Lefka Ori Hotel
+					</a>
 					<p className="text-sm text-muted-foreground mt-1">
 						Chora Sfakion, Crete
 					</p>
@@ -201,19 +210,11 @@ function InfoLogisticsTemplate() {
 					<iframe
 						title="Mapa Lefka Ori Hotel, Chora Sfakion"
 						src={MAP_EMBED_URL}
-						className="h-[55vh] min-h-[320px] w-full"
+						className="h-[48vh] min-h-[260px] w-full sm:h-[55vh] sm:min-h-[320px]"
 						loading="lazy"
 						referrerPolicy="no-referrer-when-downgrade"
 					/>
 				</div>
-				<a
-					href={MAP_LINK_URL}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="inline-flex items-center text-sm font-semibold text-primary hover:underline"
-				>
-					Otwórz w Google Maps
-				</a>
 			</div>
 		</div>
 	);
@@ -450,9 +451,11 @@ function InfoAttractionsTemplate({
 
 	return (
 		<div className="space-y-6">
-			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
-				<h3 className="text-2xl font-bold text-foreground">Atrakcje</h3>
-				<p className="text-muted-foreground">
+			<div className="rounded-2xl border border-border bg-white p-4 shadow-sm space-y-4 sm:p-6">
+				<h3 className="text-xl font-bold text-foreground sm:text-2xl">
+					Atrakcje
+				</h3>
+				<p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
 					Zebraliśmy 6 sprawdzonych propozycji blisko Chora Sfakion. Każda
 					kartka otwiera modal z krótkim opisem i linkiem do mapy.
 				</p>
@@ -562,9 +565,9 @@ function InfoQATemplate({ invitationId }: { invitationId?: string }) {
 
 	return (
 		<div className="space-y-6">
-			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
-				<h3 className="text-2xl font-bold text-foreground">Q&A</h3>
-				<p className="text-muted-foreground">
+			<div className="rounded-2xl border border-border bg-white p-4 shadow-sm space-y-4 sm:p-6">
+				<h3 className="text-xl font-bold text-foreground sm:text-2xl">Q&A</h3>
+				<p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
 					Zebraliśmy najczęstsze pytania i odpowiedzi. Nowe pytania od gości od
 					razu trafiają do wspólnej puli.
 				</p>
@@ -572,12 +575,14 @@ function InfoQATemplate({ invitationId }: { invitationId?: string }) {
 					{mergedQuestions.map((item) => (
 						<div
 							key={item.id}
-							className="rounded-xl bg-[var(--color-background-light)] p-4"
+							className="rounded-xl bg-[var(--color-background-light)] p-3 sm:p-4"
 						>
-							<h4 className="text-sm font-semibold uppercase tracking-widest text-foreground">
+							<h4 className="text-[11px] font-semibold uppercase tracking-widest text-foreground sm:text-sm">
 								{item.question}
 							</h4>
-							<p className="mt-2 text-muted-foreground">{item.answer}</p>
+							<p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+								{item.answer}
+							</p>
 							{item.createdAt && (
 								<p className="mt-3 text-xs text-muted-foreground/80">
 									Pytanie od: {item.askerDisplayName ?? "Gość"} •{" "}
@@ -589,21 +594,20 @@ function InfoQATemplate({ invitationId }: { invitationId?: string }) {
 				</div>
 			</div>
 
-			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
-				<h3 className="text-xl font-bold text-foreground">
+			<div className="rounded-2xl border border-border bg-white p-4 shadow-sm space-y-4 sm:p-6">
+				<h3 className="text-lg font-bold text-foreground sm:text-xl">
 					Masz dodatkowe pytanie?
 				</h3>
-				<p className="text-muted-foreground">
-					Napisz je poniżej. Twoje pytanie pojawi się dla wszystkich w tej
-					sekcji.
+				<p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+					Zadaj je poniżej, będzie widoczne dla wszystkich w tej sekcji.
 				</p>
 				<form className="space-y-3" onSubmit={handleSubmitQuestion}>
 					<textarea
 						value={questionDraft}
 						onChange={(event) => setQuestionDraft(event.target.value)}
-						placeholder="Wpisz pytanie..."
+						placeholder="Twoje pytanie..."
 						maxLength={400}
-						rows={4}
+						rows={3}
 						className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
 					/>
 					<div className="flex items-center justify-between gap-3">

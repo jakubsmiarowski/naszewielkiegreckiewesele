@@ -67,7 +67,7 @@ export const planTimelineDays: PlanDay[] = [
 				time: "Do 14:00",
 				title: "Czas wolny",
 				description:
-					"Zanim spotkamy się po południu, macie moment oddechu. My zajmiemy się przygotowaniami, a Wam zostawiamy czas na relaks, zwiedzanie lub leniwe plażowanie.",
+					"Zanim spotkamy się po południu, macie moment oddechu. My zajmiemy się przygotowaniami, a Wam zostanie czas na relaks, zwiedzanie lub leniwe plażowanie.",
 				tag: "Relaks",
 				location: "Według uznania",
 			},
@@ -77,7 +77,6 @@ export const planTimelineDays: PlanDay[] = [
 				title: "Ślub",
 				description:
 					"Spotykamy się w starym porcie lub na plaży niedaleko restauracji. Ceremonię poprowadzi Ojciec Mateusz albo urzędnik.",
-				// "Spotykamy się w starym porcie lub na plaży niedaleko knajpy. Ceremonię poprowadzi Mateusz (bestman) albo urzędnik/konsul z Aten.",
 				tag: "Ceremonia",
 				location: "Stary port / plaża",
 			},
@@ -87,7 +86,6 @@ export const planTimelineDays: PlanDay[] = [
 				title: "Wesele",
 				description:
 					// https://www.youtube.com/watch?v=MFKqiFG6HVs&list=PLrrQclmFn_7cfbELsVdc1F5SoKdNWCIWf&index=3
-					// "Przechodzimy do restauracji na biesiadowanie, toast i zabawę. Chcemy, żeby to był nasz wspólny, radosny wieczór.",
 					"Zapraszamy dalej na wspólne biesiadowanie, tańce i śpiewy — Kawałek tekstu z mamma mia",
 				tag: "Przyjęcie",
 				location: "Restauracja Lefka Ori",
@@ -216,7 +214,7 @@ export const greekPhraseCards: GreekPhraseCard[] = [
 	},
 	{
 		id: "small-kebab",
-		polish: "Poproszę małego kebaba.",
-		greek: "Ένα μικρό κεμπάπ, παρακαλώ. (Éna mikró kebáp, parakaló.)",
+		polish: "Małego kebaba!",
+		greek: "Ένα μικρό κεμπάπ! (Éna mikró kebáp!)",
 	},
 ];

@@ -233,53 +233,49 @@ export function GreekPhrasesWidget() {
 	}
 
 	return (
-		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">
+		<div className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-6">
 			<div className="mb-4 flex items-center justify-between gap-2">
 				<h4 className="text-lg font-bold text-foreground">
 					Greckie powiedzonka
 				</h4>
-				<span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+				<span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
 					{activePhraseIndex + 1}/{greekPhraseCards.length}
 				</span>
 			</div>
 
-			<div className="rounded-xl border border-border/80 bg-muted/20 p-3">
-				<div className="relative min-h-[236px] overflow-hidden">
-					<AnimatePresence mode="wait" initial={false}>
-						<motion.div
-							key={activePhrase.id}
-							initial={{ opacity: 0, x: prefersReducedMotion ? 0 : 40 }}
-							animate={{ opacity: 1, x: 0 }}
-							exit={{ opacity: 0, x: prefersReducedMotion ? 0 : -40 }}
-							transition={{ duration: 0.35, ease: "easeOut" }}
-							className="absolute inset-0 flex flex-col gap-3"
-						>
-							<div className="rounded-lg border border-border bg-background p-3">
-								<p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-									Po polsku
-								</p>
-								<p className="mt-2 text-sm font-medium leading-relaxed text-foreground">
-									{activePhrase.polish}
-								</p>
-							</div>
+			<AnimatePresence mode="wait" initial={false}>
+				<motion.div
+					key={activePhrase.id}
+					initial={{ opacity: 0, x: prefersReducedMotion ? 0 : 40 }}
+					animate={{ opacity: 1, x: 0 }}
+					exit={{ opacity: 0, x: prefersReducedMotion ? 0 : -40 }}
+					transition={{ duration: 0.35, ease: "easeOut" }}
+					className="space-y-4"
+				>
+					<div>
+						<p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+							Po polsku
+						</p>
+						<p className="mt-1 text-sm font-medium leading-relaxed text-foreground sm:text-base">
+							{activePhrase.polish}
+						</p>
+					</div>
 
-							<div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
-								<p className="text-[10px] font-semibold uppercase tracking-wide text-primary">
-									Po grecku
-								</p>
-								<p className="mt-2 text-sm font-semibold leading-relaxed text-foreground">
-									{activePhrase.greek}
-								</p>
-								{activePhrase.isApproximate && (
-									<p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-										Luźne tłumaczenie
-									</p>
-								)}
-							</div>
-						</motion.div>
-					</AnimatePresence>
-				</div>
-			</div>
+					<div>
+						<p className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+							Po grecku
+						</p>
+						<p className="mt-1 text-sm font-semibold leading-relaxed text-foreground sm:text-base">
+							{activePhrase.greek}
+						</p>
+						{activePhrase.isApproximate && (
+							<p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+								Luźne tłumaczenie
+							</p>
+						)}
+					</div>
+				</motion.div>
+			</AnimatePresence>
 		</div>
 	);
 }

@@ -14,28 +14,66 @@ export interface InfoCardData {
 	content: React.ReactNode;
 }
 
-function InfoCardPreview({ card }: { card: InfoCardData }) {
+function InfoCardMedia({
+	card,
+	showImage,
+	onImageError,
+	expandOnHover = false,
+}: {
+	card: InfoCardData;
+	showImage: boolean;
+	onImageError: () => void;
+	expandOnHover?: boolean;
+}) {
+	if (showImage) {
+		return (
+			<img
+				src={card.image}
+				alt={card.alt}
+				className={`absolute inset-0 h-full w-full object-cover bg-muted ${expandOnHover ? "transform transition-transform duration-700 group-hover:scale-105" : ""}`}
+				loading="lazy"
+				onError={onImageError}
+			/>
+		);
+	}
+
+	return (
+		<div className="absolute inset-0 flex items-center justify-center bg-muted px-4 text-center text-sm font-medium text-muted-foreground">
+			Zdjęcie wkrótce
+		</div>
+	);
+}
+
+function InfoCardPreview({
+	card,
+	showImage,
+	onImageError,
+}: {
+	card: InfoCardData;
+	showImage: boolean;
+	onImageError: () => void;
+}) {
 	return (
 		<>
 			<div className="relative h-56 overflow-hidden">
-				<div
-					className="absolute inset-0 bg-cover bg-center"
-					role="img"
-					aria-label={card.alt}
-					style={{ backgroundImage: `url("${card.image}")` }}
+				<InfoCardMedia
+					card={card}
+					showImage={showImage}
+					onImageError={onImageError}
+					expandOnHover
 				/>
 				<div className="absolute top-4 left-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md dark:bg-black/80">
 					{card.category}
 				</div>
 			</div>
-			<div className="flex flex-1 flex-col p-6">
+			<div className="flex flex-1 flex-col p-4 sm:p-6">
 				{card.date ? (
 					<div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
 						<Calendar className="size-5" />
 						<span>{card.date}</span>
 					</div>
 				) : null}
-				<h3 className="mb-3 text-xl font-bold leading-snug text-card-foreground transition-colors group-hover:text-primary">
+				<h3 className="mb-3 text-lg font-bold leading-snug text-card-foreground transition-colors group-hover:text-primary sm:text-xl">
 					{card.title}
 				</h3>
 				<p className="mb-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
@@ -51,6 +89,13 @@ function InfoCardPreview({ card }: { card: InfoCardData }) {
 
 export function InfoCard({ card }: { card: InfoCardData }) {
 	const [open, setOpen] = useState(false);
+	const [imageFailed, setImageFailed] = useState(false);
+	const hasImage = card.image.trim().length > 0;
+	const showImage = hasImage && !imageFailed;
+
+	const handleImageError = () => {
+		setImageFailed(true);
+	};
 
 	return (
 		<Dialog.Root open={open} onOpenChange={setOpen}>
@@ -59,37 +104,40 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 					type="button"
 					className="group flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm"
 				>
-					<InfoCardPreview card={card} />
+					<InfoCardPreview
+						card={card}
+						showImage={showImage}
+						onImageError={handleImageError}
+					/>
 				</button>
 			</Dialog.Trigger>
 
 			<Dialog.Portal>
 				<Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-				<Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex h-fit max-h-[90vh] w-[min(720px,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-y-auto rounded-3xl border border-border bg-background shadow-2xl">
-					<div className="relative h-72 overflow-hidden">
-						<div
-							className="absolute inset-0 bg-cover bg-center"
-							role="img"
-							aria-label={card.alt}
-							style={{ backgroundImage: `url("${card.image}")` }}
+				<Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex h-fit max-h-[90vh] w-[min(720px,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-y-auto rounded-2xl border border-border bg-background shadow-2xl sm:rounded-3xl">
+					<div className="relative h-56 overflow-hidden sm:h-72">
+						<InfoCardMedia
+							card={card}
+							showImage={showImage}
+							onImageError={handleImageError}
 						/>
 						<div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-						<div className="absolute top-4 left-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md dark:bg-black/80">
+						<div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md dark:bg-black/80">
 							{card.category}
 						</div>
 					</div>
 
-					<div className="p-8">
+					<div className="p-5 sm:p-8">
 						{card.date ? (
 							<div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
 								<Calendar className="size-5" />
 								<span>{card.date}</span>
 							</div>
 						) : null}
-						<Dialog.Title className="mb-2 text-2xl font-bold text-foreground">
+						<Dialog.Title className="mb-2 text-xl font-bold text-foreground sm:text-2xl">
 							{card.title}
 						</Dialog.Title>
-						<Dialog.Description className="mb-6 text-muted-foreground">
+						<Dialog.Description className="mb-5 text-sm leading-relaxed text-muted-foreground sm:mb-6 sm:text-base">
 							{card.description}
 						</Dialog.Description>
 						<div className="space-y-4 text-foreground">{card.content}</div>
@@ -98,7 +146,7 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 					<Dialog.Close asChild>
 						<button
 							type="button"
-							className="absolute right-6 top-6 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:text-gray-900"
+							className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md transition hover:bg-white dark:bg-black/80 sm:right-6 sm:top-6"
 						>
 							Zamknij
 						</button>
