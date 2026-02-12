@@ -1,8 +1,23 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "naszewielkiegreckiewesele",
-  "compatibility_date": "2025-09-02",
-  "compatibility_flags": ["nodejs_compat"],
-  "keep_vars": true,
-  "main": "@tanstack/react-start/server-entry"
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "naszewielkiegreckiewesele",
+	"compatibility_date": "2025-09-02",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"keep_vars": true,
+	"workers_dev": false,
+	"main": "@tanstack/react-start/server-entry",
+	"routes": [
+		{
+			"pattern": "naszewielkiegreckiewesele.com",
+			"zone_name": "naszewielkiegreckiewesele.com",
+			"custom_domain": true
+		},
+		{
+			"pattern": "www.naszewielkiegreckiewesele.com",
+			"zone_name": "naszewielkiegreckiewesele.com",
+			"custom_domain": true
+		}
+	],
 }

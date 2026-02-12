@@ -15,6 +15,19 @@ describe("resolveConvexUrl", () => {
     expect(url).toBe("https://explicit.convex.cloud");
   });
 
+  it("ignores explicit VITE_CONVEX_URL outside local development", () => {
+    const url = resolveConvexUrl({
+      viteEnv: {
+        DEV: false,
+        VITE_CONVEX_URL: "https://explicit-dev.convex.cloud",
+        VITE_CONVEX_PROD_URL: "https://prod.convex.cloud",
+      },
+      processEnv: { NODE_ENV: "production" },
+    });
+
+    expect(url).toBe("https://prod.convex.cloud");
+  });
+
   it("uses dev URL in local development", () => {
     const url = resolveConvexUrl({
       viteEnv: {

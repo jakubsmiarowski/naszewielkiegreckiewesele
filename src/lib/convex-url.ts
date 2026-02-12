@@ -46,11 +46,7 @@ export function resolveConvexUrl(
     options.processEnv ??
     (typeof process !== "undefined" ? (process.env ?? {}) : {});
   const envs = [viteEnv, processEnv];
-
-  const explicit = readFirst(envs, ["VITE_CONVEX_URL", "CONVEX_URL"]);
-  if (explicit) {
-    return explicit;
-  }
+  const local = isLocalEnvironment(viteEnv, processEnv);
 
   const localDevUrl = readFirst(envs, [
     "VITE_CONVEX_DEV_URL",
@@ -62,8 +58,9 @@ export function resolveConvexUrl(
     options.fallbackProdUrl ??
     DEFAULT_PROD_CONVEX_URL;
 
-  if (isLocalEnvironment(viteEnv, processEnv)) {
-    return localDevUrl ?? productionUrl;
+  if (local) {
+    const explicit = readFirst(envs, ["VITE_CONVEX_URL", "CONVEX_URL"]);
+    return explicit ?? localDevUrl ?? productionUrl;
   }
 
   return productionUrl;
