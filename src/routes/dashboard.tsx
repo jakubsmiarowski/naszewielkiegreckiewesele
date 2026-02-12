@@ -315,6 +315,7 @@ function DashboardPage() {
 								focusAttractionId={focusAttractionId}
 								onAttractionFocused={() => setFocusAttractionId(null)}
 								onOpenAttraction={handleOpenAttraction}
+								onOpenCarpool={() => handleGoToCarpool()}
 							/>
 						)}
 				</div>

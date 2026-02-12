@@ -26,18 +26,20 @@ export function InfoTabContent({
 	focusAttractionId,
 	onAttractionFocused,
 	onOpenAttraction,
+	onOpenCarpool,
 }: {
 	activeTab: MainTabId;
 	invitationId?: string;
 	focusAttractionId?: AttractionAnchorId | null;
 	onAttractionFocused?: () => void;
 	onOpenAttraction?: (anchorId: AttractionAnchorId) => void;
+	onOpenCarpool?: () => void;
 }) {
 	switch (activeTab) {
 		case "Plan zabawy":
 			return <InfoPlanTemplate onOpenAttraction={onOpenAttraction} />;
 		case "Logistyka":
-			return <InfoLogisticsTemplate />;
+			return <InfoLogisticsTemplate onOpenCarpool={onOpenCarpool} />;
 		case "Atrakcje":
 			return (
 				<InfoAttractionsTemplate
@@ -139,7 +141,11 @@ function InfoPlanTemplate({
 	);
 }
 
-function InfoLogisticsTemplate() {
+function InfoLogisticsTemplate({
+	onOpenCarpool,
+}: {
+	onOpenCarpool?: () => void;
+}) {
 	return (
 		<div className="space-y-6">
 			<div className="rounded-2xl border border-border bg-white p-4 shadow-sm space-y-4 sm:p-6">
@@ -152,9 +158,22 @@ function InfoLogisticsTemplate() {
 							Środki transportu
 						</h4>
 						<ul className="mt-2 space-y-2">
-							<li>Bus z lotniska.</li>
 							<li>Wypożyczenie auta.</li>
-							<li>Zabranie się z kimś z innych gości.</li>
+							<li>
+								Zabranie się z kimś z innych gości używając opcji{" "}
+								{onOpenCarpool ? (
+									<button
+										type="button"
+										onClick={onOpenCarpool}
+										className="font-medium text-foreground underline underline-offset-4 hover:opacity-80"
+									>
+										Car Pool
+									</button>
+								) : (
+									"Car Pool"
+								)}
+								.
+							</li>
 						</ul>
 					</div>
 					<div>
@@ -162,13 +181,15 @@ function InfoLogisticsTemplate() {
 							Hotel
 						</h4>
 						<p className="mt-2">
-							Noclegi planujemy w dwóch pensjonatach. W jednym z nich znajduje
-							się restauracja, w której odbędzie się wesele.
+							Noclegi planujemy w kilku pensjonatach. Okazuje się, ze przełom
+							września i października jest nadal popularny. W jednym z
+							pensjonatów znajduje się restauracja, w której odbędzie się
+							wesele.
 						</p>
 						<p className="mt-2">
 							Jeśli planujesz przylot wcześniej lub wylot później i potrzebujesz
 							wsparcia z rezerwacją dodatkowych noclegów, zaznacz to w
-							formularzu RSVP.
+							formularzu RSVP a my to załatwimy.
 						</p>
 					</div>
 					<div>
@@ -176,8 +197,8 @@ function InfoLogisticsTemplate() {
 							Koszty
 						</h4>
 						<p className="mt-2">
-							Noclegi od środy do niedzieli opłacamy my. Goście opłacają
-							samodzielnie lot.
+							Noclegi od środy do niedzieli opłacamy my. Po waszej stronie
+							zostaje lot i dotarcie do Chory Sfakion.
 						</p>
 						<p className="mt-2">
 							Jeśli ktoś planuje przylecieć wcześniej lub zostać dłużej,
