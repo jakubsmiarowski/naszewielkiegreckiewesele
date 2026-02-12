@@ -1,12 +1,10 @@
 import { ConvexHttpClient } from "convex/browser";
+import { resolveConvexUrl } from "./convex-url";
 
-const CONVEX_URL =
-  process.env.VITE_CONVEX_URL ??
-  (import.meta as any).env?.VITE_CONVEX_URL ??
-  "";
+const CONVEX_URL = resolveConvexUrl();
 
 if (!CONVEX_URL) {
-  console.error("Missing VITE_CONVEX_URL for server-side Convex client.");
+  console.error("Missing Convex URL for server-side Convex client.");
 }
 
 let cachedClient: ConvexHttpClient | null = null;

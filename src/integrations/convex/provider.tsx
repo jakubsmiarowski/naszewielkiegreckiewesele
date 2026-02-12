@@ -1,8 +1,9 @@
 import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { resolveConvexUrl } from "@/lib/convex-url";
 
-const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL;
+const CONVEX_URL = resolveConvexUrl();
 if (!CONVEX_URL) {
-	console.error("missing envar CONVEX_URL");
+	console.error("Missing Convex URL for React client.");
 }
 const convex = new ConvexReactClient(CONVEX_URL);
 

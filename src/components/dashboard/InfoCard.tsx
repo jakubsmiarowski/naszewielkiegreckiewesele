@@ -122,8 +122,18 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 							onImageError={handleImageError}
 						/>
 						<div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-						<div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md dark:bg-black/80">
-							{card.category}
+						<div className="absolute inset-x-0 top-0 z-20 flex w-full justify-between p-4 sm:p-6">
+							<div className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md dark:bg-black/80">
+								{card.category}
+							</div>
+							<Dialog.Close asChild>
+								<button
+									type="button"
+									className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md transition hover:bg-white dark:bg-black/80"
+								>
+									Zamknij
+								</button>
+							</Dialog.Close>
 						</div>
 					</div>
 
@@ -142,15 +152,6 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 						</Dialog.Description>
 						<div className="space-y-4 text-foreground">{card.content}</div>
 					</div>
-
-					<Dialog.Close asChild>
-						<button
-							type="button"
-							className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md transition hover:bg-white dark:bg-black/80 sm:right-6 sm:top-6"
-						>
-							Zamknij
-						</button>
-					</Dialog.Close>
 				</Dialog.Content>
 			</Dialog.Portal>
 		</Dialog.Root>

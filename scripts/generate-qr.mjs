@@ -37,6 +37,7 @@ const outDir = path.resolve(process.cwd(), args["out-dir"] ?? "qr-codes");
 const format = String(args.format ?? "png").toLowerCase();
 const size = args.size ? Number(args.size) : 512;
 const limit = args.limit ? Number(args.limit) : undefined;
+const foregroundColor = normalizeHexColor(args.fg ?? "#000000");
 const internalApiKey =
   args["internal-api-key"] ??
   process.env.INTERNAL_API_KEY ??
@@ -49,6 +50,11 @@ if (Number.isNaN(size) || size <= 0) {
 
 if (limit !== undefined && (Number.isNaN(limit) || limit <= 0)) {
   console.error("--limit must be a positive number when provided.");
+  process.exit(1);
+}
+
+if (!foregroundColor) {
+  console.error("--fg must be a valid hex color, e.g. #737373 or 737373.");
   process.exit(1);
 }
 
@@ -86,7 +92,7 @@ for (const invitation of selected) {
   const filename = `${safeName}-${invitation.shortCode}.${format}`;
   const filePath = path.join(outDir, filename);
 
-  await writeQrCode(filePath, url, format, size);
+  await writeQrCode(filePath, url, format, size, foregroundColor);
 
   manifest.push({
     displayName: invitation.displayName,
@@ -138,6 +144,16 @@ function normalizeBaseUrl(value) {
   return `https://${normalized}`;
 }
 
+function normalizeHexColor(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const withHash = raw.startsWith("#") ? raw : `#${raw}`;
+  if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(withHash)) {
+    return null;
+  }
+  return withHash.toUpperCase();
+}
+
 function slugify(value) {
   return String(value ?? "")
     .normalize("NFKD")
@@ -147,10 +163,14 @@ function slugify(value) {
     .toLowerCase();
 }
 
-async function writeQrCode(filePath, value, format, size) {
+async function writeQrCode(filePath, value, format, size, foregroundColor) {
   const options = {
     errorCorrectionLevel: "Q",
     margin: 2,
+    color: {
+      dark: foregroundColor,
+      light: "#FFFFFF",
+    },
   };
 
   if (format === "png") {
@@ -199,6 +219,7 @@ Options:
   --out-dir <dir>      Output directory (default: ./qr-codes)
   --format <png|svg>   Output format (default: png)
   --size <px>          PNG size in pixels (default: 512)
+  --fg <hex>           Foreground QR color (default: #000000)
   --limit <n>          Only generate first n invitations
   --internal-api-key   Internal key for admin query access
   --help               Show this help

@@ -134,12 +134,6 @@ function InfoPlanTemplate({
 }) {
 	return (
 		<div className="space-y-6">
-			{/* <div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
-				<h3 className="text-2xl font-bold text-foreground">Plan zabawy</h3>
-				<p className="text-muted-foreground">
-					Kazdy dzien szczegolowo rozpisany.
-				</p>
-			</div> */}
 			<PlanTimeline onOpenAttraction={onOpenAttraction} />
 		</div>
 	);
@@ -478,11 +472,6 @@ const BASE_QA = [
 		question: "Czy warto mieć przy sobie gotówkę?",
 		answer:
 			"Tak, zdecydowanie warto. To mała miejscowość, więc czasem może nie być zasięgu albo działającego bankomatu.",
-	},
-	{
-		question: "Czy można przyjechać z dziećmi?",
-		answer:
-			"Co do zasady to wesele dla dorosłych, ale nie będziemy nikomu narzucać decyzji. Po prostu większość znajomych planuje zostawić dzieci z babciami.",
 	},
 	{
 		question: "Co najlepiej spakować na wyjazd?",
