@@ -91,6 +91,10 @@ function DashboardPage() {
 		invitationId ? { invitationId: invitationId as Id<"invitations"> } : "skip",
 	);
 	const { hasResponded, hasAnyAttending } = useRsvpStats(invitationData);
+	const canOpenCarpoolTab = Boolean(
+		invitationData?.invitation.carpoolDriverOptIn ||
+			(hasResponded && hasAnyAttending),
+	);
 	const adminInvitations = useQuery(
 		api.invitations.listForAdmin,
 		adminAccessToken ? { adminAccessToken } : "skip",
@@ -235,6 +239,9 @@ function DashboardPage() {
 	};
 
 	const handleGoToCarpool = (options?: { openCreateModal?: boolean }) => {
+		if (!canOpenCarpoolTab) {
+			return;
+		}
 		setActiveTab("Car Pool");
 		if (options?.openCreateModal) {
 			setOpenCarpoolCreateToken(Date.now());
@@ -310,10 +317,7 @@ function DashboardPage() {
 						onSelect={(label) => setActiveTab(label as MainTabId)}
 						badges={isAdmin ? { Admin: adminActionCount } : undefined}
 						labelsById={tabLabels}
-						showCarpoolTab={
-							invitationData?.invitation.carpoolDriverOptIn ||
-							(hasResponded && hasAnyAttending)
-						}
+						showCarpoolTab={canOpenCarpoolTab}
 					/>
 
 					{activeTab === "RSVP" && (
@@ -323,16 +327,14 @@ function DashboardPage() {
 							onGoToCarpool={handleGoToCarpool}
 						/>
 					)}
-					{activeTab === "Car Pool" &&
-						(invitationData?.invitation.carpoolDriverOptIn ||
-							(hasResponded && hasAnyAttending)) && (
-							<CarpoolTab
-								invitationData={invitationData}
-								isAdmin={isAdmin}
-								adminAccessToken={adminAccessToken}
-								openCreateOfferToken={openCarpoolCreateToken}
-							/>
-						)}
+					{activeTab === "Car Pool" && canOpenCarpoolTab && (
+						<CarpoolTab
+							invitationData={invitationData}
+							isAdmin={isAdmin}
+							adminAccessToken={adminAccessToken}
+							openCreateOfferToken={openCarpoolCreateToken}
+						/>
+					)}
 					{activeTab === "Admin" && isAdmin && (
 						<AdminTab
 							invitations={adminInvitations ?? []}
@@ -352,6 +354,7 @@ function DashboardPage() {
 								onAttractionFocused={() => setFocusAttractionId(null)}
 								onOpenAttraction={handleOpenAttraction}
 								onOpenCarpool={() => handleGoToCarpool()}
+								canOpenCarpool={canOpenCarpoolTab}
 							/>
 						)}
 				</div>

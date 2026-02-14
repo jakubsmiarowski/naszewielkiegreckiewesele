@@ -203,7 +203,7 @@ export function EmergencyContactsWidget() {
 		},
 		{
 			name: "Kuba",
-			phone: "501 604 101",
+			phone: "881 233 694",
 			role: locale === "en" ? "Groom" : "Pan Młody",
 		},
 		{
@@ -322,8 +322,8 @@ export function GreekPhrasesWidget() {
 export function DogSlideshowWidget() {
 	const { locale } = useLocale();
 	const albumImages = [
-		"/images/alajan.webp",
 		"/images/azja.webp",
+		"/images/alajan.webp",
 		"/images/dawid.webp",
 		"/images/franek.webp",
 		"/images/kite.webp",

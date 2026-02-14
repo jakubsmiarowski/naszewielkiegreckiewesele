@@ -159,6 +159,7 @@ export function InfoTabContent({
 	onAttractionFocused,
 	onOpenAttraction,
 	onOpenCarpool,
+	canOpenCarpool = true,
 }: {
 	activeTab: MainTabId;
 	invitationId?: string;
@@ -166,6 +167,7 @@ export function InfoTabContent({
 	onAttractionFocused?: () => void;
 	onOpenAttraction?: (anchorId: AttractionAnchorId) => void;
 	onOpenCarpool?: () => void;
+	canOpenCarpool?: boolean;
 }) {
 	const { locale } = useLocale();
 
@@ -174,7 +176,11 @@ export function InfoTabContent({
 			return <InfoPlanTemplate onOpenAttraction={onOpenAttraction} />;
 		case "Logistyka":
 			return (
-				<InfoLogisticsTemplate locale={locale} onOpenCarpool={onOpenCarpool} />
+				<InfoLogisticsTemplate
+					locale={locale}
+					onOpenCarpool={onOpenCarpool}
+					canOpenCarpool={canOpenCarpool}
+				/>
 			);
 		case "Atrakcje":
 			return (
@@ -329,14 +335,20 @@ function InfoPlanTemplate({
 function InfoLogisticsTemplate({
 	locale,
 	onOpenCarpool,
+	canOpenCarpool,
 }: {
 	locale: AppLocale;
 	onOpenCarpool?: () => void;
+	canOpenCarpool: boolean;
 }) {
 	const title = locale === "en" ? "Logistics" : "Logistyka";
 	const transportTitle = locale === "en" ? "Transport" : "Środki transportu";
 	const hotelTitle = locale === "en" ? "Hotel" : "Hotel";
 	const costsTitle = locale === "en" ? "Costs" : "Koszty";
+	const carpoolAccessMessage =
+		locale === "en"
+			? "To access Car Pool, complete your RSVP first."
+			: "Aby wejść do Car Pool, najpierw odpowiedz na RSVP.";
 
 	return (
 		<div className="space-y-6">
@@ -357,7 +369,7 @@ function InfoLogisticsTemplate({
 								{locale === "en"
 									? "Joining another guest using the "
 									: "Zabranie się z kimś z innych gości używając opcji "}
-								{onOpenCarpool ? (
+								{onOpenCarpool && canOpenCarpool ? (
 									<button
 										type="button"
 										onClick={onOpenCarpool}
@@ -370,6 +382,9 @@ function InfoLogisticsTemplate({
 								)}
 								.
 							</li>
+							{!canOpenCarpool && (
+								<li className="text-xs sm:text-sm">{carpoolAccessMessage}</li>
+							)}
 						</ul>
 					</div>
 					<div>
