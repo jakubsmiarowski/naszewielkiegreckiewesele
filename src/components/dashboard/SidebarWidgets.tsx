@@ -10,7 +10,8 @@ import {
 	CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Input } from "@/components/ui/input";
-import { greekPhraseCards } from "@/data/plan-timeline";
+import { getGreekPhraseCards } from "@/data/plan-timeline";
+import { type AppLocale, useLocale } from "@/lib/locale";
 import { WEDDING_EVENT } from "@/lib/wedding-event";
 
 export function SearchWidget() {
@@ -62,6 +63,7 @@ function CountdownCard({
 	buttonLabel,
 	onButtonClick,
 	theme = "event",
+	locale,
 }: {
 	title: string;
 	dateLabel: string;
@@ -70,6 +72,7 @@ function CountdownCard({
 	buttonLabel?: string;
 	onButtonClick?: () => void;
 	theme?: "event" | "deadline";
+	locale: AppLocale;
 }) {
 	const { days, hours, minutes } = useCountdown(targetDate);
 	const themeClasses =
@@ -94,9 +97,17 @@ function CountdownCard({
 			<p className="opacity-80 text-sm mb-6">{dateLabel}</p>
 			<div className="grid grid-cols-3 gap-2 mb-4">
 				{[
-					{ val: days, label: "Dni", id: "days" },
-					{ val: hours, label: "Godz", id: "hours" },
-					{ val: minutes, label: "Min", id: "mins" },
+					{ val: days, label: locale === "en" ? "Days" : "Dni", id: "days" },
+					{
+						val: hours,
+						label: locale === "en" ? "Hours" : "Godz",
+						id: "hours",
+					},
+					{
+						val: minutes,
+						label: locale === "en" ? "Min" : "Min",
+						id: "mins",
+					},
 				].map((item) => (
 					<div
 						key={item.id}
@@ -129,25 +140,27 @@ export function EventCountdownWidget({
 	eventDate: Date | null;
 	onAddToCalendar: () => void;
 }) {
+	const { locale } = useLocale();
 	const label = useMemo(() => {
 		const fallbackDate = new Date(WEDDING_EVENT.startIso);
 		const displayDate = eventDate ?? fallbackDate;
-		return displayDate.toLocaleDateString("pl-PL", {
+		return displayDate.toLocaleDateString(locale === "en" ? "en-US" : "pl-PL", {
 			day: "2-digit",
 			month: "long",
 			year: "numeric",
 		});
-	}, [eventDate]);
+	}, [eventDate, locale]);
 
 	return (
 		<CountdownCard
-			title="Wielki Dzień"
+			title={locale === "en" ? "The Big Day" : "Wielki Dzień"}
 			dateLabel={`${label}`}
 			targetDate={eventDate}
 			icon={Heart}
-			buttonLabel="Dodaj do kalendarza"
+			buttonLabel={locale === "en" ? "Add to calendar" : "Dodaj do kalendarza"}
 			onButtonClick={onAddToCalendar}
 			theme="event"
+			locale={locale}
 		/>
 	);
 }
@@ -157,37 +170,59 @@ export function DeadlineCountdownWidget({
 }: {
 	deadline: Date | null;
 }) {
+	const { locale } = useLocale();
 	const label = useMemo(() => {
-		if (!deadline) return "28 Lutego 2026";
-		return deadline.toLocaleDateString("pl-PL", {
+		if (!deadline)
+			return locale === "en" ? "February 28, 2026" : "28 Lutego 2026";
+		return deadline.toLocaleDateString(locale === "en" ? "en-US" : "pl-PL", {
 			day: "2-digit",
 			month: "long",
 			year: "numeric",
 		});
-	}, [deadline]);
+	}, [deadline, locale]);
 
 	return (
 		<CountdownCard
-			title="Dajcie nam znać do"
+			title={locale === "en" ? "Please RSVP by" : "Dajcie nam znać do"}
 			dateLabel={label}
 			targetDate={deadline}
 			icon={Clock3}
 			theme="deadline"
+			locale={locale}
 		/>
 	);
 }
 
 export function EmergencyContactsWidget() {
+	const { locale } = useLocale();
 	const contacts = [
-		{ name: "Kamila", phone: "739 046 625", role: "Panna Młoda" },
-		{ name: "Kuba", phone: "501 604 101", role: "Pan Młody" },
-		{ name: "Magda", phone: "501 604 101", role: "Świadek" },
-		{ name: "Matuesz", phone: "501 604 101", role: "Świadek" },
+		{
+			name: "Kamila",
+			phone: "739 046 625",
+			role: locale === "en" ? "Bride" : "Panna Młoda",
+		},
+		{
+			name: "Kuba",
+			phone: "501 604 101",
+			role: locale === "en" ? "Groom" : "Pan Młody",
+		},
+		{
+			name: "Magda",
+			phone: "501 604 101",
+			role: locale === "en" ? "Witness" : "Świadek",
+		},
+		{
+			name: "Matuesz",
+			phone: "501 604 101",
+			role: locale === "en" ? "Witness" : "Świadek",
+		},
 	];
 
 	return (
 		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">
-			<h4 className="text-lg font-bold text-foreground mb-4">Ważne kontakty</h4>
+			<h4 className="text-lg font-bold text-foreground mb-4">
+				{locale === "en" ? "Important contacts" : "Ważne kontakty"}
+			</h4>
 			<ul className="flex flex-col gap-3">
 				{contacts.map((contact) => (
 					<li key={contact.name}>
@@ -210,6 +245,8 @@ export function EmergencyContactsWidget() {
 }
 
 export function GreekPhrasesWidget() {
+	const { locale } = useLocale();
+	const greekPhraseCards = useMemo(() => getGreekPhraseCards(locale), [locale]);
 	const prefersReducedMotion = useReducedMotion();
 	const [activePhraseIndex, setActivePhraseIndex] = useState(0);
 
@@ -225,7 +262,7 @@ export function GreekPhrasesWidget() {
 		}, 10000);
 
 		return () => window.clearInterval(interval);
-	}, []);
+	}, [greekPhraseCards.length]);
 
 	const activePhrase = greekPhraseCards[activePhraseIndex];
 	if (!activePhrase) {
@@ -236,7 +273,7 @@ export function GreekPhrasesWidget() {
 		<div className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-6">
 			<div className="mb-4 flex items-center justify-between gap-2">
 				<h4 className="text-lg font-bold text-foreground">
-					Greckie powiedzonka
+					{locale === "en" ? "Greek phrases" : "Greckie powiedzonka"}
 				</h4>
 				<span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
 					{activePhraseIndex + 1}/{greekPhraseCards.length}
@@ -254,23 +291,25 @@ export function GreekPhrasesWidget() {
 				>
 					<div>
 						<p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-							Po polsku
+							{locale === "en" ? "In English" : "Po polsku"}
 						</p>
 						<p className="mt-1 text-sm font-medium leading-relaxed text-foreground sm:text-base">
-							{activePhrase.polish}
+							{activePhrase.sourceText}
 						</p>
 					</div>
 
 					<div>
 						<p className="text-[10px] font-semibold uppercase tracking-wide text-primary">
-							Po grecku
+							{locale === "en" ? "In Greek" : "Po grecku"}
 						</p>
 						<p className="mt-1 text-sm font-semibold leading-relaxed text-foreground sm:text-base">
 							{activePhrase.greek}
 						</p>
 						{activePhrase.isApproximate && (
 							<p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-								Luźne tłumaczenie
+								{locale === "en"
+									? "Approximate translation"
+									: "Luźne tłumaczenie"}
 							</p>
 						)}
 					</div>
@@ -281,6 +320,7 @@ export function GreekPhrasesWidget() {
 }
 
 export function DogSlideshowWidget() {
+	const { locale } = useLocale();
 	const dogImages = [
 		"https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&h=600",
 		"https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=600&h=600",
@@ -291,7 +331,9 @@ export function DogSlideshowWidget() {
 
 	return (
 		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">
-			<h4 className="text-lg font-bold text-foreground mb-4">Album</h4>
+			<h4 className="text-lg font-bold text-foreground mb-4">
+				{locale === "en" ? "Album" : "Album"}
+			</h4>
 			<Carousel className="w-full">
 				<CarouselContent className="-ml-0">
 					{dogImages.map((src, index) => (

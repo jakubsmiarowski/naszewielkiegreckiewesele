@@ -14,16 +14,30 @@ export interface InfoCardData {
 	content: React.ReactNode;
 }
 
+export interface InfoCardLabels {
+	imageFallbackLabel: string;
+	learnMoreLabel: string;
+	closeLabel: string;
+}
+
+const DEFAULT_CARD_LABELS: InfoCardLabels = {
+	imageFallbackLabel: "Zdjęcie wkrótce",
+	learnMoreLabel: "Dowiedz się więcej",
+	closeLabel: "Zamknij",
+};
+
 function InfoCardMedia({
 	card,
 	showImage,
 	onImageError,
 	expandOnHover = false,
+	labels,
 }: {
 	card: InfoCardData;
 	showImage: boolean;
 	onImageError: () => void;
 	expandOnHover?: boolean;
+	labels: InfoCardLabels;
 }) {
 	if (showImage) {
 		return (
@@ -39,7 +53,7 @@ function InfoCardMedia({
 
 	return (
 		<div className="absolute inset-0 flex items-center justify-center bg-muted px-4 text-center text-sm font-medium text-muted-foreground">
-			Zdjęcie wkrótce
+			{labels.imageFallbackLabel}
 		</div>
 	);
 }
@@ -48,10 +62,12 @@ function InfoCardPreview({
 	card,
 	showImage,
 	onImageError,
+	labels,
 }: {
 	card: InfoCardData;
 	showImage: boolean;
 	onImageError: () => void;
+	labels: InfoCardLabels;
 }) {
 	return (
 		<>
@@ -61,6 +77,7 @@ function InfoCardPreview({
 					showImage={showImage}
 					onImageError={onImageError}
 					expandOnHover
+					labels={labels}
 				/>
 				<div className="absolute top-4 left-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md dark:bg-black/80">
 					{card.category}
@@ -80,14 +97,20 @@ function InfoCardPreview({
 					{card.description}
 				</p>
 				<span className="mt-auto inline-flex items-center text-sm font-bold text-primary">
-					Dowiedz się więcej
+					{labels.learnMoreLabel}
 				</span>
 			</div>
 		</>
 	);
 }
 
-export function InfoCard({ card }: { card: InfoCardData }) {
+export function InfoCard({
+	card,
+	labels = DEFAULT_CARD_LABELS,
+}: {
+	card: InfoCardData;
+	labels?: InfoCardLabels;
+}) {
 	const [open, setOpen] = useState(false);
 	const [imageFailed, setImageFailed] = useState(false);
 	const hasImage = card.image.trim().length > 0;
@@ -108,6 +131,7 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 						card={card}
 						showImage={showImage}
 						onImageError={handleImageError}
+						labels={labels}
 					/>
 				</button>
 			</Dialog.Trigger>
@@ -120,6 +144,7 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 							card={card}
 							showImage={showImage}
 							onImageError={handleImageError}
+							labels={labels}
 						/>
 						<div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 						<div className="absolute inset-x-0 top-0 z-20 flex w-full justify-between p-4 sm:p-6">
@@ -131,7 +156,7 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 									type="button"
 									className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground backdrop-blur-md transition hover:bg-white dark:bg-black/80"
 								>
-									Zamknij
+									{labels.closeLabel}
 								</button>
 							</Dialog.Close>
 						</div>
@@ -158,7 +183,13 @@ export function InfoCard({ card }: { card: InfoCardData }) {
 	);
 }
 
-export function InfoCardGrid({ cards }: { cards: InfoCardData[] }) {
+export function InfoCardGrid({
+	cards,
+	labels,
+}: {
+	cards: InfoCardData[];
+	labels?: InfoCardLabels;
+}) {
 	return (
 		<div className="grid grid-cols-1 gap-8 md:grid-cols-2">
 			{cards.map((card) => (
@@ -168,7 +199,7 @@ export function InfoCardGrid({ cards }: { cards: InfoCardData[] }) {
 					className="relative w-full scroll-mt-24"
 					data-attraction-anchor={card.anchorId}
 				>
-					<InfoCard card={card} />
+					<InfoCard card={card} labels={labels} />
 				</div>
 			))}
 		</div>

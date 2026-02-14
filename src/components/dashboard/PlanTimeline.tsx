@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AttractionAnchorId } from "@/components/dashboard/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +8,8 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { planTimelineDays } from "@/data/plan-timeline";
+import { getPlanTimelineDays } from "@/data/plan-timeline";
+import { useLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 const listVariants = {
@@ -29,11 +30,21 @@ export function PlanTimeline({
 }: {
 	onOpenAttraction?: (anchorId: AttractionAnchorId) => void;
 }) {
+	const { locale } = useLocale();
+	const planTimelineDays = useMemo(() => getPlanTimelineDays(locale), [locale]);
 	const [activeDayId, setActiveDayId] = useState(planTimelineDays[0]?.id);
 	const [open, setOpen] = useState(false);
+
+	useEffect(() => {
+		if (planTimelineDays.some((day) => day.id === activeDayId)) {
+			return;
+		}
+		setActiveDayId(planTimelineDays[0]?.id);
+	}, [activeDayId, planTimelineDays]);
+
 	const activeDay = useMemo(
 		() => planTimelineDays.find((day) => day.id === activeDayId),
-		[activeDayId],
+		[activeDayId, planTimelineDays],
 	);
 
 	if (!activeDay) {
@@ -91,7 +102,7 @@ export function PlanTimeline({
 			{/* Desktop View - Tabs */}
 			<div
 				role="tablist"
-				aria-label="Dni planu zabawy"
+				aria-label={locale === "en" ? "Schedule days" : "Dni planu zabawy"}
 				className="hidden md:flex flex-wrap gap-3"
 			>
 				{planTimelineDays.map((day) => {
@@ -118,7 +129,7 @@ export function PlanTimeline({
 
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
 				<p className="text-xs uppercase tracking-widest text-muted-foreground">
-					Plan dnia
+					{locale === "en" ? "Day plan" : "Plan dnia"}
 				</p>
 				<h4 className="text-2xl font-bold text-foreground mt-2">
 					{activeDay.label}
@@ -179,7 +190,10 @@ export function PlanTimeline({
 												}
 											}}
 										>
-											{event.attractionCtaLabel ?? "Zobacz powiązaną atrakcję"}
+											{event.attractionCtaLabel ??
+												(locale === "en"
+													? "View related attraction"
+													: "Zobacz powiązaną atrakcję")}
 										</Button>
 									)}
 								</div>

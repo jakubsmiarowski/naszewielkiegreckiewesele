@@ -25,6 +25,7 @@ import type {
 import { authClient } from "@/lib/auth-client";
 import { buildGreeting } from "@/lib/greetings";
 import { useInvitationSession } from "@/lib/invitation-session";
+import { type AppLocale, useLocale } from "@/lib/locale";
 import { useRsvpStats } from "@/lib/rsvp-helpers";
 import { WEDDING_EVENT } from "@/lib/wedding-event";
 import { api } from "../../convex/_generated/api";
@@ -51,7 +52,29 @@ const GUEST_TABS: MainTabId[] = [
 	"Q&A",
 ];
 
+const TAB_LABELS: Record<AppLocale, Record<MainTabId, string>> = {
+	pl: {
+		RSVP: "RSVP",
+		"Car Pool": "Car Pool",
+		"Plan zabawy": "Plan zabawy",
+		Logistyka: "Logistyka",
+		Atrakcje: "Atrakcje",
+		"Q&A": "Q&A",
+		Admin: "Admin",
+	},
+	en: {
+		RSVP: "RSVP",
+		"Car Pool": "Car Pool",
+		"Plan zabawy": "Schedule",
+		Logistyka: "Logistics",
+		Atrakcje: "Attractions",
+		"Q&A": "Q&A",
+		Admin: "Admin",
+	},
+};
+
 function DashboardPage() {
+	const { locale } = useLocale();
 	const navigate = useNavigate();
 	const { invitationId, isLoading: isSessionLoading } = useInvitationSession();
 	const { data: adminSession, isPending: isAdminPending } =
@@ -180,13 +203,14 @@ function DashboardPage() {
 	}, [adminEmail, isAdminPending]);
 
 	const greeting = useMemo(() => {
-		if (!invitationData?.guests) return "Cześć!";
-		return buildGreeting(invitationData.guests);
-	}, [invitationData?.guests]);
+		if (!invitationData?.guests) return locale === "en" ? "Hi!" : "Cześć!";
+		return buildGreeting(invitationData.guests, locale);
+	}, [invitationData?.guests, locale]);
 
 	const tabs = useMemo(() => {
 		return isAdmin ? ADMIN_TABS : GUEST_TABS;
 	}, [isAdmin]);
+	const tabLabels = useMemo(() => TAB_LABELS[locale], [locale]);
 	const pendingQaCount = useMemo(() => {
 		if (!qaQuestions) return 0;
 		return qaQuestions.filter((item) => item.status === "pending").length;
@@ -222,7 +246,9 @@ function DashboardPage() {
 			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)]">
 				<div className="flex flex-col items-center gap-4">
 					<div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[var(--color-primary)]" />
-					<p className="text-gray-500 font-medium">Ładowanie...</p>
+					<p className="text-gray-500 font-medium">
+						{locale === "en" ? "Loading..." : "Ładowanie..."}
+					</p>
 				</div>
 			</div>
 		);
@@ -233,7 +259,11 @@ function DashboardPage() {
 			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)]">
 				<div className="flex flex-col items-center gap-4">
 					<div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[var(--color-primary)]" />
-					<p className="text-gray-500 font-medium">Weryfikacja uprawnień...</p>
+					<p className="text-gray-500 font-medium">
+						{locale === "en"
+							? "Verifying permissions..."
+							: "Weryfikacja uprawnień..."}
+					</p>
 				</div>
 			</div>
 		);
@@ -244,18 +274,23 @@ function DashboardPage() {
 			<div className="flex items-center justify-center min-h-screen bg-[var(--color-background-light)] px-4">
 				<div className="w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-sm space-y-3">
 					<h2 className="text-xl font-bold text-foreground">
-						Brak dostępu administratora
+						{locale === "en"
+							? "No administrator access"
+							: "Brak dostępu administratora"}
 					</h2>
 					<p className="text-sm text-muted-foreground">
-						Twoja sesja logowania działa, ale backend nie przyznał tokenu
-						administratora.
+						{locale === "en"
+							? "Your login session is active, but the backend did not grant an admin token."
+							: "Twoja sesja logowania działa, ale backend nie przyznał tokenu administratora."}
 					</p>
 					<p className="text-sm text-muted-foreground">
-						Sprawdź `GET /api/admin/session` w Network (status + payload) oraz
-						czy użytkownik istnieje jako aktywny admin w Convex.
+						{locale === "en"
+							? "Check `GET /api/admin/session` in Network (status + payload) and verify this user is an active admin in Convex."
+							: "Sprawdź `GET /api/admin/session` w Network (status + payload) oraz czy użytkownik istnieje jako aktywny admin w Convex."}
 					</p>
 					<p className="text-xs text-muted-foreground">
-						Szczegóły: {adminAccessError ?? "forbidden"}
+						{locale === "en" ? "Details" : "Szczegóły"}:{" "}
+						{adminAccessError ?? "forbidden"}
 					</p>
 				</div>
 			</div>
@@ -274,6 +309,7 @@ function DashboardPage() {
 						activeFilter={activeTab}
 						onSelect={(label) => setActiveTab(label as MainTabId)}
 						badges={isAdmin ? { Admin: adminActionCount } : undefined}
+						labelsById={tabLabels}
 						showCarpoolTab={
 							invitationData?.invitation.carpoolDriverOptIn ||
 							(hasResponded && hasAnyAttending)

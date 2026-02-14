@@ -9,6 +9,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Toaster } from "@/components/ui/toaster";
+import { LocaleProvider } from "@/lib/locale";
 import ConvexProvider from "../integrations/convex/provider";
 import appCss from "../styles.css?url";
 
@@ -87,23 +88,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body className="flex min-h-screen w-full flex-col bg-background text-foreground overflow-x-hidden font-sans">
 				<ConvexProvider>
-					<HeaderWrapper />
-					<main className="flex-1 flex flex-col items-center w-full">
-						{children}
-					</main>
-					<FooterWrapper />
-					<Toaster />
-					<TanStackDevtools
-						config={{
-							position: "bottom-right",
-						}}
-						plugins={[
-							{
-								name: "Tanstack Router",
-								render: <TanStackRouterDevtoolsPanel />,
-							},
-						]}
-					/>
+					<LocaleProvider>
+						<HeaderWrapper />
+						<main className="flex-1 flex flex-col items-center w-full">
+							{children}
+						</main>
+						<FooterWrapper />
+						<Toaster />
+						<TanStackDevtools
+							config={{
+								position: "bottom-right",
+							}}
+							plugins={[
+								{
+									name: "Tanstack Router",
+									render: <TanStackRouterDevtoolsPanel />,
+								},
+							]}
+						/>
+					</LocaleProvider>
 				</ConvexProvider>
 				<Scripts />
 			</body>

@@ -1,6 +1,23 @@
 import { Megaphone } from "lucide-react";
+import { useLocale } from "@/lib/locale";
 
 export function HeroSection() {
+	const { locale } = useLocale();
+	const copy =
+		locale === "en"
+			? {
+					badge: "Important Updates",
+					title: "Our Greek Wedding",
+					description:
+						"Here you can find the latest updates, schedule changes, and travel tips for your stay in Crete.",
+				}
+			: {
+					badge: "Ważne Informacje",
+					title: "Nasze Greckie Wesele",
+					description:
+						"Tutaj znajdziecie najnowsze aktualności, zmiany w harmonogramie oraz wskazówki dotyczące podróży i pobytu na Krecie.",
+				};
+
 	return (
 		<div
 			className="w-full relative bg-cover bg-center h-[400px]"
@@ -11,14 +28,13 @@ export function HeroSection() {
 			<div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
 				<span className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-4 py-1.5 text-xs font-bold text-white uppercase tracking-wider mb-4 border border-white/30">
 					<Megaphone className="size-4" />
-					Ważne Informacje
+					{copy.badge}
 				</span>
 				<h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-[-0.033em] max-w-3xl mb-4">
-					Nasze Greckie Wesele
+					{copy.title}
 				</h1>
 				<p className="text-gray-200 text-base md:text-lg font-medium max-w-2xl leading-relaxed">
-					Tutaj znajdziecie najnowsze aktualności, zmiany w harmonogramie oraz
-					wskazówki dotyczące podróży i pobytu na Krecie.
+					{copy.description}
 				</p>
 			</div>
 		</div>

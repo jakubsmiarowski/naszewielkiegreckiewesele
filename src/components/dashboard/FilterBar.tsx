@@ -43,17 +43,20 @@ export function FilterBar({
 	onSelect,
 	badges,
 	showCarpoolTab,
+	labelsById,
 }: {
 	filtersOverride?: string[];
 	activeFilter?: string;
 	onSelect?: (value: string) => void;
 	badges?: Partial<Record<string, number>>;
 	showCarpoolTab?: boolean;
+	labelsById?: Partial<Record<string, string>>;
 }) {
 	const items = (filtersOverride ?? filters).filter(
 		(item) => item !== "Car Pool" || showCarpoolTab,
 	);
 	const [open, setOpen] = useState(false);
+	const labelForItem = (item: string) => labelsById?.[item] ?? item;
 
 	const activeItem = items.find((item) => item === activeFilter) || items[0];
 
@@ -70,7 +73,7 @@ export function FilterBar({
 							className="w-full justify-between bg-background border-border text-foreground hover:bg-muted/50"
 						>
 							<div className="flex items-center gap-2">
-								<span>{activeItem}</span>
+								<span>{labelForItem(activeItem)}</span>
 								{(badges?.[activeItem] ?? 0) > 0 && (
 									<Badge
 										variant="destructive"
@@ -109,7 +112,7 @@ export function FilterBar({
 											)}
 										/>
 									</div>
-									<span>{filter}</span>
+									<span>{labelForItem(filter)}</span>
 									{(badges?.[filter] ?? 0) > 0 && (
 										<Badge
 											variant="destructive"
@@ -141,7 +144,7 @@ export function FilterBar({
 							)}
 							onClick={() => onSelect?.(filter)}
 						>
-							<span>{filter}</span>
+							<span>{labelForItem(filter)}</span>
 							{(badges?.[filter] ?? 0) > 0 && (
 								<Badge
 									variant={isActive ? "secondary" : "destructive"}
