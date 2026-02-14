@@ -321,12 +321,16 @@ export function GreekPhrasesWidget() {
 
 export function DogSlideshowWidget() {
 	const { locale } = useLocale();
-	const dogImages = [
-		"https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&h=600",
-		"https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=600&h=600",
-		"https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=600&h=600",
-		"https://images.unsplash.com/photo-1534361960057-19889db9621e?auto=format&fit=crop&w=600&h=600",
-		"https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=600&h=600",
+	const albumImages = [
+		"/images/alajan.webp",
+		"/images/azja.webp",
+		"/images/dawid.webp",
+		"/images/franek.webp",
+		"/images/kite.webp",
+		"/images/sadowa.webp",
+		"/images/uro.webp",
+		"/images/wataha.webp",
+		"/images/wojtek.webp",
 	];
 
 	return (
@@ -336,12 +340,12 @@ export function DogSlideshowWidget() {
 			</h4>
 			<Carousel className="w-full">
 				<CarouselContent className="-ml-0">
-					{dogImages.map((src, index) => (
+					{albumImages.map((src, index) => (
 						<CarouselItem key={src} className="pl-0">
 							<div className="overflow-hidden rounded-xl aspect-square">
 								<img
 									src={src}
-									alt={`Dog ${index + 1}`}
+									alt={`${locale === "en" ? "Album photo" : "Zdjęcie z albumu"} ${index + 1}`}
 									className="object-cover w-full h-full"
 								/>
 							</div>
