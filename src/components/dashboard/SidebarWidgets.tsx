@@ -61,7 +61,7 @@ function CountdownCard({
 	icon: Icon,
 	buttonLabel,
 	onButtonClick,
-	theme = "primary",
+	theme = "event",
 }: {
 	title: string;
 	dateLabel: string;
@@ -69,16 +69,16 @@ function CountdownCard({
 	icon: LucideIcon;
 	buttonLabel?: string;
 	onButtonClick?: () => void;
-	theme?: "primary" | "sunset";
+	theme?: "event" | "deadline";
 }) {
 	const { days, hours, minutes } = useCountdown(targetDate);
 	const themeClasses =
-		theme === "sunset"
-			? "bg-[#FDE68A] text-[#7C2D12]"
+		theme === "deadline"
+			? "bg-[#899349] text-white"
 			: "bg-primary text-primary-foreground";
 	const accentClasses =
-		theme === "sunset"
-			? "bg-white/60 text-[#7C2D12]"
+		theme === "deadline"
+			? "bg-white/20 text-white"
 			: "bg-white/20 text-primary-foreground";
 
 	return (
@@ -147,7 +147,7 @@ export function EventCountdownWidget({
 			icon={Heart}
 			buttonLabel="Dodaj do kalendarza"
 			onButtonClick={onAddToCalendar}
-			theme="primary"
+			theme="event"
 		/>
 	);
 }
@@ -172,7 +172,7 @@ export function DeadlineCountdownWidget({
 			dateLabel={label}
 			targetDate={deadline}
 			icon={Clock3}
-			theme="sunset"
+			theme="deadline"
 		/>
 	);
 }

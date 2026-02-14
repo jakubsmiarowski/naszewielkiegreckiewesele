@@ -19,6 +19,14 @@ const MAP_QUERY = "Lefka Ori Hotel, Chora Sfakion, Crete";
 const MAP_QUERY_PARAM = encodeURIComponent(MAP_QUERY);
 const MAP_EMBED_URL = `https://www.google.com/maps?q=${MAP_QUERY_PARAM}&output=embed`;
 const MAP_LINK_URL = `https://www.google.com/maps/search/?api=1&query=${MAP_QUERY_PARAM}`;
+const ASSET_CDN_BASE_URL =
+	import.meta.env.VITE_ASSET_CDN_BASE_URL?.trim() ?? "";
+
+function cdnAsset(path: string) {
+	if (!path.startsWith("/")) return path;
+	if (!ASSET_CDN_BASE_URL) return path;
+	return `${ASSET_CDN_BASE_URL.replace(/\/+$/, "")}${path}`;
+}
 
 export function InfoTabContent({
 	activeTab,
@@ -254,8 +262,7 @@ function InfoAttractionsTemplate({
 		{
 			id: "attractions-loutro",
 			anchorId: ATTRACTION_ANCHORS.loutroSaturdayTrip,
-			image:
-				"https://images.unsplash.com/photo-1521292270410-a8c4d716d518?auto=format&fit=crop&w=1200&q=80",
+			image: cdnAsset("/images/loutro4.webp"),
 			category: "Plaże i zatoczki",
 			date: "Sobota 03.10 • Rejs 20-30 min",
 			title: "Loutro",
@@ -293,8 +300,7 @@ function InfoAttractionsTemplate({
 		},
 		{
 			id: "attractions-glyka-nera",
-			image:
-				"https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80",
+			image: cdnAsset("/images/glykanera.webp"),
 			category: "Plaże i zatoczki",
 			date: "Łódź lub trekking",
 			title: "Glyka Nera (Sweet Water Beach)",
@@ -330,8 +336,7 @@ function InfoAttractionsTemplate({
 		},
 		{
 			id: "attractions-frangokastello",
-			image:
-				"https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1200&q=80",
+			image: cdnAsset("/images/frangokastello.webp"),
 			category: "Historia i plaża",
 			date: "Auto 20-25 min",
 			title: "Frangokastello",
@@ -365,8 +370,7 @@ function InfoAttractionsTemplate({
 		},
 		{
 			id: "attractions-imbros",
-			image:
-				"https://images.unsplash.com/photo-1476231682828-37e571bc172f?auto=format&fit=crop&w=1200&q=80",
+			image: cdnAsset("/images/imbros.webp"),
 			category: "Trekking",
 			date: "Auto 20 min",
 			title: "Wąwóz Imbros",
@@ -400,8 +404,7 @@ function InfoAttractionsTemplate({
 		},
 		{
 			id: "attractions-aradena",
-			image:
-				"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+			image: cdnAsset("/images/aradena.webp"),
 			category: "Widoki",
 			date: "Auto 20-30 min",
 			title: "Wąwóz Aradena i most",
@@ -432,8 +435,7 @@ function InfoAttractionsTemplate({
 		},
 		{
 			id: "attractions-anopoli",
-			image:
-				"https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
+			image: cdnAsset("/images/anopoli.webp"),
 			category: "Lokalny klimat",
 			date: "Auto 20-30 min",
 			title: "Anopoli i płaskowyż Sfakia",
