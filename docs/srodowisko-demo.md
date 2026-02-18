@@ -98,3 +98,31 @@ Stworzyć publiczne środowisko demo do portfolio, w którym odwiedzający może
 ## 13. Decyzje zatwierdzone
 - Model docelowy: `interactive + auto-reset`.
 - Kierunek: środowisko demo traktowane jak osobny produkt operacyjny, nie jako okrojona produkcja.
+
+## 14. Implementacja w tym repo
+- Tryb aplikacji:
+  - `APP_MODE=production|demo` (resolver w `src/lib/app-mode.ts`).
+  - W trybie `demo` aplikacja używa demo Convex URL (`VITE_CONVEX_DEMO_URL` / fallback).
+- Osobna aplikacja Cloudflare:
+  - produkcja: `wrangler.jsonc` (`naszewielkiegreckiewesele.com`, `www...`),
+  - demo: `wrangler.demo.jsonc` (`demo.naszewielkiegreckiewesele.com`).
+- UX demo:
+  - baner informujący o trybie demo,
+  - statyczna instrukcja testowania: `/demo.html`,
+  - szybki wybór demo PIN-ów na stronie logowania.
+- Reset i seed demo:
+  - Convex mutation: `demo.resetDemoEnvironment` (`convex/demo.ts`),
+  - ręczny reset z panelu admina (sekcja Zaproszenia),
+  - skrypt CLI: `npm run demo:reset`.
+- Heartbeat:
+  - endpoint statyczny: `/healthz.txt`.
+
+## 15. Operacyjnie (demo)
+1. Zdeployuj aplikację demo:
+   - `npm run deploy:demo`
+2. Ustaw demo Convex URL dla buildu/deploya:
+   - `VITE_CONVEX_DEMO_URL=https://<twoj-dev-convex>.convex.cloud`
+3. Zresetuj i zasiej dane demo:
+   - `npm run demo:reset -- --convex-url https://<twoj-dev-convex>.convex.cloud --internal-api-key <INTERNAL_API_KEY>`
+4. Skonfiguruj auto-reset (cron) na 00:00 czasu lokalnego:
+   - wywołanie `npm run demo:reset` raz dziennie.

@@ -60,7 +60,7 @@ const QA_CONTENT: Record<
 > = {
 	pl: {
 		pendingAnswerMessage:
-			"Kuba jeszcze się zastanawia i odpowie jak szybko może.",
+			"Organizator jeszcze się zastanawia i odpowie jak szybko może.",
 		baseQuestions: [
 			{
 				question: "Jaki jest dress code?",
@@ -103,7 +103,7 @@ const QA_CONTENT: Record<
 	},
 	en: {
 		pendingAnswerMessage:
-			"Kuba is still thinking about it and will answer as soon as possible.",
+			"The organizer is still thinking about it and will answer as soon as possible.",
 		baseQuestions: [
 			{
 				question: "What is the dress code?",

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jak testować demo | Nasze Wielkie Greckie Wesele</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f2ec;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --accent: #2563eb;
+        --border: #e5e7eb;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Lora", Georgia, serif;
+        background: radial-gradient(circle at top, #fff8eb, var(--bg) 45%);
+        color: var(--text);
+      }
+      .container {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 32px 20px 56px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(17, 24, 39, 0.06);
+      }
+      h1 {
+        margin: 0;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(2rem, 4vw, 2.8rem);
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 1.2rem;
+      }
+      p { line-height: 1.6; }
+      ol { margin: 0; padding-left: 20px; line-height: 1.8; }
+      code {
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 2px 8px;
+        font-size: 0.95em;
+      }
+      .badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #fde68a;
+        background: #fef3c7;
+        color: #78350f;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      .pins {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pin {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-weight: 700;
+      }
+      .muted { color: var(--muted); }
+      a {
+        color: var(--accent);
+        text-underline-offset: 2px;
+      }
+      @media (min-width: 780px) {
+        .grid { grid-template-columns: 1fr 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <span class="badge">ŚRODOWISKO DEMO</span>
+      <h1>Jak testować demo</h1>
+      <p class="muted">
+        To środowisko jest publiczne i okresowo resetowane. Żadne dane z produkcji nie są tutaj używane.
+      </p>
+
+      <section class="grid">
+        <article class="card">
+          <h2>1) Logowanie gościa (PIN)</h2>
+          <p>Wybierz jeden z kodów i zaloguj się na stronie głównej:</p>
+          <div class="pins">
+            <span class="pin">111111</span>
+            <span class="pin">222222</span>
+            <span class="pin">333333</span>
+          </div>
+          <p class="muted">
+            Każdy PIN otwiera inny scenariusz: kompletne RSVP, brak odpowiedzi lub konflikt Car Pool.
+          </p>
+        </article>
+
+        <article class="card">
+          <h2>2) Logowanie admina demo</h2>
+          <p>
+            Panel administratora jest dostępny przez przycisk <strong>"Zaloguj przez Google"</strong> na landing page.
+          </p>
+          <p class="muted">
+            Konto admin demo musi być wcześniej dodane do listy adminów w środowisku demo Convex.
+          </p>
+        </article>
+      </section>
+
+      <section class="card" style="margin-top: 16px">
+        <h2>3) Szybka checklista flow</h2>
+        <ol>
+          <li>RSVP: zmień odpowiedź i zapisz.</li>
+          <li>Car Pool: utwórz ofertę albo wyślij zgłoszenie.</li>
+          <li>Q&amp;A: dodaj pytanie jako gość.</li>
+          <li>Admin: przejdź do sekcji <code>Admin</code> i sprawdź alerty oraz pytania.</li>
+          <li>Reset: w sekcji <code>Admin → Zaproszenia</code> kliknij <code>Reset danych demo</code>.</li>
+        </ol>
+      </section>
+
+      <section class="card" style="margin-top: 16px">
+        <h2>4) Reset i harmonogram</h2>
+        <p>
+          Dane można resetować ręcznie (admin-only) oraz automatycznie przez zaplanowane wywołanie skryptu resetującego.
+        </p>
+        <p class="muted">
+          Rekomendowany harmonogram: codziennie o 00:00 czasu lokalnego (<code>Europe/Warsaw</code>).
+        </p>
+      </section>
+
+      <p style="margin-top: 20px">
+        <a href="/">Wróć do aplikacji demo</a>
+      </p>
+    </main>
+  </body>
+</html>

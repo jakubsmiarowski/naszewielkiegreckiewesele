@@ -6,7 +6,9 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useMemo, useState } from "react";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+import { isDemoMode } from "@/lib/app-mode";
 import { authClient, signInWithGoogle } from "@/lib/auth-client";
+import { getCoupleNames } from "@/lib/couple";
 import { useInvitationSession } from "@/lib/invitation-session";
 
 export const Route = createFileRoute("/")({ component: LandingPage });
@@ -15,6 +17,8 @@ function LandingPage() {
 	const navigate = useNavigate();
 	const prefersReducedMotion = useReducedMotion();
 	const { invitationId, isLoading: isSessionLoading } = useInvitationSession();
+	const isDemoEnvironment = isDemoMode();
+	const couple = getCoupleNames();
 	const { data: adminSession, isPending: isAdminPending } =
 		authClient.useSession();
 	const adminEmail = adminSession?.user?.email ?? null;
@@ -30,6 +34,18 @@ function LandingPage() {
 		const params = new URLSearchParams(location.search);
 		return params.get("error");
 	}, [location.search]);
+	const demoPins = useMemo(() => {
+		const raw =
+			(import.meta.env.VITE_DEMO_GUEST_PINS as string | undefined) ?? "";
+		const parsed = raw
+			.split(/[,\n; ]+/)
+			.map((value) => value.trim())
+			.filter(Boolean);
+		if (parsed.length > 0) {
+			return parsed;
+		}
+		return ["111111", "222222", "333333"];
+	}, []);
 
 	const resolvedError = error ?? (searchError ? "Nieprawidłowy kod." : null);
 
@@ -102,6 +118,12 @@ function LandingPage() {
 		}
 	};
 
+	const handlePickDemoPin = (pin: string) => {
+		setShowPinForm(true);
+		setPinCode(pin);
+		setError(null);
+	};
+
 	return (
 		<div className="relative flex min-h-screen w-full flex-col font-display overflow-x-hidden">
 			<header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
@@ -129,8 +151,8 @@ function LandingPage() {
 
 					<div className="space-y-4">
 						<h1 className="text-6xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl sm:text-7xl md:text-9xl">
-							Kamila <br className="md:hidden" />
-							<span className="text-blue-300">&</span> Kuba
+							{couple.first} <br className="md:hidden" />
+							<span className="text-blue-300">&</span> {couple.second}
 						</h1>
 
 						<div className="mx-auto w-full max-w-md text-white/95">
@@ -145,6 +167,36 @@ function LandingPage() {
 							</div>
 						</div>
 					</div>
+
+					{isDemoEnvironment && (
+						<div className="w-full max-w-md rounded-2xl border border-amber-200 bg-amber-50/95 p-4 text-left text-amber-950 shadow-lg sm:rounded-3xl sm:p-5">
+							<p className="text-xs font-semibold uppercase tracking-wide">
+								Tryb demo
+							</p>
+							<p className="mt-2 text-sm">
+								Użyj jednego z gotowych PIN-ów, aby wejść do przygotowanych
+								scenariuszy.
+							</p>
+							<div className="mt-3 flex flex-wrap gap-2">
+								{demoPins.map((pin) => (
+									<button
+										key={pin}
+										type="button"
+										onClick={() => handlePickDemoPin(pin)}
+										className="rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
+									>
+										{pin}
+									</button>
+								))}
+							</div>
+							<a
+								href="/demo.html"
+								className="mt-3 inline-block text-xs font-semibold underline"
+							>
+								Otwórz instrukcję testowania demo
+							</a>
+						</div>
+					)}
 
 					<div className="mt-8 w-full max-w-md overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-xl glass-card sm:mt-12 sm:rounded-3xl sm:p-8">
 						<div className="flex flex-col gap-6">

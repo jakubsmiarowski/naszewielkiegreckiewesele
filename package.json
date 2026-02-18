@@ -11,12 +11,14 @@
     "test": "vitest run",
     "deploy": "npm run build && wrangler deploy --keep-vars",
     "deploy:cloudflare": "wrangler deploy --keep-vars",
+    "deploy:demo": "npm run build && wrangler deploy --config wrangler.demo.jsonc --keep-vars",
     "ci:verify": "npm run check && npm run test",
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
     "generate:qr": "node scripts/generate-qr.mjs",
-    "seed:admins": "node scripts/seed-admin-users.mjs"
+    "seed:admins": "node scripts/seed-admin-users.mjs",
+    "demo:reset": "node scripts/reset-demo-environment.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.13.8",

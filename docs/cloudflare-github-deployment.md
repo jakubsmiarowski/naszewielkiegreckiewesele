@@ -34,6 +34,7 @@ Deployment workflow file: `.github/workflows/deploy-cloudflare.yml`
 ```bash
 npx wrangler whoami
 npm run deploy
+npm run deploy:demo
 ```
 
 If `wrangler whoami` fails, run:
@@ -41,3 +42,12 @@ If `wrangler whoami` fails, run:
 ```bash
 npx wrangler login
 ```
+
+## 5) Demo app (`demo.naszewielkiegreckiewesele.com`)
+
+- Demo deploy uses separate config: `wrangler.demo.jsonc`.
+- Required variable for demo build/runtime:
+  - `APP_MODE=demo` (already in `wrangler.demo.jsonc`)
+  - `VITE_CONVEX_DEMO_URL` pointing at demo/dev Convex deployment.
+- Route is configured as custom domain:
+  - `demo.naszewielkiegreckiewesele.com`

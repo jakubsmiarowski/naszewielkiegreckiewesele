@@ -82,7 +82,7 @@ export function buildIcsFile(options?: BuildIcsFileOptions) {
 	return [
 		"BEGIN:VCALENDAR",
 		"VERSION:2.0",
-		"PRODID:-//KamilaKuba//Wedding//PL",
+		"PRODID:-//GreekWeddingApp//Wedding//PL",
 		"CALSCALE:GREGORIAN",
 		"METHOD:PUBLISH",
 		"BEGIN:VEVENT",

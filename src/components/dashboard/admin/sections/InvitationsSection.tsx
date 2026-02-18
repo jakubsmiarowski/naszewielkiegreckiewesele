@@ -17,6 +17,7 @@ interface InvitationsSectionProps {
 	onResetRsvpForAllInvitations?: () => void;
 	showResetRsvpForAllButton?: boolean;
 	isResettingRsvpForAll?: boolean;
+	resetRsvpButtonLabel?: string;
 	onRelationChange: (guestId: string, relation: string | undefined) => void;
 	onCopyInvitationLink: (token: string) => void;
 }
@@ -39,6 +40,7 @@ export function InvitationsSection({
 	onResetRsvpForAllInvitations,
 	showResetRsvpForAllButton = false,
 	isResettingRsvpForAll = false,
+	resetRsvpButtonLabel = "Reset RSVP",
 	onRelationChange,
 	onCopyInvitationLink,
 }: InvitationsSectionProps) {
@@ -70,8 +72,8 @@ export function InvitationsSection({
 							className="h-auto rounded-full border-red-200 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 hover:text-red-800"
 						>
 							{isResettingRsvpForAll
-								? "Resetowanie RSVP..."
-								: "Reset RSVP (dev)"}
+								? "Resetowanie danych..."
+								: resetRsvpButtonLabel}
 						</Button>
 					)}
 				</div>

@@ -1,5 +1,6 @@
 import { Heart, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getCoupleLabel } from "@/lib/couple";
 import { useLocale } from "@/lib/locale";
 
 export function DashboardHeader() {
@@ -12,7 +13,7 @@ export function DashboardHeader() {
 					<Heart className="size-5 text-primary fill-current" />
 				</div>
 				<h2 className="text-foreground text-lg font-bold leading-tight tracking-[-0.015em]">
-					Kamila & Kuba
+					{getCoupleLabel()}
 				</h2>
 			</div>
 			<div className="flex items-center gap-2">

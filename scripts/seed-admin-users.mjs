@@ -4,9 +4,8 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api.js";
 
 const DEFAULT_EMAILS = [
-  "jakub.smiarowski@gmail.com",
-  "pazgan.kamila@gmail.com",
-  "Mateusz.szymczak1@gmail.com",
+  "admin.demo+1@example.com",
+  "admin.demo+2@example.com",
 ];
 
 const args = parseArgs(process.argv.slice(2));

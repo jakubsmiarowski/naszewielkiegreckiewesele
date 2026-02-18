@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { useEffect, useId, useMemo, useState } from "react";
 import { getInvitationAttendanceStats } from "@/components/dashboard/admin/helpers";
 import { SectionSelector } from "@/components/dashboard/admin/SectionSelector";
@@ -22,6 +22,7 @@ import type {
 	RsvpSettings,
 } from "@/components/dashboard/types";
 import { toast } from "@/components/ui/use-toast";
+import { isDemoMode } from "@/lib/app-mode";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -40,6 +41,7 @@ export function AdminTab({
 	mediationAlerts,
 	qaQuestions,
 }: AdminTabProps) {
+	const convex = useConvex();
 	const updateRelation = useMutation(api.guests.updateGuestRelation);
 	const updateSettings = useMutation(api.settings.updateRsvpSettings);
 	const seedInvitations = useMutation(api.invitations.seedInvitations);
@@ -77,6 +79,14 @@ export function AdminTab({
 	const [activeSection, setActiveSection] = useState<AdminSectionId>("admins");
 	const newAdminEmailId = useId();
 	const isDevelopment = import.meta.env.DEV;
+	const isDemoEnvironment = isDemoMode();
+	const demoResetMutation = (
+		api as unknown as {
+			demo: {
+				resetDemoEnvironment: typeof api.invitations.resetRsvpForAllInvitations;
+			};
+		}
+	).demo.resetDemoEnvironment;
 
 	useEffect(() => {
 		if (settings?.rsvpDeadline) {
@@ -295,6 +305,18 @@ export function AdminTab({
 	const handleSeedInvitations = async () => {
 		if (!adminAccessToken) return;
 		try {
+			if (isDemoEnvironment) {
+				await convex.mutation(demoResetMutation, {
+					adminAccessToken,
+				});
+				toast({
+					variant: "success",
+					title: "Dane demo odtworzone",
+					description: "Załadowano fikcyjny zestaw gości i scenariuszy demo.",
+				});
+				return;
+			}
+
 			await seedInvitations({ adminAccessToken });
 			toast({
 				variant: "success",
@@ -311,11 +333,19 @@ export function AdminTab({
 	};
 
 	const handleResetRsvpForAllInvitations = async () => {
-		if (!adminAccessToken || !isDevelopment || isResettingRsvpData) return;
+		if (
+			!adminAccessToken ||
+			(!isDevelopment && !isDemoEnvironment) ||
+			isResettingRsvpData
+		) {
+			return;
+		}
 		if (
 			typeof window !== "undefined" &&
 			!window.confirm(
-				"To wyczyści wszystkie odpowiedzi RSVP i pola logistyczne dla każdego zaproszenia. Kontynuować?",
+				isDemoEnvironment
+					? "To odtworzy pełny dataset demo (RSVP, Car Pool i Q&A). Kontynuować?"
+					: "To wyczyści wszystkie odpowiedzi RSVP i pola logistyczne dla każdego zaproszenia. Kontynuować?",
 			)
 		) {
 			return;
@@ -323,6 +353,18 @@ export function AdminTab({
 
 		try {
 			setIsResettingRsvpData(true);
+			if (isDemoEnvironment) {
+				await convex.mutation(demoResetMutation, {
+					adminAccessToken,
+				});
+				toast({
+					variant: "success",
+					title: "Dane demo zresetowane",
+					description: "Środowisko demo zostało odtworzone do stanu bazowego.",
+				});
+				return;
+			}
+
 			const resetCount = await resetRsvpForAllInvitations({ adminAccessToken });
 			toast({
 				variant: "success",
@@ -501,8 +543,11 @@ export function AdminTab({
 					invitations={invitations}
 					onSeedInvitations={handleSeedInvitations}
 					onResetRsvpForAllInvitations={handleResetRsvpForAllInvitations}
-					showResetRsvpForAllButton={isDevelopment}
+					showResetRsvpForAllButton={isDevelopment || isDemoEnvironment}
 					isResettingRsvpForAll={isResettingRsvpData}
+					resetRsvpButtonLabel={
+						isDemoEnvironment ? "Reset danych demo" : "Reset RSVP (dev)"
+					}
 					onRelationChange={handleRelationChange}
 					onCopyInvitationLink={handleCopyInvitationLink}
 				/>

@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "naszewielkiegreckiewesele",
+	"name": "naszewielkiegreckiewesele-demo",
 	"compatibility_date": "2025-09-02",
 	"compatibility_flags": [
 		"nodejs_compat"
@@ -9,18 +9,13 @@
 	"workers_dev": false,
 	"main": "@tanstack/react-start/server-entry",
 	"vars": {
-		"APP_MODE": "production"
+		"APP_MODE": "demo"
 	},
 	"routes": [
 		{
-			"pattern": "naszewielkiegreckiewesele.com",
-			"zone_name": "naszewielkiegreckiewesele.com",
-			"custom_domain": true
-		},
-		{
-			"pattern": "www.naszewielkiegreckiewesele.com",
+			"pattern": "demo.naszewielkiegreckiewesele.com",
 			"zone_name": "naszewielkiegreckiewesele.com",
 			"custom_domain": true
 		}
-	],
+	]
 }

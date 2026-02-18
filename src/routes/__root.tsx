@@ -9,6 +9,8 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Toaster } from "@/components/ui/toaster";
+import { isDemoMode } from "@/lib/app-mode";
+import { getCoupleLabel } from "@/lib/couple";
 import { LocaleProvider } from "@/lib/locale";
 import ConvexProvider from "../integrations/convex/provider";
 import appCss from "../styles.css?url";
@@ -24,7 +26,9 @@ export const Route = createRootRoute({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "Kamila & Kuba - Ślub w Grecji",
+				title: isDemoMode()
+					? `Demo | ${getCoupleLabel()} - Ślub w Grecji`
+					: `${getCoupleLabel()} - Ślub w Grecji`,
 			},
 		],
 		links: [
@@ -90,6 +94,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<ConvexProvider>
 					<LocaleProvider>
 						<HeaderWrapper />
+						<DemoEnvironmentBanner />
 						<main className="flex-1 flex flex-col items-center w-full">
 							{children}
 						</main>
@@ -130,4 +135,19 @@ function FooterWrapper() {
 	if (isLandingPage) return null;
 
 	return <DashboardFooter />;
+}
+
+function DemoEnvironmentBanner() {
+	if (!isDemoMode()) {
+		return null;
+	}
+
+	return (
+		<div className="w-full border-y border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
+			To jest środowisko demonstracyjne. Dane są okresowo resetowane.{" "}
+			<a href="/demo.html" className="font-semibold underline">
+				Jak testować demo
+			</a>
+		</div>
+	);
 }

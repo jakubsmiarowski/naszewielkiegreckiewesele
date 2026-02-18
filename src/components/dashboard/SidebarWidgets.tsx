@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/carousel";
 import { Input } from "@/components/ui/input";
 import { getGreekPhraseCards } from "@/data/plan-timeline";
+import { isDemoMode } from "@/lib/app-mode";
 import { type AppLocale, useLocale } from "@/lib/locale";
 import { WEDDING_EVENT } from "@/lib/wedding-event";
 
@@ -195,28 +196,52 @@ export function DeadlineCountdownWidget({
 
 export function EmergencyContactsWidget() {
 	const { locale } = useLocale();
-	const contacts = [
-		{
-			name: "Kamila",
-			phone: "739 046 625",
-			role: locale === "en" ? "Bride" : "Panna Młoda",
-		},
-		{
-			name: "Kuba",
-			phone: "881 233 694",
-			role: locale === "en" ? "Groom" : "Pan Młody",
-		},
-		{
-			name: "Magda",
-			phone: "501 604 101",
-			role: locale === "en" ? "Witness" : "Świadek",
-		},
-		{
-			name: "Matuesz",
-			phone: "501 604 101",
-			role: locale === "en" ? "Witness" : "Świadek",
-		},
-	];
+	const demoMode = isDemoMode();
+	const contacts = demoMode
+		? [
+				{
+					name: "Nadia",
+					phone: "+48 500 111 222",
+					role: locale === "en" ? "Bride" : "Panna Młoda",
+				},
+				{
+					name: "Leon",
+					phone: "+48 500 333 444",
+					role: locale === "en" ? "Groom" : "Pan Młody",
+				},
+				{
+					name: "Julia",
+					phone: "+48 500 555 666",
+					role: locale === "en" ? "Witness" : "Świadkowa",
+				},
+				{
+					name: "Michał",
+					phone: "+48 500 777 888",
+					role: locale === "en" ? "Witness" : "Świadek",
+				},
+			]
+		: [
+				{
+					name: "Kamila",
+					phone: "739 046 625",
+					role: locale === "en" ? "Bride" : "Panna Młoda",
+				},
+				{
+					name: "Kuba",
+					phone: "881 233 694",
+					role: locale === "en" ? "Groom" : "Pan Młody",
+				},
+				{
+					name: "Magda",
+					phone: "501 604 101",
+					role: locale === "en" ? "Witness" : "Świadek",
+				},
+				{
+					name: "Mateusz",
+					phone: "501 604 101",
+					role: locale === "en" ? "Witness" : "Świadek",
+				},
+			];
 
 	return (
 		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">

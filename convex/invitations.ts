@@ -430,133 +430,131 @@ export const markViewed = mutation({
   },
 });
 
-// Keep this list in sync with docs/lista-gosci.md
+// Demo-safe invitation seed list (fictional data).
 const RAW_GUEST_LIST = `
-Paweł Ostaszewski
-Krystyna Ostaszewska
+Marek Cichocki
+Zofia Cichocka
 
 ---
 
-## Katarzyna Śmiarowska +1
+## Julia Wrona +1
 
 ---
 
-Artur Śmiarowski
-Monika Gałecka
+Adam Wolski
+Ewa Wolska
 
 ---
 
-## Franek Śmiarowski +1
+## Wojciech Ryba +1
 
 ---
 
-Anna Gołębiewska
-Robert Gołębiewski
+Aneta Lis
+Robert Lis
 
 ---
 
-Sylwia Pazgan
-Marzena Barchacka
+Paulina Łukasik
+Marcin Łukasik
 
 ---
 
-Paweł Muszyński
-Monika Muszyńska
+Piotr Kurek
+Iwona Kurek
 
 ---
 
-## Magda Muszyńska +1
+## Natalia Nita +1
 
 ---
 
-## Marzena Podymska
+## Alicja Chmura
 
 ---
 
-## Michał Muszyński +1
+## Michał Kania +1
 
 ---
 
-Janusz Pazgan
-Edyta Pazgan
+Damian Mrozowski
+Agnieszka Mrozowska
 
 ---
 
-Patrycja Pazgan
-Ryan Nietzsche
+Magdalena Chojnacka
+Mateusz Chojnacki
 
 ---
 
-## Karol Muszyński +1
+## Karol Tarnowski +1
 
 ---
 
-Kacper Tyszkiewicz
-Marta Żmuchowska
+Tomasz Bratek
+Joanna Bratek
 
 ---
 
-Jan Biardzki
-Alicja Biardzka
+Jan Rytel
+Alicja Rytel
 
 ---
 
-Kuba Radolak
-Dorota Kruszyńska
+Karol Raczyński
+Dorota Raczyńska
 
 ---
 
-Mateusz Szymczak
-Karolina Szymczak
+Leon Błaszczyk
+Nadia Błaszczyk
 
 ---
 
-Adam Sajkowski
-Ola Sajkowska
+Igor Chaberski
+Olga Chaberska
 
 ---
 
-Wojtek Puczyński
-Ewelina Mazurek
+Wojciech Mróz
+Ewelina Mróz
 
 ---
 
-Dawid Frieske
-Gosia Frieske
+Dawid Kos
+Gosia Kos
 
 ---
 
-Mikołaj Przychodzki
-Martyna Przychodzka
+Mikołaj Pytel
+Martyna Pytel
 
 ---
 
-Marcin Walczak
-Magda Walczak
+Marcin Baran
+Magda Baran
 
 ---
 
-## Konrad Michalski +1
+## Konrad Sarnowski +1
 
 ---
 
-Magda Woźniakowska
-Paweł Marszałek
+Magda Ptak
+Paweł Ptak
 
 ---
 
-Agata Woźniakowska
-Maciej Sugajski
+Agata Ogonowska
+Maciej Ogonowski
 
 ---
 
-## Krzysztof Batorski +1
+## Krzysztof Dunal +1
 
 ---
 
-## Julia Strus +1
-
----
+## Julia Rudnik +1
 `;
 
 function normalizeName(line: string) {
@@ -602,9 +600,8 @@ function normalizeCompare(value: string) {
 }
 
 const RELATION_BY_NAME = new Map<string, string>([
-  [normalizeCompare("Mateusz Szymczak"), "swiadek"],
-  [normalizeCompare("Magda Woźniakowska"), "swiadkowa"],
-  [normalizeCompare("Magda Wożniakowska"), "swiadkowa"],
+  [normalizeCompare("Mateusz Chojnacki"), "swiadek"],
+  [normalizeCompare("Magda Ptak"), "swiadkowa"],
 ]);
 
 function randomToken() {
