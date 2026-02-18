@@ -85,8 +85,10 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	const htmlLang = isDemoMode() ? "en" : "pl";
+
 	return (
-		<html lang="pl" className="light">
+		<html lang={htmlLang} className="light">
 			<head>
 				<HeadContent />
 			</head>
@@ -144,9 +146,9 @@ function DemoEnvironmentBanner() {
 
 	return (
 		<div className="w-full border-y border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
-			To jest środowisko demonstracyjne. Dane są okresowo resetowane.{" "}
+			This is a demo environment. Data is periodically reset.{" "}
 			<a href="/demo.html" className="font-semibold underline">
-				Jak testować demo
+				How to test demo
 			</a>
 		</div>
 	);

@@ -46,8 +46,55 @@ function LandingPage() {
 		}
 		return ["111111", "222222", "333333"];
 	}, []);
+	const copy = useMemo(
+		() =>
+			isDemoEnvironment
+				? {
+						invalidCode: "Invalid code. Check your invitation.",
+						inviteBadge: "Wedding Invitation",
+						locationLabel: "CRETE, GREECE",
+						demoTitle: "Demo mode",
+						demoDescription:
+							"Use one of the ready PIN codes to enter prepared scenarios.",
+						demoGuide: "Open demo testing guide",
+						loginTitle: "Sign in to view details",
+						enterHint: "Enter your invitation code or scan QR",
+						enterCodeButton: "Enter code",
+						guestsOnly: "Access for invited guests only",
+						codeLabel: "Invitation code",
+						codePlaceholder: "Enter 6-digit code",
+						backButton: "Back",
+						enterButton: "Enter",
+						checkingButton: "Checking...",
+						organizerPanel: "Organizer panel",
+						googleButton: "Sign in with Google",
+						loginFailed: "Could not sign in.",
+					}
+				: {
+						invalidCode: "Nieprawidłowy kod. Sprawdź zaproszenie.",
+						inviteBadge: "Zaproszenie na Ślub",
+						locationLabel: "KRETA, GRECJA",
+						demoTitle: "Tryb demo",
+						demoDescription:
+							"Użyj jednego z gotowych PIN-ów, aby wejść do przygotowanych scenariuszy.",
+						demoGuide: "Otwórz instrukcję testowania demo",
+						loginTitle: "Zaloguj się, aby zobaczyć szczegóły",
+						enterHint: "Wpisz kod z zaproszenia lub zeskanuj QR",
+						enterCodeButton: "Wpisz kod",
+						guestsOnly: "Dostęp tylko dla zaproszonych gości",
+						codeLabel: "Kod z zaproszenia",
+						codePlaceholder: "Wpisz 6-cyfrowy kod",
+						backButton: "Wstecz",
+						enterButton: "Wejdź",
+						checkingButton: "Sprawdzam...",
+						organizerPanel: "Panel organizatorów",
+						googleButton: "Zaloguj przez Google",
+						loginFailed: "Nie udało się zalogować.",
+					},
+		[isDemoEnvironment],
+	);
 
-	const resolvedError = error ?? (searchError ? "Nieprawidłowy kod." : null);
+	const resolvedError = error ?? (searchError ? copy.invalidCode : null);
 
 	useEffect(() => {
 		if (searchError) {
@@ -105,14 +152,14 @@ function LandingPage() {
 			});
 
 			if (!response.ok) {
-				setError("Nieprawidłowy kod. Sprawdź zaproszenie.");
+				setError(copy.invalidCode);
 				setIsSubmitting(false);
 				return;
 			}
 
 			navigate({ to: "/dashboard" });
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Nie udało się zalogować.");
+			setError(err instanceof Error ? err.message : copy.loginFailed);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -145,7 +192,7 @@ function LandingPage() {
 				<div className="relative z-10 flex flex-col items-center justify-center gap-6 px-5 pb-16 pt-20 text-center sm:gap-8 sm:px-4 sm:pb-0 sm:pt-0">
 					<div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 backdrop-blur-md sm:px-6">
 						<span className="text-sm font-bold uppercase tracking-[0.2em] text-white">
-							Zaproszenie na Ślub
+							{copy.inviteBadge}
 						</span>
 					</div>
 
@@ -162,7 +209,7 @@ function LandingPage() {
 								</span>
 								<span className="h-1.5 w-1.5 rounded-full bg-white/90" />
 								<span className="justify-self-start pl-3 text-lg font-medium uppercase tracking-wide sm:pl-4 sm:text-xl">
-									Kreta, Grecja
+									{copy.locationLabel}
 								</span>
 							</div>
 						</div>
@@ -171,12 +218,9 @@ function LandingPage() {
 					{isDemoEnvironment && (
 						<div className="w-full max-w-md rounded-2xl border border-amber-200 bg-amber-50/95 p-4 text-left text-amber-950 shadow-lg sm:rounded-3xl sm:p-5">
 							<p className="text-xs font-semibold uppercase tracking-wide">
-								Tryb demo
+								{copy.demoTitle}
 							</p>
-							<p className="mt-2 text-sm">
-								Użyj jednego z gotowych PIN-ów, aby wejść do przygotowanych
-								scenariuszy.
-							</p>
+							<p className="mt-2 text-sm">{copy.demoDescription}</p>
 							<div className="mt-3 flex flex-wrap gap-2">
 								{demoPins.map((pin) => (
 									<button
@@ -193,7 +237,7 @@ function LandingPage() {
 								href="/demo.html"
 								className="mt-3 inline-block text-xs font-semibold underline"
 							>
-								Otwórz instrukcję testowania demo
+								{copy.demoGuide}
 							</a>
 						</div>
 					)}
@@ -201,7 +245,7 @@ function LandingPage() {
 					<div className="mt-8 w-full max-w-md overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-xl glass-card sm:mt-12 sm:rounded-3xl sm:p-8">
 						<div className="flex flex-col gap-6">
 							<h3 className="text-white font-bold text-lg text-center">
-								Zaloguj się, aby zobaczyć szczegóły
+								{copy.loginTitle}
 							</h3>
 
 							<div className="relative">
@@ -218,18 +262,16 @@ function LandingPage() {
 											transition={{ duration: 0.35, ease: "easeOut" }}
 											className="flex flex-col items-center gap-4 text-center"
 										>
-											<p className="text-white text-sm">
-												Wpisz kod z zaproszenia lub zeskanuj QR
-											</p>
+											<p className="text-white text-sm">{copy.enterHint}</p>
 											<button
 												type="button"
 												onClick={() => setShowPinForm(true)}
 												className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border-2 border-white/30 bg-white/5 text-white font-bold transition-all hover:bg-white/20 hover:border-white"
 											>
-												Wpisz kod
+												{copy.enterCodeButton}
 											</button>
 											<p className="text-white/50 text-xs leading-relaxed">
-												Dostęp tylko dla zaproszonych gości
+												{copy.guestsOnly}
 											</p>
 										</motion.div>
 									) : (
@@ -245,7 +287,7 @@ function LandingPage() {
 												className="text-white text-sm"
 												htmlFor={pinInputId}
 											>
-												Kod z zaproszenia
+												{copy.codeLabel}
 											</label>
 											<input
 												id={pinInputId}
@@ -255,7 +297,7 @@ function LandingPage() {
 													if (error) setError(null);
 												}}
 												className="h-12 rounded-xl bg-white/10 border border-white/30 px-4 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
-												placeholder="Wpisz 6-cyfrowy kod"
+												placeholder={copy.codePlaceholder}
 												inputMode="numeric"
 												autoComplete="one-time-code"
 											/>
@@ -268,7 +310,7 @@ function LandingPage() {
 													onClick={() => setShowPinForm(false)}
 													className="flex-1 h-12 rounded-xl border border-white/30 text-white/80 hover:text-white hover:border-white/60 transition"
 												>
-													Wstecz
+													{copy.backButton}
 												</button>
 												<button
 													type="button"
@@ -279,7 +321,9 @@ function LandingPage() {
 													}
 													className="flex-1 h-12 rounded-xl bg-white text-gray-900 font-bold hover:bg-gray-100 transition disabled:opacity-60"
 												>
-													{isSubmitting ? "Sprawdzam..." : "Wejdź"}
+													{isSubmitting
+														? copy.checkingButton
+														: copy.enterButton}
 												</button>
 											</div>
 										</motion.div>
@@ -289,7 +333,7 @@ function LandingPage() {
 
 							<div className="border-t border-white/20 pt-6">
 								<p className="text-white text-sm mb-4 text-center">
-									Panel organizatorów
+									{copy.organizerPanel}
 								</p>
 
 								<button
@@ -297,7 +341,7 @@ function LandingPage() {
 									onClick={handleGoogleLogin}
 									className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border-2 border-white/30 bg-white/5 text-white font-bold transition-all hover:bg-white/20 hover:border-white"
 								>
-									Zaloguj przez Google
+									{copy.googleButton}
 								</button>
 							</div>
 						</div>

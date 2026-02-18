@@ -80,13 +80,6 @@ export function AdminTab({
 	const newAdminEmailId = useId();
 	const isDevelopment = import.meta.env.DEV;
 	const isDemoEnvironment = isDemoMode();
-	const demoResetMutation = (
-		api as unknown as {
-			demo: {
-				resetDemoEnvironment: typeof api.invitations.resetRsvpForAllInvitations;
-			};
-		}
-	).demo.resetDemoEnvironment;
 
 	useEffect(() => {
 		if (settings?.rsvpDeadline) {
@@ -306,7 +299,7 @@ export function AdminTab({
 		if (!adminAccessToken) return;
 		try {
 			if (isDemoEnvironment) {
-				await convex.mutation(demoResetMutation, {
+				await convex.mutation(api.demo.resetDemoEnvironment, {
 					adminAccessToken,
 				});
 				toast({
@@ -354,7 +347,7 @@ export function AdminTab({
 		try {
 			setIsResettingRsvpData(true);
 			if (isDemoEnvironment) {
-				await convex.mutation(demoResetMutation, {
+				await convex.mutation(api.demo.resetDemoEnvironment, {
 					adminAccessToken,
 				});
 				toast({

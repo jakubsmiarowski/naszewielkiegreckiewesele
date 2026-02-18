@@ -1,5 +1,5 @@
 import type { Id } from "./_generated/dataModel";
-import { mutation, type MutationCtx } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdminAccess } from "./adminAuth";
 import { getInternalApiKey } from "./adminConfig";
@@ -93,6 +93,19 @@ async function assertDemoResetAccess(
 
   throw new Error("Brak uprawnień do resetu środowiska demo.");
 }
+
+export const hasSeedData = query({
+  args: {},
+  returns: v.object({
+    hasSeedData: v.boolean(),
+  }),
+  handler: async (ctx) => {
+    const invitations = await ctx.db.query("invitations").take(1);
+    return {
+      hasSeedData: invitations.length > 0,
+    };
+  },
+});
 
 export const resetDemoEnvironment = mutation({
   args: {

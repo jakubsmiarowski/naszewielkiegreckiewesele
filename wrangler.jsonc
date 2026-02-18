@@ -7,7 +7,10 @@
 	],
 	"keep_vars": true,
 	"workers_dev": false,
-	"main": "@tanstack/react-start/server-entry",
+	"main": "dist/server/index.js",
+	"assets": {
+		"directory": "dist/client"
+	},
 	"vars": {
 		"APP_MODE": "production"
 	},

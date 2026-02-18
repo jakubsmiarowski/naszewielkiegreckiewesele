@@ -6,11 +6,13 @@ import {
 	useMemo,
 	useState,
 } from "react";
+import { isDemoMode } from "@/lib/app-mode";
 
 export type AppLocale = "pl" | "en";
 
 const STORAGE_KEY = "nwgw:locale";
 const DEFAULT_LOCALE: AppLocale = "pl";
+const DEMO_LOCALE: AppLocale = "en";
 
 interface LocaleContextValue {
 	locale: AppLocale;
@@ -23,20 +25,32 @@ export function isAppLocale(value: string): value is AppLocale {
 	return value === "pl" || value === "en";
 }
 
-export function resolveLocale(value: string | null | undefined): AppLocale {
-	if (!value) return DEFAULT_LOCALE;
-	return isAppLocale(value) ? value : DEFAULT_LOCALE;
+export function resolveLocale(
+	value: string | null | undefined,
+	defaultLocale: AppLocale = DEFAULT_LOCALE,
+): AppLocale {
+	if (!value) return defaultLocale;
+	return isAppLocale(value) ? value : defaultLocale;
 }
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-	const [locale, setLocale] = useState<AppLocale>(DEFAULT_LOCALE);
+	const demoMode = isDemoMode();
+	const defaultLocale = demoMode ? DEMO_LOCALE : DEFAULT_LOCALE;
+	const [locale, setLocale] = useState<AppLocale>(defaultLocale);
 
 	useEffect(() => {
+		if (demoMode) {
+			setLocale(DEMO_LOCALE);
+			window.localStorage.setItem(STORAGE_KEY, DEMO_LOCALE);
+			return;
+		}
+
 		const storedLocale = resolveLocale(
 			window.localStorage.getItem(STORAGE_KEY),
+			defaultLocale,
 		);
 		setLocale(storedLocale);
-	}, []);
+	}, [defaultLocale, demoMode]);
 
 	useEffect(() => {
 		document.documentElement.lang = locale;

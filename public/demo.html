@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jak testować demo | Nasze Wielkie Greckie Wesele</title>
+    <title>How to test demo | Greek Wedding Demo</title>
     <style>
       :root {
         color-scheme: light;
@@ -90,60 +90,60 @@
   </head>
   <body>
     <main class="container">
-      <span class="badge">ŚRODOWISKO DEMO</span>
-      <h1>Jak testować demo</h1>
+      <span class="badge">DEMO ENVIRONMENT</span>
+      <h1>How to test the demo</h1>
       <p class="muted">
-        To środowisko jest publiczne i okresowo resetowane. Żadne dane z produkcji nie są tutaj używane.
+        This environment is public and periodically reset. No production guest data is used.
       </p>
 
       <section class="grid">
         <article class="card">
-          <h2>1) Logowanie gościa (PIN)</h2>
-          <p>Wybierz jeden z kodów i zaloguj się na stronie głównej:</p>
+          <h2>1) Guest login (PIN)</h2>
+          <p>Use one of the following PIN codes on the landing page:</p>
           <div class="pins">
             <span class="pin">111111</span>
             <span class="pin">222222</span>
             <span class="pin">333333</span>
           </div>
           <p class="muted">
-            Każdy PIN otwiera inny scenariusz: kompletne RSVP, brak odpowiedzi lub konflikt Car Pool.
+            Each PIN opens a different scenario: complete RSVP, pending RSVP, and Car Pool mediation.
           </p>
         </article>
 
         <article class="card">
-          <h2>2) Logowanie admina demo</h2>
+          <h2>2) Demo admin login</h2>
           <p>
-            Panel administratora jest dostępny przez przycisk <strong>"Zaloguj przez Google"</strong> na landing page.
+            Admin panel access is available through the <strong>"Sign in with Google"</strong> button on the landing page.
           </p>
           <p class="muted">
-            Konto admin demo musi być wcześniej dodane do listy adminów w środowisku demo Convex.
+            Demo admin account must be added in the demo Convex environment.
           </p>
         </article>
       </section>
 
       <section class="card" style="margin-top: 16px">
-        <h2>3) Szybka checklista flow</h2>
+        <h2>3) Quick test checklist</h2>
         <ol>
-          <li>RSVP: zmień odpowiedź i zapisz.</li>
-          <li>Car Pool: utwórz ofertę albo wyślij zgłoszenie.</li>
-          <li>Q&amp;A: dodaj pytanie jako gość.</li>
-          <li>Admin: przejdź do sekcji <code>Admin</code> i sprawdź alerty oraz pytania.</li>
-          <li>Reset: w sekcji <code>Admin → Zaproszenia</code> kliknij <code>Reset danych demo</code>.</li>
+          <li>RSVP: update answer and save.</li>
+          <li>Car Pool: create an offer or send a ride request.</li>
+          <li>Q&amp;A: add a new question as a guest.</li>
+          <li>Admin: open <code>Admin</code> tab and review alerts and questions.</li>
+          <li>Reset: in <code>Admin → Invitations</code> click <code>Reset demo data</code>.</li>
         </ol>
       </section>
 
       <section class="card" style="margin-top: 16px">
-        <h2>4) Reset i harmonogram</h2>
+        <h2>4) Reset schedule</h2>
         <p>
-          Dane można resetować ręcznie (admin-only) oraz automatycznie przez zaplanowane wywołanie skryptu resetującego.
+          Data can be reset manually (admin-only) and automatically using a scheduled reset script.
         </p>
         <p class="muted">
-          Rekomendowany harmonogram: codziennie o 00:00 czasu lokalnego (<code>Europe/Warsaw</code>).
+          Recommended schedule: daily at 00:00 local time (<code>Europe/Warsaw</code>).
         </p>
       </section>
 
       <p style="margin-top: 20px">
-        <a href="/">Wróć do aplikacji demo</a>
+        <a href="/">Back to demo app</a>
       </p>
     </main>
   </body>
