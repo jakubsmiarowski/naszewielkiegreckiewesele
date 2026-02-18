@@ -15,6 +15,31 @@ import { isDemoMode } from "@/lib/app-mode";
 import { type AppLocale, useLocale } from "@/lib/locale";
 import { WEDDING_EVENT } from "@/lib/wedding-event";
 
+const PRIVATE_ALBUM_IMAGES = [
+	"/images/azja.webp",
+	"/images/alajan.webp",
+	"/images/dawid.webp",
+	"/images/franek.webp",
+	"/images/kite.webp",
+	"/images/sadowa.webp",
+	"/images/uro.webp",
+	"/images/wataha.webp",
+	"/images/wojtek.webp",
+] as const;
+
+const DEMO_ALBUM_IMAGES = [
+	"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+	"https://images.unsplash.com/photo-1514890547357-a9ee288728e0?auto=format&fit=crop&w=1200&q=80",
+	"https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80",
+	"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
+	"https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&w=1200&q=80",
+	"https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1200&q=80",
+] as const;
+
+export function getAlbumImagesForMode(demoMode: boolean): readonly string[] {
+	return demoMode ? DEMO_ALBUM_IMAGES : PRIVATE_ALBUM_IMAGES;
+}
+
 export function SearchWidget() {
 	return (
 		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">
@@ -346,23 +371,21 @@ export function GreekPhrasesWidget() {
 
 export function DogSlideshowWidget() {
 	const { locale } = useLocale();
-	const albumImages = [
-		"/images/azja.webp",
-		"/images/alajan.webp",
-		"/images/dawid.webp",
-		"/images/franek.webp",
-		"/images/kite.webp",
-		"/images/sadowa.webp",
-		"/images/uro.webp",
-		"/images/wataha.webp",
-		"/images/wojtek.webp",
-	];
+	const demoMode = isDemoMode();
+	const albumImages = getAlbumImagesForMode(demoMode);
 
 	return (
 		<div className="bg-background p-6 rounded-2xl shadow-sm border border-border">
 			<h4 className="text-lg font-bold text-foreground mb-4">
 				{locale === "en" ? "Album" : "Album"}
 			</h4>
+			{demoMode && (
+				<p className="mb-3 text-xs text-muted-foreground">
+					{locale === "en"
+						? "Demo uses public sample photos."
+						: "Demo używa publicznych zdjęć przykładowych."}
+				</p>
+			)}
 			<Carousel className="w-full">
 				<CarouselContent className="-ml-0">
 					{albumImages.map((src, index) => (
