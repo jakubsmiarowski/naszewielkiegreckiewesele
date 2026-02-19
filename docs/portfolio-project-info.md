@@ -1,6 +1,6 @@
-# Nasze Wielkie Greckie Wesele — informacje do formularza portfolio
+# Nasze Wielkie Greckie Wesele — portfolio project info
 
-Treść do wklejenia w formularz dodawania projektu na stronie portfolio.
+Copy-paste content for adding this project to your portfolio site.
 
 ---
 
@@ -13,38 +13,44 @@ nasze-wielkie-greckie-wesele
 ## Title
 
 ```
-Nasze Wielkie Greckie Wesele
+Our Big Greek Wedding
 ```
 
-## Headline (krótki tagline)
+## Headline (short tagline)
 
 ```
-Aplikacja weselna dla gości — RSVP, car pool, logistyka i Q&A w jednym miejscu
+Wedding app for guests — RSVP, car pool, logistics and Q&A in one place
 ```
 
-## Summary (pierwszy akapit)
+## Summary (first paragraph)
 
 ```
-Aplikacja weselna napisana od zera: goście logują się kodem z zaproszenia, potwierdzają przybycie (RSVP), rezerwują transport (car pool), przeglądają plan i logistykę oraz zadają pytania. Panel admina: zarządzanie zaproszeniami, terminami RSVP i car poolu, moderacja Q&A oraz mediacja w car poolu.
+A wedding app built from scratch: guests sign in with a code from their invitation, confirm attendance (RSVP), arrange transport (car pool), browse the schedule and logistics, and ask questions. Admin panel: manage invitations, RSVP and car pool deadlines, Q&A moderation, and car pool mediation.
 ```
 
-## Body paragraphs (oddzielone pustą linią)
+## Body paragraphs (separate with blank lines)
 
 ```
-Aplikacja weselna dla Kamili i Kuby — pełny stack od zera: front (React, TanStack Router, Tailwind), backend (Convex), autentykacja (Better Auth, Google dla adminów), deploy na Cloudflare Workers. Goście wchodzą po kodzie PIN z zaproszenia i mają dostęp do dashboardu z sekcjami: RSVP (potwierdzenie, +1, transport, noclegi, dzieci, wiadomość), Car Pool (oferty i prośby o miejsca, mediacja przez admina), Plan zabawy, Logistyka, Q&A.
+Guests sign in with a PIN from their invitation and see a single dashboard with all wedding info and actions.
 
-Panel administratora: lista zaproszeń z filtrami i akcjami, zarządzanie adminami, ustawianie deadlinów RSVP i car poolu, podgląd i rozwiązywanie mediacji car pool, odpowiadanie na pytania w Q&A. Dane w Convex (zaproszenia, goście, ustawienia, car pool, pytania, logi). Aplikacja wspiera tryb demo (osobna domena i baza) oraz eksport wydarzenia do pliku .ics.
+RSVP: one form per invitation. Confirm attendance, add a +1 and their name, choose transport (own car or shuttle), arrival and departure times, accommodation type, number of children and sleep options, optional extra nights and a short message. Export the event to calendar (.ics).
+
+Car pool: drivers publish ride offers (route, time, seats); others request a seat. Admins see pending matches and can mediate. Deadlines for RSVP and car pool are configurable.
+
+Schedule and Logistics: static tabs with the wedding programme, venue details, and practical info so guests have everything in one place.
+
+Q&A: guests ask questions; admins answer. Pending and answered questions are listed; answers are visible to all.
+
+Admin panel: manage invitations (list, filters, notes), add or deactivate admins, set RSVP and car pool deadlines, resolve car pool mediation, and answer Q&A.
 ```
 
 ## Cover image URL
 
-Masz 3 zrzuty w projekcie:
+There is no `assets` folder or screenshots in this repo. To fill **Cover image URL**:
 
-- `assets/Screenshot_2026-02-18_at_11.30.07-d49cf161-bdae-41f9-b2f7-b7a734939d3c.png`
-- `assets/Screenshot_2026-02-18_at_11.30.25-f336c5a2-74db-41e0-9461-179980aaaf82.png`
-- `assets/Screenshot_2026-02-18_at_11.30.16-ab46e33a-c09c-42ab-bd13-a07c0358b301.png`
-
-W polu **Cover image URL** wklej **publiczny URL** jednego z nich (np. po wgraniu na swoją stronę portfolio, Cloudflare Images albo inny CDN). Lokalna ścieżka w repo nie zadziała w formularzu.
+1. Take a screenshot of the app (e.g. landing page or guest dashboard).
+2. Upload it to a public host (your portfolio site, Cloudflare Images, imgur, etc.).
+3. Paste that **public URL** in the form. A local file path will not work.
 
 ## Live URL
 
@@ -52,7 +58,7 @@ W polu **Cover image URL** wklej **publiczny URL** jednego z nich (np. po wgrani
 https://naszewielkiegreckiewesele.com
 ```
 
-(Demo: `https://demo.naszewielkiegreckiewesele.com` — jeśli chcesz pokazać wersję testową.)
+(Demo: `https://demo.naszewielkiegreckiewesele.com` — use this if you want to show the test environment.)
 
 ## Repo URL
 
@@ -62,9 +68,9 @@ https://github.com/jakubsmiarowski/naszewielkiegreckiewesele
 
 ## Case study URL
 
-Zostaw puste, chyba że masz artykuł / wpis o projekcie — wtedy wklej link.
+Leave empty unless you have a blog post or article about the project — then paste the link.
 
-## Tags (po przecinku)
+## Tags (comma-separated)
 
 ```
 React, TypeScript, Convex, TanStack Router, Tailwind CSS, Better Auth, Cloudflare Workers, Full-stack, Wedding App, Personal Project
@@ -72,8 +78,8 @@ React, TypeScript, Convex, TanStack Router, Tailwind CSS, Better Auth, Cloudflar
 
 ## Status
 
-`published` (albo `draft`, jeśli wolisz najpierw dopracować opis/zdjęcie).
+`published` (or `draft` if you want to polish the copy or image first).
 
 ---
 
-**Podsumowanie:** Slug, Title, Headline, Summary, Body, Tags, Live URL i Repo URL są gotowe do wklejenia. **Cover image URL** wymaga wgrania jednego z trzech zrzutów w projekcie w miejsce publiczne i wklejenia tego linku; Case study URL tylko jeśli taki wpis istnieje.
+**Summary:** Slug, Title, Headline, Summary, Body, Tags, Live URL and Repo URL are ready to paste. **Cover image URL** requires taking a screenshot, uploading it to a public host, and pasting that link; Case study URL only if you have a write-up.
