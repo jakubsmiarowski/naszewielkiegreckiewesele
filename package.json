@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
-    "build": "vite build && node scripts/fix-start-manifest.mjs",
+    "build": "node scripts/prepare-worker-entry.mjs && vite build && node scripts/fix-start-manifest.mjs",
     "preview": "vite preview",
     "codex:safe": "bash scripts/codex-safe.sh",
     "codex:safe:oss": "bash scripts/codex-safe.sh --oss --mode saver",
