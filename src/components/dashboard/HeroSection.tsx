@@ -1,21 +1,27 @@
 import { Megaphone } from "lucide-react";
+import { isDemoMode } from "@/lib/app-mode";
 import { useLocale } from "@/lib/locale";
 
 export function HeroSection() {
 	const { locale } = useLocale();
+	const demoMode = isDemoMode();
 	const copy =
 		locale === "en"
 			? {
 					badge: "Important Updates",
 					title: "Our Greek Wedding",
 					description:
-						"Here you can find the latest updates, schedule changes, and travel tips for your stay in Crete.",
+						demoMode
+							? "Here you can find sample updates, schedule changes, and travel tips for your stay in Santorini."
+							: "Here you can find the latest updates, schedule changes, and travel tips for your stay in Crete.",
 				}
 			: {
 					badge: "Ważne Informacje",
 					title: "Nasze Greckie Wesele",
 					description:
-						"Tutaj znajdziecie najnowsze aktualności, zmiany w harmonogramie oraz wskazówki dotyczące podróży i pobytu na Krecie.",
+						demoMode
+							? "Tutaj znajdziecie przykładowe aktualności, zmiany w harmonogramie oraz wskazówki dotyczące pobytu na Santorini."
+							: "Tutaj znajdziecie najnowsze aktualności, zmiany w harmonogramie oraz wskazówki dotyczące podróży i pobytu na Krecie.",
 				};
 
 	return (

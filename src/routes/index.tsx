@@ -52,7 +52,7 @@ function LandingPage() {
 				? {
 						invalidCode: "Invalid code. Check your invitation.",
 						inviteBadge: "Wedding Invitation",
-						locationLabel: "CRETE, GREECE",
+						locationLabel: "SANTORINI, GREECE",
 						demoTitle: "Demo mode",
 						demoDescription:
 							"Use one of the ready PIN codes to enter prepared scenarios.",

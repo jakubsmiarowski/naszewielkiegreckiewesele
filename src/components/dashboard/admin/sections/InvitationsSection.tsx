@@ -1,5 +1,4 @@
 import type { AdminInvitation } from "@/components/dashboard/types";
-import { Button } from "@/components/ui/button";
 import {
 	Select,
 	SelectContent,
@@ -13,11 +12,6 @@ import { getInvitationAttendanceStats } from "../helpers";
 
 interface InvitationsSectionProps {
 	invitations: AdminInvitation[];
-	onSeedInvitations: () => void;
-	onResetRsvpForAllInvitations?: () => void;
-	showResetRsvpForAllButton?: boolean;
-	isResettingRsvpForAll?: boolean;
-	resetRsvpButtonLabel?: string;
 	onRelationChange: (guestId: string, relation: string | undefined) => void;
 	onCopyInvitationLink: (token: string) => void;
 }
@@ -36,50 +30,19 @@ export function fromRelationSelectValue(value: string) {
 
 export function InvitationsSection({
 	invitations,
-	onSeedInvitations,
-	onResetRsvpForAllInvitations,
-	showResetRsvpForAllButton = false,
-	isResettingRsvpForAll = false,
-	resetRsvpButtonLabel = "Reset RSVP",
 	onRelationChange,
 	onCopyInvitationLink,
 }: InvitationsSectionProps) {
 	return (
 		<>
-			{invitations.length === 0 && (
-				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-					<p className="text-muted-foreground">
-						Brak zaproszeń w bazie. Możesz je teraz załadować z listy.
-					</p>
-					<Button
-						type="button"
-						onClick={onSeedInvitations}
-						className="mt-4 px-4 py-2 rounded-full bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary)]/90 h-auto"
-					>
-						Załaduj zaproszenia
-					</Button>
-				</div>
-			)}
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm overflow-x-auto">
 				<div className="mb-4 flex items-center justify-between gap-3">
 					<h3 className="text-xl font-bold text-foreground">Zaproszenia</h3>
-					{showResetRsvpForAllButton && onResetRsvpForAllInvitations && (
-						<Button
-							type="button"
-							variant="outline"
-							onClick={onResetRsvpForAllInvitations}
-							disabled={isResettingRsvpForAll}
-							className="h-auto rounded-full border-red-200 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 hover:text-red-800"
-						>
-							{isResettingRsvpForAll
-								? "Resetowanie danych..."
-								: resetRsvpButtonLabel}
-						</Button>
-					)}
 				</div>
 				{invitations.length === 0 ? (
 					<p className="text-sm text-muted-foreground">
-						Brak zaproszeń do wyświetlenia.
+						Brak zaproszeń do wyświetlenia. Użyj skryptu terminalowego do
+						zasilenia danych.
 					</p>
 				) : (
 					<table className="w-full text-sm">

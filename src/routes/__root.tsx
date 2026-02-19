@@ -27,7 +27,7 @@ export const Route = createRootRoute({
 			},
 			{
 				title: isDemoMode()
-					? `Demo | ${getCoupleLabel()} - Ślub w Grecji`
+					? `Demo | ${getCoupleLabel()} - Wedding in Santorini`
 					: `${getCoupleLabel()} - Ślub w Grecji`,
 			},
 		],

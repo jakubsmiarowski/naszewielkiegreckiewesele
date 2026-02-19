@@ -13,14 +13,21 @@ import {
 	type QaPublicQuestion,
 } from "@/components/dashboard/types";
 import { toast } from "@/components/ui/use-toast";
+import { isDemoMode } from "@/lib/app-mode";
 import { type AppLocale, useLocale } from "@/lib/locale";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-const MAP_QUERY = "Lefka Ori Hotel, Chora Sfakion, Crete";
-const MAP_QUERY_PARAM = encodeURIComponent(MAP_QUERY);
-const MAP_EMBED_URL = `https://www.google.com/maps?q=${MAP_QUERY_PARAM}&output=embed`;
-const MAP_LINK_URL = `https://www.google.com/maps/search/?api=1&query=${MAP_QUERY_PARAM}`;
+function getMapConfig(demoMode: boolean) {
+	const mapQuery = demoMode
+		? "Imerovigli, Santorini, Greece"
+		: "Lefka Ori Hotel, Chora Sfakion, Crete";
+	const queryParam = encodeURIComponent(mapQuery);
+	return {
+		mapEmbedUrl: `https://www.google.com/maps?q=${queryParam}&output=embed`,
+		mapLinkUrl: `https://www.google.com/maps/search/?api=1&query=${queryParam}`,
+	};
+}
 const ASSET_CDN_BASE_URL =
 	import.meta.env.VITE_ASSET_CDN_BASE_URL?.trim() ?? "";
 
@@ -170,6 +177,7 @@ export function InfoTabContent({
 	canOpenCarpool?: boolean;
 }) {
 	const { locale } = useLocale();
+	const demoMode = isDemoMode();
 
 	switch (activeTab) {
 		case "Plan zabawy":
@@ -178,6 +186,7 @@ export function InfoTabContent({
 			return (
 				<InfoLogisticsTemplate
 					locale={locale}
+					demoMode={demoMode}
 					onOpenCarpool={onOpenCarpool}
 					canOpenCarpool={canOpenCarpool}
 				/>
@@ -186,6 +195,7 @@ export function InfoTabContent({
 			return (
 				<InfoAttractionsTemplate
 					locale={locale}
+					demoMode={demoMode}
 					focusAttractionId={focusAttractionId}
 					onAttractionFocused={onAttractionFocused}
 				/>
@@ -193,11 +203,17 @@ export function InfoTabContent({
 		case "Q&A":
 			return <InfoQATemplate locale={locale} invitationId={invitationId} />;
 		default:
-			return <InfoOverview locale={locale} />;
+			return <InfoOverview locale={locale} demoMode={demoMode} />;
 	}
 }
 
-function InfoOverview({ locale }: { locale: AppLocale }) {
+function InfoOverview({
+	locale,
+	demoMode,
+}: {
+	locale: AppLocale;
+	demoMode: boolean;
+}) {
 	const cards = useMemo<InfoCardData[]>(() => {
 		if (locale === "en") {
 			return [
@@ -287,8 +303,12 @@ function InfoOverview({ locale }: { locale: AppLocale }) {
 					</h3>
 					<p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
 						{locale === "en"
-							? "We will be in Greece from September 30 to October 4, 2026. The main ceremony takes place on October 1, 2026."
-							: "Widujemy się w Grecji od 30 września do 4 października. Główna uroczystość: 1 października 2026."}
+							? demoMode
+								? "Demo scenario: we will be in Santorini from September 30 to October 4, 2026. Main ceremony: October 1, 2026."
+								: "We will be in Greece from September 30 to October 4, 2026. The main ceremony takes place on October 1, 2026."
+							: demoMode
+								? "Scenariusz demo: będziemy na Santorini od 30 września do 4 października 2026. Główna uroczystość: 1 października 2026."
+								: "Widujemy się w Grecji od 30 września do 4 października. Główna uroczystość: 1 października 2026."}
 					</p>
 				</div>
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -297,7 +317,13 @@ function InfoOverview({ locale }: { locale: AppLocale }) {
 							{locale === "en" ? "Location" : "Miejsce"}
 						</p>
 						<p className="font-semibold text-foreground mt-1">
-							{locale === "en" ? "Crete, Greece" : "Kreta, Grecja"}
+							{locale === "en"
+								? demoMode
+									? "Santorini, Greece"
+									: "Crete, Greece"
+								: demoMode
+									? "Santorini, Grecja"
+									: "Kreta, Grecja"}
 						</p>
 					</div>
 					<div className="rounded-xl bg-[var(--color-background-light)] p-4">
@@ -334,13 +360,16 @@ function InfoPlanTemplate({
 
 function InfoLogisticsTemplate({
 	locale,
+	demoMode,
 	onOpenCarpool,
 	canOpenCarpool,
 }: {
 	locale: AppLocale;
+	demoMode: boolean;
 	onOpenCarpool?: () => void;
 	canOpenCarpool: boolean;
 }) {
+	const { mapEmbedUrl, mapLinkUrl } = getMapConfig(demoMode);
 	const title = locale === "en" ? "Logistics" : "Logistyka";
 	const transportTitle = locale === "en" ? "Transport" : "Środki transportu";
 	const hotelTitle = locale === "en" ? "Hotel" : "Hotel";
@@ -393,8 +422,12 @@ function InfoLogisticsTemplate({
 						</h4>
 						<p className="mt-2">
 							{locale === "en"
-								? "We are planning accommodation in a few nearby guesthouses. Late September and early October are still busy in this region. One of these guesthouses hosts the restaurant where the wedding reception takes place."
-								: "Noclegi planujemy w kilku pensjonatach. Przełom września i października jest nadal popularny. W jednym z pensjonatów znajduje się restauracja, w której odbędzie się wesele."}
+								? demoMode
+									? "Demo scenario: accommodation is planned in guesthouses near Fira and Imerovigli."
+									: "We are planning accommodation in a few nearby guesthouses. Late September and early October are still busy in this region. One of these guesthouses hosts the restaurant where the wedding reception takes place."
+								: demoMode
+									? "Scenariusz demo: noclegi planujemy w pensjonatach w okolicy Firy i Imerovigli."
+									: "Noclegi planujemy w kilku pensjonatach. Przełom września i października jest nadal popularny. W jednym z pensjonatów znajduje się restauracja, w której odbędzie się wesele."}
 						</p>
 						<p className="mt-2">
 							{locale === "en"
@@ -408,8 +441,12 @@ function InfoLogisticsTemplate({
 						</h4>
 						<p className="mt-2">
 							{locale === "en"
-								? "We cover accommodation from Wednesday to Sunday. Guests cover flights and transfer to Chora Sfakion."
-								: "Noclegi od środy do niedzieli opłacamy my. Po Waszej stronie zostaje lot i dotarcie do Chory Sfakion."}
+								? demoMode
+									? "Demo assumption: accommodation from Wednesday to Sunday is covered, while flights and airport transfer are on guests."
+									: "We cover accommodation from Wednesday to Sunday. Guests cover flights and transfer to Chora Sfakion."
+								: demoMode
+									? "Założenie demo: noclegi od środy do niedzieli są po naszej stronie, a lot i transfer lotniskowy po stronie gości."
+									: "Noclegi od środy do niedzieli opłacamy my. Po Waszej stronie zostaje lot i dotarcie do Chory Sfakion."}
 						</p>
 						<p className="mt-2">
 							{locale === "en"
@@ -422,25 +459,29 @@ function InfoLogisticsTemplate({
 			<div className="rounded-2xl border border-border bg-white p-4 shadow-sm space-y-4 sm:p-6">
 				<div>
 					<a
-						href={MAP_LINK_URL}
+						href={mapLinkUrl}
 						target="_blank"
 						rel="noopener noreferrer"
 						className="inline-flex text-lg font-bold text-foreground hover:underline sm:text-xl"
 					>
-						Lefka Ori Hotel
+						{demoMode ? "Santorini meeting point" : "Lefka Ori Hotel"}
 					</a>
 					<p className="text-sm text-muted-foreground mt-1">
-						Chora Sfakion, Crete
+						{demoMode ? "Imerovigli, Santorini" : "Chora Sfakion, Crete"}
 					</p>
 				</div>
 				<div className="overflow-hidden rounded-xl border border-border bg-muted">
 					<iframe
 						title={
 							locale === "en"
-								? "Map of Lefka Ori Hotel, Chora Sfakion"
-								: "Mapa Lefka Ori Hotel, Chora Sfakion"
+								? demoMode
+									? "Map of the Santorini meeting point"
+									: "Map of Lefka Ori Hotel, Chora Sfakion"
+								: demoMode
+									? "Mapa punktu spotkania na Santorini"
+									: "Mapa Lefka Ori Hotel, Chora Sfakion"
 						}
-						src={MAP_EMBED_URL}
+						src={mapEmbedUrl}
 						className="h-[48vh] min-h-[260px] w-full sm:h-[55vh] sm:min-h-[320px]"
 						loading="lazy"
 						referrerPolicy="no-referrer-when-downgrade"
@@ -453,10 +494,12 @@ function InfoLogisticsTemplate({
 
 function InfoAttractionsTemplate({
 	locale,
+	demoMode,
 	focusAttractionId,
 	onAttractionFocused,
 }: {
 	locale: AppLocale;
+	demoMode: boolean;
 	focusAttractionId?: AttractionAnchorId | null;
 	onAttractionFocused?: () => void;
 }) {
@@ -469,6 +512,171 @@ function InfoAttractionsTemplate({
 	}, [focusAttractionId, onAttractionFocused]);
 
 	const cards = useMemo<InfoCardData[]>(() => {
+		if (demoMode && locale === "en") {
+			return [
+				{
+					id: "demo-attractions-oia",
+					image:
+						"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80",
+					category: "Views",
+					date: "15-20 min drive",
+					title: "Oia viewpoints",
+					description:
+						"Classic caldera views, white architecture, and sunset walks.",
+					alt: "Santorini white houses and sea view",
+					content: (
+						<div className="space-y-4 text-sm text-muted-foreground">
+							<p>
+								Oia is perfect for a relaxed walk, photos, and sunset panoramas.
+							</p>
+							<a
+								href="https://maps.google.com/?q=Oia+Santorini"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center font-semibold text-primary hover:underline"
+							>
+								View Oia on map
+							</a>
+						</div>
+					),
+				},
+				{
+					id: "demo-attractions-red-beach",
+					image:
+						"https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=1200&q=80",
+					category: "Beaches",
+					date: "25-30 min drive",
+					title: "Red Beach",
+					description:
+						"A dramatic volcanic beach with red cliffs and clear water.",
+					alt: "Volcanic beach with red cliffs",
+					content: (
+						<div className="space-y-4 text-sm text-muted-foreground">
+							<p>
+								A popular Santorini stop with unique colors and coastline views.
+							</p>
+							<a
+								href="https://maps.google.com/?q=Red+Beach+Santorini"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center font-semibold text-primary hover:underline"
+							>
+								View Red Beach on map
+							</a>
+						</div>
+					),
+				},
+				{
+					id: "demo-attractions-fira",
+					image:
+						"https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1200&q=80",
+					category: "Town walk",
+					date: "Any time",
+					title: "Fira old town",
+					description:
+						"Shops, cafes, and walkable viewpoints above the caldera.",
+					alt: "Santorini town with cliffside terraces",
+					content: (
+						<div className="space-y-4 text-sm text-muted-foreground">
+							<p>
+								Good base for evening walks and group meetups after daytime
+								activities.
+							</p>
+							<a
+								href="https://maps.google.com/?q=Fira+Santorini"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center font-semibold text-primary hover:underline"
+							>
+								View Fira on map
+							</a>
+						</div>
+					),
+				},
+			];
+		}
+
+		if (demoMode) {
+			return [
+				{
+					id: "demo-attractions-oia-pl",
+					image:
+						"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80",
+					category: "Widoki",
+					date: "Auto 15-20 min",
+					title: "Punkty widokowe Oia",
+					description:
+						"Klasyczne widoki na kalderę, biała zabudowa i spacery o zachodzie słońca.",
+					alt: "Biała zabudowa Santorini i widok na morze",
+					content: (
+						<div className="space-y-4 text-sm text-muted-foreground">
+							<p>Oia to świetne miejsce na spacer, zdjęcia i zachód słońca.</p>
+							<a
+								href="https://maps.google.com/?q=Oia+Santorini"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center font-semibold text-primary hover:underline"
+							>
+								Zobacz Oia na mapie
+							</a>
+						</div>
+					),
+				},
+				{
+					id: "demo-attractions-red-beach-pl",
+					image:
+						"https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=1200&q=80",
+					category: "Plaże",
+					date: "Auto 25-30 min",
+					title: "Red Beach",
+					description:
+						"Wulkaniczna plaża z czerwonym klifem i bardzo czystą wodą.",
+					alt: "Wulkaniczna plaża z czerwonym klifem",
+					content: (
+						<div className="space-y-4 text-sm text-muted-foreground">
+							<p>
+								To jedna z najbardziej charakterystycznych plaż na Santorini.
+							</p>
+							<a
+								href="https://maps.google.com/?q=Red+Beach+Santorini"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center font-semibold text-primary hover:underline"
+							>
+								Zobacz Red Beach na mapie
+							</a>
+						</div>
+					),
+				},
+				{
+					id: "demo-attractions-fira-pl",
+					image:
+						"https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1200&q=80",
+					category: "Spacer po mieście",
+					date: "Dowolna pora",
+					title: "Stare miasto Fira",
+					description:
+						"Kawiarnie, sklepy i punkty widokowe nad kalderą.",
+					alt: "Miasteczko Santorini na klifie",
+					content: (
+						<div className="space-y-4 text-sm text-muted-foreground">
+							<p>
+								Dobre miejsce na wieczorny spacer i spotkanie po atrakcjach.
+							</p>
+							<a
+								href="https://maps.google.com/?q=Fira+Santorini"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center font-semibold text-primary hover:underline"
+							>
+								Zobacz Firę na mapie
+							</a>
+						</div>
+					),
+				},
+			];
+		}
+
 		if (locale === "en") {
 			return [
 				{
@@ -878,7 +1086,7 @@ function InfoAttractionsTemplate({
 				),
 			},
 		];
-	}, [locale]);
+	}, [demoMode, locale]);
 
 	const cardLabels = CARD_LABELS[locale];
 
@@ -890,8 +1098,12 @@ function InfoAttractionsTemplate({
 				</h3>
 				<p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
 					{locale === "en"
-						? "We collected 6 proven options close to Chora Sfakion. Each card opens a modal with a short description and a map link."
-						: "Zebraliśmy 6 sprawdzonych propozycji blisko Chora Sfakion. Każda kartka otwiera modal z krótkim opisem i linkiem do mapy."}
+						? demoMode
+							? "Demo uses Santorini sample attractions. Each card opens a short description and map link."
+							: "We collected 6 proven options close to Chora Sfakion. Each card opens a modal with a short description and a map link."
+						: demoMode
+							? "Demo używa przykładowych atrakcji na Santorini. Każda kartka otwiera opis i link do mapy."
+							: "Zebraliśmy 6 sprawdzonych propozycji blisko Chora Sfakion. Każda kartka otwiera modal z krótkim opisem i linkiem do mapy."}
 				</p>
 			</div>
 			<InfoCardGrid cards={cards} labels={cardLabels} />

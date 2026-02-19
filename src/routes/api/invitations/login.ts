@@ -70,14 +70,22 @@ export const Route = createFileRoute("/api/invitations/login")({
 
 					if (internalApiKey) {
 						for (const key of throttleKeys) {
-							const state = await convex.query(
-								api.security.getPinThrottleState,
-								{
+							let state:
+								| { isBlocked: boolean; retryAfterSeconds: number }
+								| undefined;
+							try {
+								state = await convex.query(api.security.getPinThrottleState, {
 									key,
 									internalApiKey,
-								},
-							);
-							if (state.isBlocked) {
+								});
+							} catch (throttleError) {
+								console.warn(
+									"PIN throttle check unavailable, continuing without throttle.",
+									throttleError,
+								);
+								break;
+							}
+							if (state?.isBlocked) {
 								return Response.json(
 									{
 										ok: false,
@@ -95,39 +103,44 @@ export const Route = createFileRoute("/api/invitations/login")({
 						}
 					}
 
-					let invitationId = await convex.query(
-						api.invitations.getIdByShortCode,
-						{
+					let invitationId: string | null = null;
+					try {
+						invitationId = await convex.query(api.invitations.getIdByShortCode, {
 							shortCode: normalized,
-						},
-					);
-
-					if (!invitationId && demoMode && internalApiKey) {
-						const demoState = await convex.query(api.demo.hasSeedData, {});
-						if (!demoState.hasSeedData) {
-							await convex.mutation(api.demo.resetDemoEnvironment, {
-								internalApiKey,
-							});
-							invitationId = await convex.query(
-								api.invitations.getIdByShortCode,
-								{
-									shortCode: normalized,
-								},
-							);
-						}
+						});
+					} catch (queryError) {
+						console.error("Could not query invitation by PIN code.", queryError);
+						return Response.json(
+							{ ok: false, error: "backend-unavailable" },
+							{ status: 503 },
+						);
 					}
 
-					const attemptStates = internalApiKey
-						? await Promise.all(
-								throttleKeys.map((key) =>
-									convex.mutation(api.security.recordPinLoginAttempt, {
+					const attemptStates: Array<{
+						isBlocked: boolean;
+						retryAfterSeconds: number;
+					}> = [];
+					if (internalApiKey) {
+						for (const key of throttleKeys) {
+							try {
+								const state = await convex.mutation(
+									api.security.recordPinLoginAttempt,
+									{
 										key,
 										succeeded: Boolean(invitationId),
 										internalApiKey,
-									}),
-								),
-							)
-						: [];
+									},
+								);
+								attemptStates.push(state);
+							} catch (throttleError) {
+								console.warn(
+									"PIN throttle recording unavailable, continuing without throttle.",
+									throttleError,
+								);
+								break;
+							}
+						}
+					}
 
 					if (!invitationId) {
 						const blockedState = attemptStates.find((state) => state.isBlocked);
@@ -144,17 +157,6 @@ export const Route = createFileRoute("/api/invitations/login")({
 										"Retry-After": String(blockedState.retryAfterSeconds),
 									},
 								},
-							);
-						}
-						if (demoMode && !internalApiKey) {
-							return Response.json(
-								{
-									ok: false,
-									error: "demo-bootstrap-unavailable",
-									message:
-										"Demo environment is not configured. Missing INTERNAL_API_KEY or BETTER_AUTH_SECRET.",
-								},
-								{ status: 503 },
 							);
 						}
 						return Response.json(

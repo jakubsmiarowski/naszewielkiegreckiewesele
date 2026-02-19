@@ -112,7 +112,7 @@ Stworzyć publiczne środowisko demo do portfolio, w którym odwiedzający może
   - szybki wybór demo PIN-ów na stronie logowania.
 - Reset i seed demo:
   - Convex mutation: `demo.resetDemoEnvironment` (`convex/demo.ts`),
-  - ręczny reset z panelu admina (sekcja Zaproszenia),
+  - ręczny reset tylko z terminala (UI seed/reset w panelu admina jest wyłączone),
   - skrypt CLI: `npm run demo:reset`.
 - Heartbeat:
   - endpoint statyczny: `/healthz.txt`.

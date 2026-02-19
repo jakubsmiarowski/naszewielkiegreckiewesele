@@ -1,9 +1,18 @@
 import { getCoupleLabel } from "@/lib/couple";
+import { isDemoMode } from "@/lib/app-mode";
 import { useLocale } from "@/lib/locale";
 
 export function DashboardFooter() {
 	const { locale } = useLocale();
-	const location = locale === "en" ? "Crete, Greece" : "Kreta, Grecja";
+	const demoMode = isDemoMode();
+	const location =
+		locale === "en"
+			? demoMode
+				? "Santorini, Greece"
+				: "Crete, Greece"
+			: demoMode
+				? "Santorini, Grecja"
+				: "Kreta, Grecja";
 
 	return (
 		<footer className="bg-background-light py-20 px-6">

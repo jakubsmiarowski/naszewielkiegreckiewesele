@@ -1,23 +1,29 @@
 import { motion } from "framer-motion";
+import { isDemoMode } from "@/lib/app-mode";
 import { useLocale } from "@/lib/locale";
 
 export function DashboardGreetingCard({ greeting }: { greeting: string }) {
 	const { locale } = useLocale();
+	const demoMode = isDemoMode();
 	const copy =
 		locale === "en"
 			? {
 					intro:
-						"Welcome to our wedding page. Greece is waiting and we cannot wait to celebrate with you.",
+						demoMode
+							? "Welcome to our demo wedding page. Santorini is the setting for this sample event."
+							: "Welcome to our wedding page. Greece is waiting and we cannot wait to celebrate with you.",
 					locationLabel: "Location",
-					locationValue: "Crete, Greece",
+					locationValue: demoMode ? "Santorini, Greece" : "Crete, Greece",
 					datesLabel: "Important dates",
 					help: "If you need help with travel or accommodation, let us know in the RSVP form.",
 				}
 			: {
 					intro:
-						"Witaj na naszej stronie ślubnej! Grecja już czeka, a my nie możemy się doczekać.",
+						demoMode
+							? "Witaj na stronie demo. Ten przykładowy scenariusz osadziliśmy na Santorini."
+							: "Witaj na naszej stronie ślubnej! Grecja już czeka, a my nie możemy się doczekać.",
 					locationLabel: "Miejsce",
-					locationValue: "Kreta, Grecja",
+					locationValue: demoMode ? "Santorini, Grecja" : "Kreta, Grecja",
 					datesLabel: "Ważne daty",
 					help: "Jeśli potrzebujesz pomocy z podróżą lub noclegiem, daj nam znać w formularzu RSVP.",
 				};

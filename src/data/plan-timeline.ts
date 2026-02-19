@@ -2,6 +2,7 @@ import {
 	ATTRACTION_ANCHORS,
 	type AttractionAnchorId,
 } from "@/components/dashboard/types";
+import { isDemoMode } from "@/lib/app-mode";
 import type { AppLocale } from "@/lib/locale";
 
 export type PlanEvent = {
@@ -315,6 +316,199 @@ const planTimelineDaysByLocale: Record<AppLocale, PlanDay[]> = {
 	],
 };
 
+const demoPlanTimelineDaysByLocale: Record<AppLocale, PlanDay[]> = {
+	pl: [
+		{
+			id: "2026-09-30",
+			label: "Środa 30.09",
+			date: "2026-09-30",
+			subtitle: "Przyloty na Santorini",
+			events: [
+				{
+					id: "wed-arrivals-demo",
+					time: "Wieczór",
+					title: "Przyloty i zakwaterowanie",
+					description:
+						"Wieczorem spotykamy się po przylotach i meldujemy w hotelu w okolicy Firy.",
+					tag: "Logistyka",
+					location: "Santorini (Fira)",
+				},
+			],
+		},
+		{
+			id: "2026-10-01",
+			label: "Czwartek 01.10",
+			date: "2026-10-01",
+			subtitle: "Dzień wesela",
+			events: [
+				{
+					id: "thu-ceremony-demo",
+					time: "16:00",
+					title: "Ceremonia z widokiem na kalderę",
+					description:
+						"Spotykamy się na krótkiej ceremonii o zachodzie słońca, a potem przechodzimy na kolację.",
+					tag: "Ceremonia",
+					location: "Imerovigli",
+				},
+				{
+					id: "thu-party-demo",
+					time: "Wieczór",
+					title: "Kolacja i przyjęcie",
+					description:
+						"Po ceremonii zapraszamy na wspólną kolację, muzykę i spokojne świętowanie.",
+					tag: "Przyjęcie",
+					location: "Fira",
+				},
+			],
+		},
+		{
+			id: "2026-10-02",
+			label: "Piątek 02.10",
+			date: "2026-10-02",
+			subtitle: "Dzień na plażach",
+			events: [
+				{
+					id: "fri-beach-demo",
+					time: "Południe",
+					title: "Czas na plażę",
+					description:
+						"Dzień bez presji: relaks na plaży i wspólny lunch dla chętnych.",
+					tag: "Relaks",
+					location: "Perissa",
+				},
+			],
+		},
+		{
+			id: "2026-10-03",
+			label: "Sobota 03.10",
+			date: "2026-10-03",
+			subtitle: "Rejs po kalderze",
+			events: [
+				{
+					id: "sat-boat-demo",
+					time: "Dzień",
+					title: "Opcjonalny rejs",
+					description:
+						"Opcjonalny rejs po kalderze z postojem na kąpiel i widokami na klify.",
+					tag: "Atrakcje",
+					location: "Port Athinios",
+				},
+			],
+		},
+		{
+			id: "2026-10-04",
+			label: "Niedziela 04.10",
+			date: "2026-10-04",
+			subtitle: "Powroty",
+			events: [
+				{
+					id: "sun-departure-demo",
+					time: "Rano",
+					title: "Powroty",
+					description: "Dziękujemy za wspólny czas i do zobaczenia!",
+					tag: "Logistyka",
+					location: "Lotnisko Santorini",
+				},
+			],
+		},
+	],
+	en: [
+		{
+			id: "2026-09-30",
+			label: "Wednesday 09/30",
+			date: "2026-09-30",
+			subtitle: "Arrivals to Santorini",
+			events: [
+				{
+					id: "wed-arrivals-demo",
+					time: "Evening",
+					title: "Arrivals and hotel check-in",
+					description:
+						"We meet in the evening after flights and check in near Fira.",
+					tag: "Logistics",
+					location: "Santorini (Fira)",
+				},
+			],
+		},
+		{
+			id: "2026-10-01",
+			label: "Thursday 10/01",
+			date: "2026-10-01",
+			subtitle: "Wedding day",
+			events: [
+				{
+					id: "thu-ceremony-demo",
+					time: "4:00 PM",
+					title: "Ceremony with caldera view",
+					description:
+						"We gather for a short sunset ceremony and then move to dinner.",
+					tag: "Ceremony",
+					location: "Imerovigli",
+				},
+				{
+					id: "thu-party-demo",
+					time: "Evening",
+					title: "Dinner and reception",
+					description:
+						"After the ceremony, join us for dinner, music, and celebration.",
+					tag: "Reception",
+					location: "Fira",
+				},
+			],
+		},
+		{
+			id: "2026-10-02",
+			label: "Friday 10/02",
+			date: "2026-10-02",
+			subtitle: "Beach day",
+			events: [
+				{
+					id: "fri-beach-demo",
+					time: "Midday",
+					title: "Beach time",
+					description:
+						"A no-rush day: beach, sea, and an optional group lunch.",
+					tag: "Relax",
+					location: "Perissa",
+				},
+			],
+		},
+		{
+			id: "2026-10-03",
+			label: "Saturday 10/03",
+			date: "2026-10-03",
+			subtitle: "Caldera cruise",
+			events: [
+				{
+					id: "sat-boat-demo",
+					time: "Daytime",
+					title: "Optional boat trip",
+					description:
+						"Optional cruise around the caldera with a swim stop and cliff views.",
+					tag: "Attractions",
+					location: "Athinios Port",
+				},
+			],
+		},
+		{
+			id: "2026-10-04",
+			label: "Sunday 10/04",
+			date: "2026-10-04",
+			subtitle: "Departures",
+			events: [
+				{
+					id: "sun-departure-demo",
+					time: "Morning",
+					title: "Departures",
+					description: "Thank you for celebrating with us!",
+					tag: "Logistics",
+					location: "Santorini Airport",
+				},
+			],
+		},
+	],
+};
+
 const greekPhraseCardsByLocale: Record<AppLocale, GreekPhraseCard[]> = {
 	pl: [
 		{
@@ -405,7 +599,9 @@ const greekPhraseCardsByLocale: Record<AppLocale, GreekPhraseCard[]> = {
 };
 
 export function getPlanTimelineDays(locale: AppLocale): PlanDay[] {
-	return planTimelineDaysByLocale[locale];
+	return isDemoMode()
+		? demoPlanTimelineDaysByLocale[locale]
+		: planTimelineDaysByLocale[locale];
 }
 
 export function getGreekPhraseCards(locale: AppLocale): GreekPhraseCard[] {
