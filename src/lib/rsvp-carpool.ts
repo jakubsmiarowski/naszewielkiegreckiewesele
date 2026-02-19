@@ -1,4 +1,5 @@
 export type RsvpAttendanceValue = "yes" | "no" | undefined;
+type AppLocale = "pl" | "en";
 
 export function calculateRequestedCarpoolSeats({
 	guestAttendances,
@@ -22,7 +23,10 @@ export function calculateRequestedCarpoolSeats({
 	return Math.max(1, guestsCount + plusOneCount + normalizedChildrenCount);
 }
 
-export function formatSeatCount(value: number) {
+export function formatSeatCount(value: number, locale: AppLocale = "pl") {
+	if (locale === "en") {
+		return value === 1 ? "1 seat" : `${value} seats`;
+	}
 	if (value === 1) return "1 miejsce";
 	if (value % 10 >= 2 && value % 10 <= 4 && (value < 10 || value > 20)) {
 		return `${value} miejsca`;
@@ -34,10 +38,12 @@ export function formatCarpoolRequestError({
 	error,
 	requestedSeats,
 	seatsAvailable,
+	locale = "pl",
 }: {
 	error: unknown;
 	requestedSeats: number;
 	seatsAvailable?: number;
+	locale?: AppLocale;
 }) {
 	const rawMessage = error instanceof Error ? error.message : "";
 	const cleanedMessage = normalizeConvexErrorMessage(rawMessage);
@@ -47,27 +53,37 @@ export function formatCarpoolRequestError({
 		cleanedMessage.includes("Przekroczono limit miejsc")
 	) {
 		if (typeof seatsAvailable === "number") {
-			return `Wybrana oferta ma ${formatSeatCount(seatsAvailable)}, a Twoja grupa potrzebuje ${formatSeatCount(requestedSeats)}. Wybierz inną ofertę car pool.`;
+			return locale === "en"
+				? `The selected offer has ${formatSeatCount(seatsAvailable, locale)}, but your group needs ${formatSeatCount(requestedSeats, locale)}. Please choose another car pool offer.`
+				: `Wybrana oferta ma ${formatSeatCount(seatsAvailable, locale)}, a Twoja grupa potrzebuje ${formatSeatCount(requestedSeats, locale)}. Wybierz inną ofertę car pool.`;
 		}
-		return `Wybrana oferta nie ma wystarczającej liczby miejsc dla Twojej grupy (${formatSeatCount(requestedSeats)}). Wybierz inną ofertę car pool.`;
+		return locale === "en"
+			? `The selected offer does not have enough seats for your group (${formatSeatCount(requestedSeats, locale)}). Please choose another car pool offer.`
+			: `Wybrana oferta nie ma wystarczającej liczby miejsc dla Twojej grupy (${formatSeatCount(requestedSeats, locale)}). Wybierz inną ofertę car pool.`;
 	}
 
 	if (
 		cleanedMessage.includes("Ta oferta nie przyjmuje już zgłoszeń") ||
 		cleanedMessage.includes("Ta oferta nie jest już dostępna")
 	) {
-		return "Wybrana oferta car pool nie jest już dostępna. Wybierz inną ofertę.";
+		return locale === "en"
+			? "The selected car pool offer is no longer available. Please choose another offer."
+			: "Wybrana oferta car pool nie jest już dostępna. Wybierz inną ofertę.";
 	}
 
 	if (cleanedMessage.includes("Masz już jedno oczekujące zgłoszenie")) {
-		return "Masz już jedno oczekujące zgłoszenie car pool. Poczekaj na decyzję kierowcy albo anuluj zgłoszenie.";
+		return locale === "en"
+			? "You already have one pending car pool request. Wait for the driver's decision or cancel your current request."
+			: "Masz już jedno oczekujące zgłoszenie car pool. Poczekaj na decyzję kierowcy albo anuluj zgłoszenie.";
 	}
 
 	if (cleanedMessage) {
 		return cleanedMessage;
 	}
 
-	return "Nie udało się wysłać zgłoszenia car pool. Spróbuj ponownie.";
+	return locale === "en"
+		? "Could not send the car pool request. Please try again."
+		: "Nie udało się wysłać zgłoszenia car pool. Spróbuj ponownie.";
 }
 
 function normalizeConvexErrorMessage(message: string) {

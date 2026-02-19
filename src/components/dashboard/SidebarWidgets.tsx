@@ -226,22 +226,22 @@ export function EmergencyContactsWidget() {
 		? [
 				{
 					name: "Nadia",
-					phone: "+48 500 111 222",
+					phone: "500 111 222",
 					role: locale === "en" ? "Bride" : "Panna Młoda",
 				},
 				{
 					name: "Leon",
-					phone: "+48 500 333 444",
+					phone: "500 333 444",
 					role: locale === "en" ? "Groom" : "Pan Młody",
 				},
 				{
 					name: "Julia",
-					phone: "+48 500 555 666",
+					phone: "500 555 666",
 					role: locale === "en" ? "Witness" : "Świadkowa",
 				},
 				{
 					name: "Michał",
-					phone: "+48 500 777 888",
+					phone: "500 777 888",
 					role: locale === "en" ? "Witness" : "Świadek",
 				},
 			]

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { formatLocalDate } from "@/lib/date-time";
+import { useLocale } from "@/lib/locale";
 import {
 	calculateRequestedCarpoolSeats,
 	formatCarpoolRequestError,
@@ -31,6 +32,8 @@ export function RsvpTab({
 	settings,
 	onGoToCarpool,
 }: RsvpTabProps) {
+	const { locale } = useLocale();
+	const isEnglish = locale === "en";
 	const updateRsvp = useMutation(api.invitations.updateRsvp);
 	const createCarpoolRequest = useMutation(api.carpool.createRequest);
 	const invitation = invitationData?.invitation;
@@ -294,12 +297,17 @@ export function RsvpTab({
 						offer.seatsAvailable > 0,
 				);
 				if (selectedOffer?.myRequestId) {
-					carpoolRequestError = "Masz już zgłoszenie do tej oferty car pool.";
+					carpoolRequestError = isEnglish
+						? "You already submitted a request for this car pool offer."
+						: "Masz już zgłoszenie do tej oferty car pool.";
 				} else if (!selectedOffer) {
-					carpoolRequestError =
-						"Wybrana oferta car pool nie jest już dostępna.";
+					carpoolRequestError = isEnglish
+						? "The selected car pool offer is no longer available."
+						: "Wybrana oferta car pool nie jest już dostępna.";
 				} else if (selectedOffer.seatsAvailable < requestedSeats) {
-					carpoolRequestError = `Wybrana oferta ma ${formatSeatCount(selectedOffer.seatsAvailable)}, a Twoja grupa potrzebuje ${formatSeatCount(requestedSeats)}. Wybierz inną ofertę car pool.`;
+					carpoolRequestError = isEnglish
+						? `The selected offer has ${formatSeatCount(selectedOffer.seatsAvailable, locale)}, but your group needs ${formatSeatCount(requestedSeats, locale)}. Please choose another car pool offer.`
+						: `Wybrana oferta ma ${formatSeatCount(selectedOffer.seatsAvailable, locale)}, a Twoja grupa potrzebuje ${formatSeatCount(requestedSeats, locale)}. Wybierz inną ofertę car pool.`;
 				} else {
 					try {
 						await createCarpoolRequest({
@@ -315,6 +323,7 @@ export function RsvpTab({
 							error,
 							requestedSeats,
 							seatsAvailable: selectedOffer.seatsAvailable,
+							locale,
 						});
 					}
 				}
@@ -323,22 +332,34 @@ export function RsvpTab({
 			toast({
 				variant: carpoolRequestError ? "destructive" : "success",
 				title: carpoolRequestError
-					? "RSVP zapisane, ale car pool nie został wysłany"
-					: "RSVP zapisane",
+					? isEnglish
+						? "RSVP saved, but the car pool request was not sent"
+						: "RSVP zapisane, ale car pool nie został wysłany"
+					: isEnglish
+						? "RSVP saved"
+						: "RSVP zapisane",
 				description: carpoolRequestError
 					? carpoolRequestError
 					: hasCarpoolRequestBeenCreated
-						? "Dziękujemy za przesłanie formularza. Zgłoszenie car pool zostało wysłane."
+						? isEnglish
+							? "Thank you for submitting the form. Your car pool request has been sent."
+							: "Dziękujemy za przesłanie formularza. Zgłoszenie car pool zostało wysłane."
 						: usedLegacyRsvpFallback
-							? "Dziękujemy za przesłanie formularza. Backend działa w starszej wersji i nie zapisał jeszcze pól dzieci/noclegu."
-							: "Dziękujemy za przesłanie formularza.",
+							? isEnglish
+								? "Thank you for submitting the form. The backend is running a legacy version and did not save children/accommodation fields yet."
+								: "Dziękujemy za przesłanie formularza. Backend działa w starszej wersji i nie zapisał jeszcze pól dzieci/noclegu."
+							: isEnglish
+								? "Thank you for submitting the form."
+								: "Dziękujemy za przesłanie formularza.",
 			});
 			setIsEditing(false);
 		} catch (_error) {
 			toast({
 				variant: "destructive",
-				title: "Nie udało się zapisać RSVP",
-				description: "Spróbuj ponownie za chwilę.",
+				title: isEnglish ? "Could not save RSVP" : "Nie udało się zapisać RSVP",
+				description: isEnglish
+					? "Please try again in a moment."
+					: "Spróbuj ponownie za chwilę.",
 			});
 		}
 	};
@@ -346,7 +367,7 @@ export function RsvpTab({
 	if (!invitation) {
 		return (
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-				Ładowanie RSVP...
+				{isEnglish ? "Loading RSVP..." : "Ładowanie RSVP..."}
 			</div>
 		);
 	}
@@ -354,10 +375,13 @@ export function RsvpTab({
 	if (!hasRsvp && !canSubmitNew) {
 		return (
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-				<h3 className="text-2xl font-bold text-foreground">RSVP zamknięte</h3>
+				<h3 className="text-2xl font-bold text-foreground">
+					{isEnglish ? "RSVP closed" : "RSVP zamknięte"}
+				</h3>
 				<p className="text-muted-foreground mt-2">
-					Termin odpowiedzi minął. Jeśli to ważne, skontaktuj się z nami
-					bezpośrednio.
+					{isEnglish
+						? "The response deadline has passed. If needed, contact us directly."
+						: "Termin odpowiedzi minął. Jeśli to ważne, skontaktuj się z nami bezpośrednio."}
 				</p>
 			</div>
 		);
@@ -368,7 +392,7 @@ export function RsvpTab({
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
 				<div className="flex items-center justify-between">
 					<h3 className="text-2xl font-bold text-foreground">
-						Twoja odpowiedź
+						{isEnglish ? "Your response" : "Twoja odpowiedź"}
 					</h3>
 					{canEdit && (
 						<Button
@@ -376,14 +400,14 @@ export function RsvpTab({
 							onClick={() => setIsEditing(true)}
 							className="rounded-full px-4 py-2 font-semibold shadow transition"
 						>
-							Edytuj
+							{isEnglish ? "Edit" : "Edytuj"}
 						</Button>
 					)}
 				</div>
 
 				<div className="rounded-xl bg-[var(--color-background-light)] p-4">
 					<p className="text-xs uppercase tracking-widest text-muted-foreground">
-						Obecność
+						{isEnglish ? "Attendance" : "Obecność"}
 					</p>
 					<ul className="mt-2 space-y-1.5">
 						{invitationGuests.map((guest) => {
@@ -402,7 +426,7 @@ export function RsvpTab({
 												: "text-muted-foreground"
 										}
 									>
-										{isAttending ? "Tak" : "-"}
+										{isAttending ? (isEnglish ? "Yes" : "Tak") : "-"}
 									</span>
 								</li>
 							);
@@ -412,64 +436,94 @@ export function RsvpTab({
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<InfoRow
-						label="Transport"
+						label={isEnglish ? "Transport" : "Transport"}
 						value={
 							invitation.transport === "bus"
-								? "Potrzebujemy transportu"
-								: "Własny"
+								? isEnglish
+									? "We need transport"
+									: "Potrzebujemy transportu"
+								: isEnglish
+									? "Own transport"
+									: "Własny"
 						}
 					/>
 					<InfoRow
-						label="Car Pool (kierowca)"
-						value={invitation.carpoolDriverOptIn ? "Tak" : "-"}
+						label={isEnglish ? "Car Pool (driver)" : "Car Pool (kierowca)"}
+						value={
+							invitation.carpoolDriverOptIn ? (isEnglish ? "Yes" : "Tak") : "-"
+						}
 					/>
 					<InfoRow
-						label="Przylot"
-						value={formatLocalDate(invitation.arrivalDateTime) || "-"}
+						label={isEnglish ? "Arrival" : "Przylot"}
+						value={formatLocalDate(invitation.arrivalDateTime, locale) || "-"}
 					/>
 					<InfoRow
-						label="Wylot"
-						value={formatLocalDate(invitation.departureDateTime) || "-"}
+						label={isEnglish ? "Departure" : "Wylot"}
+						value={formatLocalDate(invitation.departureDateTime, locale) || "-"}
 					/>
 					<InfoRow
-						label="Dzieci"
+						label={isEnglish ? "Children" : "Dzieci"}
 						value={
 							(invitation.childrenCount ?? 0) > 0
-								? `Tak (${invitation.childrenCount})`
+								? `${isEnglish ? "Yes" : "Tak"} (${invitation.childrenCount})`
 								: "-"
 						}
 					/>
 					{(invitation.childrenCount ?? 0) > 0 && (
 						<InfoRow
-							label="Miejsce dla dzieci"
-							value={formatChildrenSleepOption(invitation.childrenSleepOption)}
+							label={
+								isEnglish ? "Sleeping place for children" : "Miejsce dla dzieci"
+							}
+							value={formatChildrenSleepOption(
+								invitation.childrenSleepOption,
+								locale,
+							)}
 						/>
 					)}
 					<InfoRow
-						label="Nocleg"
-						value={formatAccommodationType(invitation.accommodationType)}
+						label={isEnglish ? "Accommodation" : "Nocleg"}
+						value={formatAccommodationType(
+							invitation.accommodationType,
+							locale,
+						)}
 					/>
 					<InfoRow
-						label="Pomoc z noclegiem (dodatkowe dni)"
-						value={invitation.needsExtraNightsHelp ? "Tak" : "-"}
+						label={
+							isEnglish
+								? "Accommodation help (extra days)"
+								: "Pomoc z noclegiem (dodatkowe dni)"
+						}
+						value={
+							invitation.needsExtraNightsHelp
+								? isEnglish
+									? "Yes"
+									: "Tak"
+								: "-"
+						}
 					/>
 					{invitation.needsExtraNightsHelp && (
 						<InfoRow
-							label="Zakres dodatkowych noclegów"
+							label={
+								isEnglish ? "Extra nights range" : "Zakres dodatkowych noclegów"
+							}
 							value={formatExtraNightsRange(
 								invitation.extraNightsFromDate,
 								invitation.extraNightsToDate,
+								locale,
 							)}
 						/>
 					)}
 					{invitation.hasPlusOne && (
 						<>
 							<InfoRow
-								label="+1 obecność"
-								value={formatAttendanceValue(invitation.plusOneAttendance)}
+								label={isEnglish ? "+1 attendance" : "+1 obecność"}
+								value={formatAttendanceValue(
+									invitation.plusOneAttendance,
+									locale,
+								)}
 							/>
 							<InfoRow
-								label="+1 imię i nazwisko"
+								label={isEnglish ? "+1 full name" : "+1 imię i nazwisko"}
 								value={invitation.plusOneName ?? "-"}
 							/>
 						</>
@@ -479,7 +533,7 @@ export function RsvpTab({
 				{invitation.message && (
 					<div className="rounded-xl bg-[var(--color-background-light)] p-4">
 						<p className="text-xs uppercase tracking-widest text-muted-foreground">
-							Wiadomość
+							{isEnglish ? "Message" : "Wiadomość"}
 						</p>
 						<p className="text-foreground mt-2">{invitation.message}</p>
 					</div>
@@ -487,7 +541,9 @@ export function RsvpTab({
 
 				{!canEdit && (
 					<p className="text-sm text-muted-foreground">
-						Edycja RSVP jest już zamknięta (po 31 marca 2026).
+						{isEnglish
+							? "RSVP editing is already closed (after March 31, 2026)."
+							: "Edycja RSVP jest już zamknięta (po 31 marca 2026)."}
 					</p>
 				)}
 
@@ -500,8 +556,9 @@ export function RsvpTab({
 									Car Pool
 								</p>
 								<p className="text-foreground mt-1">
-									Znaleźliśmy dostępne miejsca u innych gości. Sprawdź oferty w
-									zakładce Car Pool.
+									{isEnglish
+										? "We found available seats from other guests. Check offers in the Car Pool tab."
+										: "Znaleźliśmy dostępne miejsca u innych gości. Sprawdź oferty w zakładce Car Pool."}
 								</p>
 							</div>
 							{onGoToCarpool && (
@@ -511,7 +568,7 @@ export function RsvpTab({
 									variant="outline"
 									className="shrink-0 rounded-full border-[var(--color-primary)] px-4 py-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
 								>
-									Pokaż oferty
+									{isEnglish ? "Show offers" : "Pokaż oferty"}
 								</Button>
 							)}
 						</div>
@@ -526,18 +583,21 @@ export function RsvpTab({
 								</p>
 								{!isCarpoolDataReady ? (
 									<p className="text-foreground mt-1">
-										Sprawdzamy Twoje ogłoszenia Car Pool...
+										{isEnglish
+											? "Checking your Car Pool offers..."
+											: "Sprawdzamy Twoje ogłoszenia Car Pool..."}
 									</p>
 								) : hasMyCarpoolOffer ? (
 									<p className="text-foreground mt-1">
-										Masz aktywny Car Pool i opublikowane ogłoszenia. Obecnie{" "}
-										{myCarpoolAcceptedSeats}/{myCarpoolSeatsTotal} miejsc jest
-										już zajętych.
+										{isEnglish
+											? `You have an active Car Pool with published offers. Currently ${myCarpoolAcceptedSeats}/${myCarpoolSeatsTotal} seats are already taken.`
+											: `Masz aktywny Car Pool i opublikowane ogłoszenia. Obecnie ${myCarpoolAcceptedSeats}/${myCarpoolSeatsTotal} miejsc jest już zajętych.`}
 									</p>
 								) : (
 									<p className="text-foreground mt-1">
-										Masz miejsca w aucie? Dodaj ogłoszenie i pomóż innym
-										dojechać na ślub.
+										{isEnglish
+											? "Have seats in your car? Add an offer and help others get to the wedding."
+											: "Masz miejsca w aucie? Dodaj ogłoszenie i pomóż innym dojechać na ślub."}
 									</p>
 								)}
 							</div>
@@ -553,10 +613,16 @@ export function RsvpTab({
 									className="shrink-0 rounded-full border-[var(--color-primary)] px-4 py-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
 								>
 									{!isCarpoolDataReady
-										? "Otwórz Car Pool"
+										? isEnglish
+											? "Open Car Pool"
+											: "Otwórz Car Pool"
 										: hasMyCarpoolOffer
-											? "Otwórz Car Pool"
-											: "Dodaj ogłoszenie"}
+											? isEnglish
+												? "Open Car Pool"
+												: "Otwórz Car Pool"
+											: isEnglish
+												? "Add offer"
+												: "Dodaj ogłoszenie"}
 								</Button>
 							)}
 						</div>
@@ -595,32 +661,45 @@ function normalizeChildrenCount(value: unknown) {
 
 function formatChildrenSleepOption(
 	value: "extraBed" | "crib" | undefined,
+	locale: "pl" | "en",
 ): string {
-	if (value === "extraBed") return "Dostawka";
-	if (value === "crib") return "Łóżeczko";
+	if (value === "extraBed") return locale === "en" ? "Extra bed" : "Dostawka";
+	if (value === "crib") return locale === "en" ? "Crib" : "Łóżeczko";
 	return "-";
 }
 
 function formatAccommodationType(
 	value: "hostProvided" | "selfArranged" | undefined,
+	locale: "pl" | "en",
 ): string {
-	if (value === "hostProvided") return "Od organizatorów";
-	if (value === "selfArranged") return "Na własną rękę";
+	if (value === "hostProvided") {
+		return locale === "en" ? "Provided by hosts" : "Od organizatorów";
+	}
+	if (value === "selfArranged") {
+		return locale === "en" ? "Self-arranged" : "Na własną rękę";
+	}
 	return "-";
 }
 
-function formatExtraNightsRange(fromDate?: string, toDate?: string): string {
+function formatExtraNightsRange(
+	fromDate: string | undefined,
+	toDate: string | undefined,
+	locale: "pl" | "en",
+): string {
 	if (!fromDate && !toDate) return "-";
 	if (fromDate && toDate) {
-		const from = formatLocalDate(fromDate);
-		const to = formatLocalDate(toDate);
+		const from = formatLocalDate(fromDate, locale);
+		const to = formatLocalDate(toDate, locale);
 		return from === to ? from : `${from} - ${to}`;
 	}
-	return formatLocalDate(fromDate ?? toDate) || "-";
+	return formatLocalDate(fromDate ?? toDate, locale) || "-";
 }
 
-function formatAttendanceValue(value: "yes" | "no" | undefined): string {
-	return value === "yes" ? "Tak" : "-";
+function formatAttendanceValue(
+	value: "yes" | "no" | undefined,
+	locale: "pl" | "en",
+): string {
+	return value === "yes" ? (locale === "en" ? "Yes" : "Tak") : "-";
 }
 
 function isLegacyRsvpValidatorError(error: unknown) {

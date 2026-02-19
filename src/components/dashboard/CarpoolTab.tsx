@@ -16,6 +16,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { buildLocalDateTime, parseLocalDateTime } from "@/lib/date-time";
+import { useLocale } from "@/lib/locale";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -42,13 +43,21 @@ type RequestDraft = {
 	mediationRequested: boolean;
 };
 
-const STATUS_LABELS: Record<CarpoolRequestStatus, string> = {
+const STATUS_LABELS_PL: Record<CarpoolRequestStatus, string> = {
 	pending: "Oczekuje",
 	accepted: "Zaakceptowane",
 	rejected: "Odrzucone",
 	cancelled_by_passenger: "Anulowane przez pasażera",
 	cancelled_by_driver: "Anulowane przez kierowcę",
 	cancelled_system: "Anulowane systemowo",
+};
+const STATUS_LABELS_EN: Record<CarpoolRequestStatus, string> = {
+	pending: "Pending",
+	accepted: "Accepted",
+	rejected: "Rejected",
+	cancelled_by_passenger: "Cancelled by passenger",
+	cancelled_by_driver: "Cancelled by driver",
+	cancelled_system: "Cancelled by system",
 };
 
 const EMPTY_OFFER_DRAFT: OfferDraft = {
@@ -71,6 +80,8 @@ export function CarpoolTab({
 	adminAccessToken,
 	openCreateOfferToken,
 }: CarpoolTabProps) {
+	const { locale } = useLocale();
+	const isEnglish = locale === "en";
 	const invitationId = invitationData?.invitation?._id;
 	const rsvpArrivalDateTime = invitationData?.invitation?.arrivalDateTime;
 
@@ -92,7 +103,16 @@ export function CarpoolTab({
 	const respondToRequest = useMutation(api.carpool.respondToRequest);
 	const cancelRequest = useMutation(api.carpool.cancelRequest);
 
-	const mediationCheckboxId = useId();
+	const formFieldPrefix = useId();
+	const mediationCheckboxId = `${formFieldPrefix}-mediation`;
+	const applySeatsId = `${formFieldPrefix}-apply-seats`;
+	const applyMessageId = `${formFieldPrefix}-apply-message`;
+	const offerPickupId = `${formFieldPrefix}-offer-pickup`;
+	const offerDropoffId = `${formFieldPrefix}-offer-dropoff`;
+	const offerDateId = `${formFieldPrefix}-offer-date`;
+	const offerTimeId = `${formFieldPrefix}-offer-time`;
+	const offerSeatsId = `${formFieldPrefix}-offer-seats`;
+	const offerNotesId = `${formFieldPrefix}-offer-notes`;
 
 	const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 	const [offerModalMode, setOfferModalMode] =
@@ -216,16 +236,20 @@ export function CarpoolTab({
 		if (!offerDraft.departureDateTime) {
 			toast({
 				variant: "destructive",
-				title: "Brak daty i godziny",
-				description: "Wybierz datę i godzinę ogłoszenia.",
+				title: isEnglish ? "Missing date and time" : "Brak daty i godziny",
+				description: isEnglish
+					? "Select date and time for the offer."
+					: "Wybierz datę i godzinę ogłoszenia.",
 			});
 			return;
 		}
 		if (!Number.isInteger(seatsTotal) || seatsTotal < 1) {
 			toast({
 				variant: "destructive",
-				title: "Nieprawidłowa liczba miejsc",
-				description: "Podaj co najmniej 1 miejsce.",
+				title: isEnglish ? "Invalid seat count" : "Nieprawidłowa liczba miejsc",
+				description: isEnglish
+					? "Enter at least 1 seat."
+					: "Podaj co najmniej 1 miejsce.",
 			});
 			return;
 		}
@@ -242,8 +266,10 @@ export function CarpoolTab({
 				});
 				toast({
 					variant: "success",
-					title: "Ogłoszenie dodane",
-					description: "Ogłoszenie Car Pool zostało opublikowane.",
+					title: isEnglish ? "Offer added" : "Ogłoszenie dodane",
+					description: isEnglish
+						? "Your Car Pool offer has been published."
+						: "Ogłoszenie Car Pool zostało opublikowane.",
 				});
 			} else {
 				if (!editingOfferId) return;
@@ -258,7 +284,7 @@ export function CarpoolTab({
 				});
 				toast({
 					variant: "success",
-					title: "Ogłoszenie zaktualizowane",
+					title: isEnglish ? "Offer updated" : "Ogłoszenie zaktualizowane",
 				});
 			}
 			handleOfferModalOpenChange(false);
@@ -267,10 +293,18 @@ export function CarpoolTab({
 				variant: "destructive",
 				title:
 					offerModalMode === "create"
-						? "Nie udało się dodać ogłoszenia"
-						: "Nie udało się zapisać zmian",
+						? isEnglish
+							? "Could not add offer"
+							: "Nie udało się dodać ogłoszenia"
+						: isEnglish
+							? "Could not save changes"
+							: "Nie udało się zapisać zmian",
 				description:
-					error instanceof Error ? error.message : "Spróbuj ponownie.",
+					error instanceof Error
+						? error.message
+						: isEnglish
+							? "Please try again."
+							: "Spróbuj ponownie.",
 			});
 		}
 	};
@@ -289,9 +323,15 @@ export function CarpoolTab({
 		} catch (error) {
 			toast({
 				variant: "destructive",
-				title: "Nie udało się zmienić statusu",
+				title: isEnglish
+					? "Could not change status"
+					: "Nie udało się zmienić statusu",
 				description:
-					error instanceof Error ? error.message : "Spróbuj ponownie.",
+					error instanceof Error
+						? error.message
+						: isEnglish
+							? "Please try again."
+							: "Spróbuj ponownie.",
 			});
 		}
 	};
@@ -305,14 +345,20 @@ export function CarpoolTab({
 			});
 			toast({
 				variant: "success",
-				title: "Ogłoszenie anulowane",
+				title: isEnglish ? "Offer cancelled" : "Ogłoszenie anulowane",
 			});
 		} catch (error) {
 			toast({
 				variant: "destructive",
-				title: "Nie udało się anulować ogłoszenia",
+				title: isEnglish
+					? "Could not cancel offer"
+					: "Nie udało się anulować ogłoszenia",
 				description:
-					error instanceof Error ? error.message : "Spróbuj ponownie.",
+					error instanceof Error
+						? error.message
+						: isEnglish
+							? "Please try again."
+							: "Spróbuj ponownie.",
 			});
 		}
 	};
@@ -332,15 +378,25 @@ export function CarpoolTab({
 				variant: "success",
 				title:
 					decision === "accept"
-						? "Zgłoszenie zaakceptowane"
-						: "Zgłoszenie odrzucone",
+						? isEnglish
+							? "Request accepted"
+							: "Zgłoszenie zaakceptowane"
+						: isEnglish
+							? "Request rejected"
+							: "Zgłoszenie odrzucone",
 			});
 		} catch (error) {
 			toast({
 				variant: "destructive",
-				title: "Nie udało się zapisać decyzji",
+				title: isEnglish
+					? "Could not save decision"
+					: "Nie udało się zapisać decyzji",
 				description:
-					error instanceof Error ? error.message : "Spróbuj ponownie.",
+					error instanceof Error
+						? error.message
+						: isEnglish
+							? "Please try again."
+							: "Spróbuj ponownie.",
 			});
 		}
 	};
@@ -359,14 +415,20 @@ export function CarpoolTab({
 			closeApplyModal();
 			toast({
 				variant: "success",
-				title: "Wysłano zgłoszenie",
+				title: isEnglish ? "Request sent" : "Wysłano zgłoszenie",
 			});
 		} catch (error) {
 			toast({
 				variant: "destructive",
-				title: "Nie udało się wysłać zgłoszenia",
+				title: isEnglish
+					? "Could not send request"
+					: "Nie udało się wysłać zgłoszenia",
 				description:
-					error instanceof Error ? error.message : "Spróbuj ponownie.",
+					error instanceof Error
+						? error.message
+						: isEnglish
+							? "Please try again."
+							: "Spróbuj ponownie.",
 			});
 		}
 	};
@@ -380,14 +442,20 @@ export function CarpoolTab({
 			});
 			toast({
 				variant: "success",
-				title: "Zgłoszenie anulowane",
+				title: isEnglish ? "Request cancelled" : "Zgłoszenie anulowane",
 			});
 		} catch (error) {
 			toast({
 				variant: "destructive",
-				title: "Nie udało się anulować zgłoszenia",
+				title: isEnglish
+					? "Could not cancel request"
+					: "Nie udało się anulować zgłoszenia",
 				description:
-					error instanceof Error ? error.message : "Spróbuj ponownie.",
+					error instanceof Error
+						? error.message
+						: isEnglish
+							? "Please try again."
+							: "Spróbuj ponownie.",
 			});
 		}
 	};
@@ -396,7 +464,9 @@ export function CarpoolTab({
 		if (!adminOverview) {
 			return (
 				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-					Ładowanie danych car pool...
+					{isEnglish
+						? "Loading car pool data..."
+						: "Ładowanie danych car pool..."}
 				</div>
 			);
 		}
@@ -405,17 +475,18 @@ export function CarpoolTab({
 			<div className="space-y-6">
 				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
 					<h3 className="text-2xl font-bold text-foreground">
-						Car Pool (podgląd)
+						{isEnglish ? "Car Pool (preview)" : "Car Pool (podgląd)"}
 					</h3>
 					<p className="text-muted-foreground mt-2">
-						Aktywne oferty: {adminOverview.offers.length}. Oczekujące
-						zgłoszenia: {pendingRequestsCount}.
+						{isEnglish
+							? `Active offers: ${adminOverview.offers.length}. Pending requests: ${pendingRequestsCount}.`
+							: `Aktywne oferty: ${adminOverview.offers.length}. Oczekujące zgłoszenia: ${pendingRequestsCount}.`}
 					</p>
 				</div>
 				{/* Admin view implementation kept simple as user asked for UX changes on client side predominantly */}
 				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
 					<h4 className="text-xl font-bold text-foreground mb-4">
-						Ogłoszenia Car Pool
+						{isEnglish ? "Car Pool offers" : "Ogłoszenia Car Pool"}
 					</h4>
 					<ul className="space-y-3">
 						{adminOverview.offers.map((offer) => (
@@ -425,7 +496,7 @@ export function CarpoolTab({
 							>
 								<p className="font-semibold text-foreground">
 									{offer.driverDisplayName}:{" "}
-									{formatRoute(offer.pickupPoint, offer.dropoffPoint)}
+									{formatRoute(offer.pickupPoint, offer.dropoffPoint, locale)}
 								</p>
 							</li>
 						))}
@@ -438,7 +509,7 @@ export function CarpoolTab({
 	if (!invitationId) {
 		return (
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-				Brak aktywnego zaproszenia.
+				{isEnglish ? "No active invitation." : "Brak aktywnego zaproszenia."}
 			</div>
 		);
 	}
@@ -446,7 +517,9 @@ export function CarpoolTab({
 	if (!carpoolData) {
 		return (
 			<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-				Ładowanie danych car pool...
+				{isEnglish
+					? "Loading car pool data..."
+					: "Ładowanie danych car pool..."}
 			</div>
 		);
 	}
@@ -461,16 +534,21 @@ export function CarpoolTab({
 				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
 					<h3 className="text-2xl font-bold text-foreground">Car Pool</h3>
 					<p className="text-muted-foreground mt-2">
-						Zapisy są aktywne do {formatDateTime(carpoolData.carpoolDeadline)}.
+						{isEnglish ? "Signups are open until" : "Zapisy są aktywne do"}{" "}
+						{formatDateTime(carpoolData.carpoolDeadline, locale)}.
 					</p>
 					{carpoolData.myOffers.length > 0 && (
 						<p className="text-sm text-muted-foreground mt-2">
-							Twoje obecne obsadzenie aut: {myAcceptedSeatsTotal} osób.
+							{isEnglish
+								? `Your current booked seats: ${myAcceptedSeatsTotal} people.`
+								: `Twoje obecne obsadzenie aut: ${myAcceptedSeatsTotal} osób.`}
 						</p>
 					)}
 					{!carpoolData.isBeforeDeadline && (
 						<p className="text-sm text-amber-600 mt-3">
-							Termin car pool minął. Dane są dostępne tylko do podglądu.
+							{isEnglish
+								? "Car pool deadline has passed. Data is available in read-only mode."
+								: "Termin car pool minął. Dane są dostępne tylko do podglądu."}
 						</p>
 					)}
 				</div>
@@ -478,10 +556,13 @@ export function CarpoolTab({
 				<div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-6">
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						<div>
-							<h4 className="text-xl font-bold text-foreground">Ogłoszenia</h4>
+							<h4 className="text-xl font-bold text-foreground">
+								{isEnglish ? "Offers" : "Ogłoszenia"}
+							</h4>
 							<p className="text-sm text-muted-foreground mt-1">
-								Trasa jest opcjonalna. Goście mogą dogadać szczegóły po
-								akceptacji zgłoszenia.
+								{isEnglish
+									? "Route details are optional. Guests can agree on details after request acceptance."
+									: "Trasa jest opcjonalna. Goście mogą dogadać szczegóły po akceptacji zgłoszenia."}
 							</p>
 						</div>
 						{carpoolData.canCreateOffer && (
@@ -491,28 +572,31 @@ export function CarpoolTab({
 								disabled={!canMutate}
 								className="px-4 py-2 rounded-full text-sm font-semibold bg-[var(--color-primary)] text-white disabled:opacity-60"
 							>
-								Dodaj ogłoszenie
+								{isEnglish ? "Add offer" : "Dodaj ogłoszenie"}
 							</Button>
 						)}
 					</div>
 
 					{!carpoolData.canCreateOffer && (
 						<p className="text-muted-foreground text-sm">
-							Aby dodać ogłoszenie, włącz opcję "Będę kierowcą" w formularzu
-							RSVP (wymaga transportu własnego).
+							{isEnglish
+								? 'To add an offer, enable "I have available seats" in the RSVP form (requires own transport).'
+								: 'Aby dodać ogłoszenie, włącz opcję "Będę kierowcą" w formularzu RSVP (wymaga transportu własnego).'}
 						</p>
 					)}
 
 					{carpoolData.myOffers.length === 0 &&
 					carpoolData.openOffers.length === 0 ? (
-						<p className="text-muted-foreground">Brak ogłoszeń Car Pool.</p>
+						<p className="text-muted-foreground">
+							{isEnglish ? "No Car Pool offers." : "Brak ogłoszeń Car Pool."}
+						</p>
 					) : (
 						<div className="space-y-6">
 							{/* My Offers Section */}
 							{carpoolData.myOffers.length > 0 && (
 								<div className="space-y-3">
 									<h5 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-										Twoje ogłoszenia
+										{isEnglish ? "Your offers" : "Twoje ogłoszenia"}
 									</h5>
 									{carpoolData.myOffers.map((offer) => (
 										<div
@@ -522,13 +606,20 @@ export function CarpoolTab({
 											<div className="flex flex-wrap items-start justify-between gap-3">
 												<div>
 													<p className="font-semibold text-foreground">
-														{formatRoute(offer.pickupPoint, offer.dropoffPoint)}
+														{formatRoute(
+															offer.pickupPoint,
+															offer.dropoffPoint,
+															locale,
+														)}
 													</p>
 													<p className="text-sm text-muted-foreground mt-1">
-														Odjazd: {formatDateTime(offer.departureDateTime)}
+														{isEnglish ? "Departure" : "Odjazd"}:{" "}
+														{formatDateTime(offer.departureDateTime, locale)}
 													</p>
 													<p className="text-sm text-muted-foreground">
-														Status: {offer.status} | miejsca:{" "}
+														{isEnglish ? "Status" : "Status"}:{" "}
+														{formatOfferStatus(offer.status, locale)} |{" "}
+														{isEnglish ? "seats" : "miejsca"}:{" "}
 														{offer.seatsAvailable}/{offer.seatsTotal}
 													</p>
 												</div>
@@ -542,7 +633,7 @@ export function CarpoolTab({
 														variant="outline"
 														className="rounded-full"
 													>
-														Edytuj
+														{isEnglish ? "Edit" : "Edytuj"}
 													</Button>
 													{offer.status !== "cancelled" && (
 														<Button
@@ -557,7 +648,13 @@ export function CarpoolTab({
 															variant="outline"
 															className="rounded-full border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)]"
 														>
-															{offer.status === "open" ? "Zamknij" : "Otwórz"}
+															{offer.status === "open"
+																? isEnglish
+																	? "Close"
+																	: "Zamknij"
+																: isEnglish
+																	? "Open"
+																	: "Otwórz"}
 														</Button>
 													)}
 													<Button
@@ -569,18 +666,20 @@ export function CarpoolTab({
 														variant="outline"
 														className="rounded-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
 													>
-														Anuluj
+														{isEnglish ? "Cancel" : "Anuluj"}
 													</Button>
 												</div>
 											</div>
 
 											<div className="pt-2 border-t border-gray-200">
 												<p className="text-sm font-semibold text-foreground mb-2">
-													Zgłoszenia pasażerów
+													{isEnglish
+														? "Passenger requests"
+														: "Zgłoszenia pasażerów"}
 												</p>
 												{offer.requests.length === 0 ? (
 													<p className="text-sm text-muted-foreground">
-														Brak zgłoszeń.
+														{isEnglish ? "No requests." : "Brak zgłoszeń."}
 													</p>
 												) : (
 													<ul className="space-y-2">
@@ -591,11 +690,12 @@ export function CarpoolTab({
 															>
 																<div className="flex items-center justify-between gap-3">
 																	<p className="font-medium text-foreground">
-																		{request.passengerDisplayName} (miejsca:{" "}
+																		{request.passengerDisplayName} (
+																		{isEnglish ? "seats" : "miejsca"}:{" "}
 																		{request.seatsRequested})
 																	</p>
 																	<span className="text-xs text-muted-foreground">
-																		{STATUS_LABELS[request.status]}
+																		{getStatusLabel(request.status, locale)}
 																	</span>
 																</div>
 																{request.message && (
@@ -616,7 +716,7 @@ export function CarpoolTab({
 																			disabled={!canMutate}
 																			className="h-7 rounded-full text-xs bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90"
 																		>
-																			Akceptuj
+																			{isEnglish ? "Accept" : "Akceptuj"}
 																		</Button>
 																		<Button
 																			type="button"
@@ -630,7 +730,7 @@ export function CarpoolTab({
 																			variant="outline"
 																			className="h-7 rounded-full text-xs border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
 																		>
-																			Odrzuć
+																			{isEnglish ? "Reject" : "Odrzuć"}
 																		</Button>
 																	</div>
 																)}
@@ -683,20 +783,27 @@ export function CarpoolTab({
 														</p>
 														{isMyRequest && (
 															<span className="inline-flex items-center rounded-full bg-[var(--color-primary)] px-2 py-0.5 text-xs font-medium text-white">
-																Twoje zgłoszenie
+																{isEnglish
+																	? "Your request"
+																	: "Twoje zgłoszenie"}
 															</span>
 														)}
 													</div>
 
 													<p className="font-medium text-foreground mb-1">
-														{formatRoute(offer.pickupPoint, offer.dropoffPoint)}
+														{formatRoute(
+															offer.pickupPoint,
+															offer.dropoffPoint,
+															locale,
+														)}
 													</p>
 													<p className="text-sm text-muted-foreground">
-														Odjazd: {formatDateTime(offer.departureDateTime)}
+														{isEnglish ? "Departure" : "Odjazd"}:{" "}
+														{formatDateTime(offer.departureDateTime, locale)}
 													</p>
 													<p className="text-sm text-muted-foreground">
-														Wolne miejsca: {offer.seatsAvailable}/
-														{offer.seatsTotal}
+														{isEnglish ? "Available seats" : "Wolne miejsca"}:{" "}
+														{offer.seatsAvailable}/{offer.seatsTotal}
 													</p>
 
 													{offer.notes && (
@@ -715,10 +822,13 @@ export function CarpoolTab({
 														{isMyRequest && offer.myRequestId ? (
 															<>
 																<p className="text-sm text-foreground">
-																	Status:{" "}
+																	{isEnglish ? "Status" : "Status"}:{" "}
 																	<span className="font-medium">
 																		{offer.myRequestStatus
-																			? STATUS_LABELS[offer.myRequestStatus]
+																			? getStatusLabel(
+																					offer.myRequestStatus,
+																					locale,
+																				)
 																			: "-"}
 																	</span>
 																</p>
@@ -734,7 +844,9 @@ export function CarpoolTab({
 																		}}
 																		className="mt-2 h-auto p-0 text-xs font-semibold text-red-600 hover:no-underline"
 																	>
-																		Anuluj zgłoszenie
+																		{isEnglish
+																			? "Cancel request"
+																			: "Anuluj zgłoszenie"}
 																	</Button>
 																)}
 															</>
@@ -748,13 +860,17 @@ export function CarpoolTab({
 																}}
 																className="w-full rounded-full bg-[var(--color-primary)] text-white hover:opacity-90 disabled:opacity-50"
 															>
-																Zgłoś się
+																{isEnglish ? "Apply" : "Zgłoś się"}
 															</Button>
 														) : (
 															<p className="text-xs text-muted-foreground">
 																{hasActiveRequest
-																	? "Masz już aktywne zgłoszenie do innej oferty."
-																	: "Ta oferta jest obecnie niedostępna."}
+																	? isEnglish
+																		? "You already have an active request for another offer."
+																		: "Masz już aktywne zgłoszenie do innej oferty."
+																	: isEnglish
+																		? "This offer is currently unavailable."
+																		: "Ta oferta jest obecnie niedostępna."}
 															</p>
 														)}
 													</div>
@@ -783,20 +899,27 @@ export function CarpoolTab({
 							<>
 								<div className="flex flex-col space-y-1.5 text-center sm:text-left">
 									<h2 className="text-lg font-semibold leading-none tracking-tight">
-										Zgłoś się do przejazdu
+										{isEnglish
+											? "Apply for this ride"
+											: "Zgłoś się do przejazdu"}
 									</h2>
 									<p className="text-sm text-muted-foreground">
-										Kierowca: {selectedApplyOffer.driverDisplayName}
+										{isEnglish ? "Driver" : "Kierowca"}:{" "}
+										{selectedApplyOffer.driverDisplayName}
 									</p>
 								</div>
 
 								<div className="grid gap-4 py-4">
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<div className="space-y-2">
-											<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-												Liczba miejsc
+											<label
+												htmlFor={applySeatsId}
+												className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+											>
+												{isEnglish ? "Number of seats" : "Liczba miejsc"}
 											</label>
 											<Input
+												id={applySeatsId}
 												type="number"
 												min={1}
 												max={Math.min(
@@ -824,18 +947,24 @@ export function CarpoolTab({
 												}
 											/>
 											<label
-												htmlFor="mediation"
+												htmlFor={mediationCheckboxId}
 												className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 											>
-												Potrzebuję pomocy
+												{isEnglish ? "I need assistance" : "Potrzebuję pomocy"}
 											</label>
 										</div>
 									</div>
 									<div className="space-y-2">
-										<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-											Wiadomość do kierowcy (opcjonalnie)
+										<label
+											htmlFor={applyMessageId}
+											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+										>
+											{isEnglish
+												? "Message to driver (optional)"
+												: "Wiadomość do kierowcy (opcjonalnie)"}
 										</label>
 										<textarea
+											id={applyMessageId}
 											className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 											value={applyRequestDraft.message}
 											onChange={(e) =>
@@ -855,14 +984,14 @@ export function CarpoolTab({
 										variant="outline"
 										className="mt-2 sm:mt-0"
 									>
-										Anuluj
+										{isEnglish ? "Cancel" : "Anuluj"}
 									</Button>
 									<Button
 										type="button"
 										onClick={handleCreateRequest}
 										className="bg-[var(--color-primary)] text-white hover:opacity-90"
 									>
-										Wyślij zgłoszenie
+										{isEnglish ? "Send request" : "Wyślij zgłoszenie"}
 									</Button>
 								</div>
 								<DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
@@ -885,11 +1014,15 @@ export function CarpoolTab({
 						<div className="flex flex-col space-y-1.5 text-center sm:text-left">
 							<h2 className="text-lg font-semibold leading-none tracking-tight">
 								{offerModalMode === "create"
-									? "Dodaj ogłoszenie"
-									: "Edytuj ogłoszenie"}
+									? isEnglish
+										? "Add offer"
+										: "Dodaj ogłoszenie"
+									: isEnglish
+										? "Edit offer"
+										: "Edytuj ogłoszenie"}
 							</h2>
 							<p className="text-sm text-muted-foreground">
-								Szczegóły przejazdu.
+								{isEnglish ? "Ride details." : "Szczegóły przejazdu."}
 							</p>
 						</div>
 
@@ -897,14 +1030,16 @@ export function CarpoolTab({
 							<div className="grid grid-cols-2 gap-4">
 								<div className="space-y-2">
 									<label
-										htmlFor="pickup"
+										htmlFor={offerPickupId}
 										className="text-sm font-medium leading-none"
 									>
-										Skąd
+										{isEnglish ? "From" : "Skąd"}
 									</label>
 									<Input
-										id="pickup"
-										placeholder="np. Lotnisko Chania"
+										id={offerPickupId}
+										placeholder={
+											isEnglish ? "e.g. Chania Airport" : "np. Lotnisko Chania"
+										}
 										value={offerDraft.pickupPoint}
 										onChange={(e) =>
 											setOfferDraft((prev) => ({
@@ -916,14 +1051,14 @@ export function CarpoolTab({
 								</div>
 								<div className="space-y-2">
 									<label
-										htmlFor="dropoff"
+										htmlFor={offerDropoffId}
 										className="text-sm font-medium leading-none"
 									>
-										Dokąd
+										{isEnglish ? "To" : "Dokąd"}
 									</label>
 									<Input
-										id="dropoff"
-										placeholder="np. Hotel"
+										id={offerDropoffId}
+										placeholder={isEnglish ? "e.g. Hotel" : "np. Hotel"}
 										value={offerDraft.dropoffPoint}
 										onChange={(e) =>
 											setOfferDraft((prev) => ({
@@ -936,10 +1071,14 @@ export function CarpoolTab({
 							</div>
 							<div className="grid grid-cols-2 gap-4">
 								<div className="space-y-2">
-									<label className="text-sm font-medium leading-none">
-										Data
+									<label
+										htmlFor={offerDateId}
+										className="text-sm font-medium leading-none"
+									>
+										{isEnglish ? "Date" : "Data"}
 									</label>
 									<DatePicker
+										id={offerDateId}
 										value={offerDate}
 										onChange={setOfferDate}
 										className="w-full"
@@ -947,13 +1086,13 @@ export function CarpoolTab({
 								</div>
 								<div className="space-y-2">
 									<label
-										htmlFor="time"
+										htmlFor={offerTimeId}
 										className="text-sm font-medium leading-none"
 									>
-										Godzina
+										{isEnglish ? "Time" : "Godzina"}
 									</label>
 									<Input
-										id="time"
+										id={offerTimeId}
 										type="time"
 										value={offerTime}
 										onChange={(e) => setOfferTime(e.target.value)}
@@ -962,13 +1101,13 @@ export function CarpoolTab({
 							</div>
 							<div className="space-y-2">
 								<label
-									htmlFor="seats"
+									htmlFor={offerSeatsId}
 									className="text-sm font-medium leading-none"
 								>
-									Liczba miejsc
+									{isEnglish ? "Number of seats" : "Liczba miejsc"}
 								</label>
 								<Input
-									id="seats"
+									id={offerSeatsId}
 									type="number"
 									min={1}
 									max={8}
@@ -983,15 +1122,19 @@ export function CarpoolTab({
 							</div>
 							<div className="space-y-2">
 								<label
-									htmlFor="notes"
+									htmlFor={offerNotesId}
 									className="text-sm font-medium leading-none"
 								>
-									Notatki
+									{isEnglish ? "Notes" : "Notatki"}
 								</label>
 								<textarea
-									id="notes"
+									id={offerNotesId}
 									className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-									placeholder="Dodatkowe informacje..."
+									placeholder={
+										isEnglish
+											? "Additional information..."
+											: "Dodatkowe informacje..."
+									}
 									value={offerDraft.notes}
 									onChange={(e) =>
 										setOfferDraft((prev) => ({
@@ -1010,14 +1153,14 @@ export function CarpoolTab({
 								onClick={() => handleOfferModalOpenChange(false)}
 								className="mt-2 sm:mt-0"
 							>
-								Anuluj
+								{isEnglish ? "Cancel" : "Anuluj"}
 							</Button>
 							<Button
 								type="button"
 								onClick={handleSubmitOffer}
 								className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90"
 							>
-								Zapisz
+								{isEnglish ? "Save" : "Zapisz"}
 							</Button>
 						</div>
 						<DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
@@ -1034,17 +1177,18 @@ export function CarpoolTab({
 function formatRoute(
 	pickup: string | null | undefined,
 	dropoff: string | null | undefined,
+	locale: "pl" | "en",
 ) {
 	const p = pickup?.trim() || "Start";
-	const d = dropoff?.trim() || "Cel";
+	const d = dropoff?.trim() || (locale === "en" ? "Destination" : "Cel");
 	return `${p} ➝ ${d}`;
 }
 
-function formatDateTime(iso: string | null | undefined) {
+function formatDateTime(iso: string | null | undefined, locale: "pl" | "en") {
 	if (!iso) return "-";
 	try {
 		const date = new Date(iso);
-		return date.toLocaleString("pl-PL", {
+		return date.toLocaleString(locale === "en" ? "en-US" : "pl-PL", {
 			day: "numeric",
 			month: "short",
 			hour: "2-digit",
@@ -1053,4 +1197,22 @@ function formatDateTime(iso: string | null | undefined) {
 	} catch {
 		return iso;
 	}
+}
+
+function formatOfferStatus(
+	status: "open" | "closed" | "cancelled",
+	locale: "pl" | "en",
+) {
+	if (locale === "en") {
+		if (status === "open") return "open";
+		if (status === "closed") return "closed";
+		return "cancelled";
+	}
+	if (status === "open") return "otwarte";
+	if (status === "closed") return "zamknięte";
+	return "anulowane";
+}
+
+function getStatusLabel(status: CarpoolRequestStatus, locale: "pl" | "en") {
+	return locale === "en" ? STATUS_LABELS_EN[status] : STATUS_LABELS_PL[status];
 }

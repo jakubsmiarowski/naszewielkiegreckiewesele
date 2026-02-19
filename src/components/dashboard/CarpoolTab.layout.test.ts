@@ -15,4 +15,22 @@ describe("CarpoolTab offer cards layout", () => {
 		expect(source).toContain("h-full w-full rounded-xl border p-4 text-left");
 		expect(source).toContain("mt-auto pt-3");
 	});
+
+	it("uses locale-aware copy for key user-facing labels", () => {
+		const source = readFileSync(
+			resolve(process.cwd(), "src/components/dashboard/CarpoolTab.tsx"),
+			"utf8",
+		);
+
+		expect(source).toContain("const { locale } = useLocale();");
+		expect(source).toContain(
+			'isEnglish ? "Signups are open until" : "Zapisy są aktywne do"',
+		);
+		expect(source).toContain(
+			'{isEnglish ? "Available seats" : "Wolne miejsca"}',
+		);
+		expect(source).toContain(
+			'{isEnglish ? "Apply for this ride" : "Zgłoś się do przejazdu"}',
+		);
+	});
 });

@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { pl } from "date-fns/locale";
+import { enUS, pl } from "date-fns/locale";
 import { ChevronDownIcon } from "lucide-react";
 import * as React from "react";
 
@@ -11,6 +11,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { useLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 type DatePickerProps = {
@@ -29,7 +30,7 @@ type DatePickerProps = {
 function DatePicker({
 	value,
 	onChange,
-	placeholder = "Wybierz datę",
+	placeholder,
 	className,
 	disabled,
 	id,
@@ -38,13 +39,17 @@ function DatePicker({
 	onTimeChange,
 	timeStep = 60,
 }: DatePickerProps) {
+	const { locale } = useLocale();
 	const [open, setOpen] = React.useState(false);
 	const timeInputId = id ? `${id}-time` : undefined;
+	const dateLocale = locale === "en" ? enUS : pl;
+	const resolvedPlaceholder =
+		placeholder ?? (locale === "en" ? "Select date" : "Wybierz datę");
 	const buttonLabel = value
 		? withTime && timeValue
-			? `${format(value, "PPP", { locale: pl })} ${timeValue}`
-			: format(value, "PPP", { locale: pl })
-		: placeholder;
+			? `${format(value, "PPP", { locale: dateLocale })} ${timeValue}`
+			: format(value, "PPP", { locale: dateLocale })
+		: resolvedPlaceholder;
 
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
@@ -77,7 +82,7 @@ function DatePicker({
 						}
 					}}
 					initialFocus
-					locale={pl}
+					locale={dateLocale}
 				/>
 				{withTime && (
 					<div className="border-t border-border p-3">
@@ -85,7 +90,7 @@ function DatePicker({
 							htmlFor={timeInputId}
 							className="mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground"
 						>
-							Godzina
+							{locale === "en" ? "Time" : "Godzina"}
 						</label>
 						<Input
 							id={timeInputId}

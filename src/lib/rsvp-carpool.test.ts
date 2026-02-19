@@ -61,4 +61,23 @@ describe("formatCarpoolRequestError", () => {
 			"Wybrana oferta car pool nie jest już dostępna. Wybierz inną ofertę.",
 		);
 	});
+
+	it("returns English seat labels when locale is en", () => {
+		expect(formatSeatCount(1, "en")).toBe("1 seat");
+		expect(formatSeatCount(3, "en")).toBe("3 seats");
+	});
+
+	it("returns English unavailable-offer message when locale is en", () => {
+		const error = new Error("Ta oferta nie jest już dostępna.");
+
+		const message = formatCarpoolRequestError({
+			error,
+			requestedSeats: 2,
+			locale: "en",
+		});
+
+		expect(message).toBe(
+			"The selected car pool offer is no longer available. Please choose another offer.",
+		);
+	});
 });

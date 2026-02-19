@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { buildLocalDateTime, parseLocalDateTime } from "@/lib/date-time";
+import { useLocale } from "@/lib/locale";
 import {
 	calculateRequestedCarpoolSeats,
 	formatSeatCount,
@@ -70,6 +71,8 @@ export function RsvpForm({
 	invitationGuests,
 	carpoolSuggestions = [],
 }: RsvpFormProps) {
+	const { locale } = useLocale();
+	const isEnglish = locale === "en";
 	const formIdPrefix = useId();
 	const guestAttendancesId = `${formIdPrefix}-guest-attendances`;
 	const plusOneNameId = `${formIdPrefix}-plus-one-name`;
@@ -375,7 +378,9 @@ export function RsvpForm({
 		if (availableGuests.length === 0) {
 			setError("guestAttendances", {
 				type: "manual",
-				message: "Brak osób na zaproszeniu.",
+				message: isEnglish
+					? "No guests found in this invitation."
+					: "Brak osób na zaproszeniu.",
 			});
 			return;
 		}
@@ -383,7 +388,9 @@ export function RsvpForm({
 		if (!hasAllGuestDecisions) {
 			setError("guestAttendances", {
 				type: "manual",
-				message: `Uzupełnij obecność dla wszystkich osób (${guestsWithDecisionsCount}/${availableGuests.length}).`,
+				message: isEnglish
+					? `Complete attendance for all guests (${guestsWithDecisionsCount}/${availableGuests.length}).`
+					: `Uzupełnij obecność dla wszystkich osób (${guestsWithDecisionsCount}/${availableGuests.length}).`,
 			});
 			return;
 		}
@@ -394,7 +401,9 @@ export function RsvpForm({
 			if (attendance !== "yes" && attendance !== "no") {
 				setError("guestAttendances", {
 					type: "manual",
-					message: "Wybierz odpowiedź dla każdej osoby.",
+					message: isEnglish
+						? "Choose an answer for each guest."
+						: "Wybierz odpowiedź dla każdej osoby.",
 				});
 				return;
 			}
@@ -437,8 +446,10 @@ export function RsvpForm({
 			console.log("RSVP Data:", payload);
 			toast({
 				variant: "success",
-				title: "RSVP zapisane",
-				description: "Dziękujemy za potwierdzenie obecności.",
+				title: isEnglish ? "RSVP saved" : "RSVP zapisane",
+				description: isEnglish
+					? "Thank you for confirming your attendance."
+					: "Dziękujemy za potwierdzenie obecności.",
 			});
 		}
 	};
@@ -449,9 +460,13 @@ export function RsvpForm({
 	return (
 		<div className="flex flex-col gap-6 rounded-2xl bg-white shadow-xl border border-gray-100 overflow-hidden">
 			<div className="bg-white pt-8 px-6 md:px-12 text-center">
-				<h3 className="text-3xl font-bold text-gray-900 mb-3">Formularz</h3>
+				<h3 className="text-3xl font-bold text-gray-900 mb-3">
+					{isEnglish ? "Form" : "Formularz"}
+				</h3>
 				<p className="text-gray-500 max-w-lg mx-auto leading-relaxed">
-					Daj nam znać o swojej obecności.
+					{isEnglish
+						? "Let us know your attendance details."
+						: "Daj nam znać o swojej obecności."}
 				</p>
 				<div className="w-24 h-1 bg-[var(--color-primary)]/20 mx-auto mt-6 rounded-full" />
 			</div>
@@ -462,11 +477,11 @@ export function RsvpForm({
 			>
 				<div className="flex flex-col gap-3">
 					<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-						Obecność
+						{isEnglish ? "Attendance" : "Obecność"}
 					</h4>
 					<p className="text-sm text-gray-600">
-						Decyzja dla gości: {guestsWithDecisionsCount}/
-						{availableGuests.length}
+						{isEnglish ? "Guest decisions" : "Decyzja dla gości"}:{" "}
+						{guestsWithDecisionsCount}/{availableGuests.length}
 					</p>
 					<input
 						id={guestAttendancesId}
@@ -487,7 +502,9 @@ export function RsvpForm({
 							>
 								✓
 							</span>
-							<span className="font-medium">Wszyscy jadą</span>
+							<span className="font-medium">
+								{isEnglish ? "Everyone is attending" : "Wszyscy jadą"}
+							</span>
 						</Button>
 						<Button
 							type="button"
@@ -501,7 +518,9 @@ export function RsvpForm({
 							>
 								✗
 							</span>
-							<span className="font-medium">Nikt nie jedzie</span>
+							<span className="font-medium">
+								{isEnglish ? "No one is attending" : "Nikt nie jedzie"}
+							</span>
 						</Button>
 					</div>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -530,10 +549,16 @@ export function RsvpForm({
 												</span>
 												<span className="text-xs text-gray-500 mt-1 font-normal">
 													{isYes
-														? "Będzie"
+														? isEnglish
+															? "Will attend"
+															: "Będzie"
 														: isNo
-															? "Nie będzie"
-															: "Wybierz odpowiedź"}
+															? isEnglish
+																? "Will not attend"
+																: "Nie będzie"
+															: isEnglish
+																? "Select an answer"
+																: "Wybierz odpowiedź"}
 												</span>
 											</div>
 											{/* <span
@@ -557,7 +582,7 @@ export function RsvpForm({
 												}}
 												className="w-full justify-start rounded-lg border border-green-500 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 hover:text-green-800 transition"
 											>
-												Tak, będzie
+												{isEnglish ? "Yes, will attend" : "Tak, będzie"}
 											</Button>
 											<Button
 												type="button"
@@ -568,7 +593,7 @@ export function RsvpForm({
 												}}
 												className="w-full justify-start rounded-lg border border-red-500 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 hover:text-red-800 transition"
 											>
-												Nie, nie będzie
+												{isEnglish ? "No, will not attend" : "Nie, nie będzie"}
 											</Button>
 										</div>
 									</PopoverContent>
@@ -588,7 +613,7 @@ export function RsvpForm({
 						{hasPlusOne && (
 							<div className="flex flex-col gap-3">
 								<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-									Osoba towarzysząca
+									{isEnglish ? "Plus one" : "Osoba towarzysząca"}
 								</h4>
 								<Controller
 									control={control}
@@ -627,7 +652,7 @@ export function RsvpForm({
 															: "text-gray-700"
 													}`}
 												>
-													Tak, będzie
+													{isEnglish ? "Yes, will attend" : "Tak, będzie"}
 												</span>
 											</label>
 											<label
@@ -658,7 +683,7 @@ export function RsvpForm({
 															: "text-gray-700"
 													}`}
 												>
-													Nie, nie może
+													{isEnglish ? "No, cannot attend" : "Nie, nie może"}
 												</span>
 											</label>
 										</RadioGroup>
@@ -670,7 +695,9 @@ export function RsvpForm({
 											className="text-gray-900 text-sm font-semibold uppercase tracking-wide"
 											htmlFor={plusOneNameId}
 										>
-											Imię i nazwisko osoby towarzyszącej
+											{isEnglish
+												? "Plus one full name"
+												: "Imię i nazwisko osoby towarzyszącej"}
 										</label>
 										<Input
 											{...register("plusOneName", {
@@ -680,12 +707,14 @@ export function RsvpForm({
 													}
 													return value?.trim()
 														? true
-														: "Podaj imię i nazwisko +1";
+														: isEnglish
+															? "Enter plus one full name"
+															: "Podaj imię i nazwisko +1";
 												},
 											})}
 											id={plusOneNameId}
 											className="h-auto w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 px-4 text-gray-900 placeholder:text-gray-400 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all outline-none"
-											placeholder="Imię i nazwisko"
+											placeholder={isEnglish ? "Full name" : "Imię i nazwisko"}
 											type="text"
 										/>
 										{errors.plusOneName && (
@@ -700,14 +729,16 @@ export function RsvpForm({
 
 						<div className="flex flex-col gap-3">
 							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-								Dzieci
+								{isEnglish ? "Children" : "Dzieci"}
 							</h4>
 							<div className="flex flex-col gap-2">
 								<label
 									className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
 									htmlFor={childrenCountId}
 								>
-									Ile dzieci będzie z Wami?
+									{isEnglish
+										? "How many children are attending with you?"
+										: "Ile dzieci będzie z Wami?"}
 								</label>
 								<Input
 									{...register("childrenCount", {
@@ -720,7 +751,9 @@ export function RsvpForm({
 												parsed < 0 ||
 												parsed > 3
 											) {
-												return "Podaj liczbę dzieci od 0 do 3";
+												return isEnglish
+													? "Enter a number of children from 0 to 3"
+													: "Podaj liczbę dzieci od 0 do 3";
 											}
 											return true;
 										},
@@ -742,7 +775,9 @@ export function RsvpForm({
 							{normalizedChildrenCount > 0 && (
 								<div className="flex flex-col gap-3">
 									<p className="text-gray-900 text-xs font-semibold uppercase tracking-wide">
-										Miejsce do spania dla dzieci
+										{isEnglish
+											? "Sleeping arrangement for children"
+											: "Miejsce do spania dla dzieci"}
 									</p>
 									<Controller
 										control={control}
@@ -772,7 +807,7 @@ export function RsvpForm({
 																: "text-gray-700"
 														}`}
 													>
-														Dostawka
+														{isEnglish ? "Extra bed" : "Dostawka"}
 													</span>
 												</label>
 												<label
@@ -794,7 +829,7 @@ export function RsvpForm({
 																: "text-gray-700"
 														}`}
 													>
-														Łóżeczko
+														{isEnglish ? "Crib" : "Łóżeczko"}
 													</span>
 												</label>
 											</RadioGroup>
@@ -811,13 +846,17 @@ export function RsvpForm({
 
 						<div className="flex flex-col gap-3">
 							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-								Przylot i wylot
+								{isEnglish ? "Arrival and departure" : "Przylot i wylot"}
 							</h4>
 							<input
 								{...register("arrivalDateTime", {
 									validate: (value) => {
 										if (!hasAnyAttending) return true;
-										return value ? true : "Podaj datę i godzinę przylotu";
+										return value
+											? true
+											: isEnglish
+												? "Enter arrival date and time"
+												: "Podaj datę i godzinę przylotu";
 									},
 								})}
 								type="hidden"
@@ -826,7 +865,11 @@ export function RsvpForm({
 								{...register("departureDateTime", {
 									validate: (value) => {
 										if (!hasAnyAttending) return true;
-										return value ? true : "Podaj datę i godzinę wylotu";
+										return value
+											? true
+											: isEnglish
+												? "Enter departure date and time"
+												: "Podaj datę i godzinę wylotu";
 									},
 								})}
 								type="hidden"
@@ -837,7 +880,7 @@ export function RsvpForm({
 										className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
 										htmlFor={arrivalDateId}
 									>
-										Przylot
+										{isEnglish ? "Arrival" : "Przylot"}
 									</label>
 									<DatePicker
 										id={arrivalDateId}
@@ -846,7 +889,11 @@ export function RsvpForm({
 										withTime
 										timeValue={arrivalTime}
 										onTimeChange={setArrivalTime}
-										placeholder="Wybierz datę i godzinę"
+										placeholder={
+											isEnglish
+												? "Select date and time"
+												: "Wybierz datę i godzinę"
+										}
 										className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
 										disabled={disabled}
 									/>
@@ -861,7 +908,7 @@ export function RsvpForm({
 										className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
 										htmlFor={departureDateId}
 									>
-										Wylot
+										{isEnglish ? "Departure" : "Wylot"}
 									</label>
 									<DatePicker
 										id={departureDateId}
@@ -870,7 +917,11 @@ export function RsvpForm({
 										withTime
 										timeValue={departureTime}
 										onTimeChange={setDepartureTime}
-										placeholder="Wybierz datę i godzinę"
+										placeholder={
+											isEnglish
+												? "Select date and time"
+												: "Wybierz datę i godzinę"
+										}
 										className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
 										disabled={disabled}
 									/>
@@ -885,11 +936,12 @@ export function RsvpForm({
 
 						<div className="flex flex-col gap-3">
 							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-								Nocleg
+								{isEnglish ? "Accommodation" : "Nocleg"}
 							</h4>
 							<p className="text-sm text-gray-600">
-								Czy organizujemy nocleg, czy planujecie go we własnym zakresie?{" "}
-								Od nas macie nocleg 30.09-04.10.
+								{isEnglish
+									? "Do you need us to arrange accommodation, or are you arranging it yourselves? We provide accommodation from 30.09 to 04.10."
+									: "Czy organizujemy nocleg, czy planujecie go we własnym zakresie? Od nas macie nocleg 30.09-04.10."}
 							</p>
 							<Controller
 								control={control}
@@ -919,7 +971,7 @@ export function RsvpForm({
 														: "text-gray-700"
 												}`}
 											>
-												Nocleg od Was
+												{isEnglish ? "Provided by hosts" : "Nocleg od Was"}
 											</span>
 										</label>
 										<label
@@ -941,7 +993,7 @@ export function RsvpForm({
 														: "text-gray-700"
 												}`}
 											>
-												Na własną rękę
+												{isEnglish ? "Self-arranged" : "Na własną rękę"}
 											</span>
 										</label>
 									</RadioGroup>
@@ -961,11 +1013,14 @@ export function RsvpForm({
 									/>
 									<span className="flex flex-col gap-1">
 										<span className="text-sm font-medium text-gray-900">
-											Potrzebujemy pomocy z noclegiem na dodatkowe dni
+											{isEnglish
+												? "We need help with accommodation for extra days"
+												: "Potrzebujemy pomocy z noclegiem na dodatkowe dni"}
 										</span>
 										<span className="text-xs text-gray-500">
-											Np. przyjazd przed 30.09 lub wyjazd po 04.10 - zrobimy
-											rezerwację, a Wy opłacicie noclegi.
+											{isEnglish
+												? "For example, arrival before 30.09 or departure after 04.10. We can make the reservation, and you cover the accommodation cost."
+												: "Np. przyjazd przed 30.09 lub wyjazd po 04.10 - zrobimy rezerwację, a Wy opłacicie noclegi."}
 										</span>
 									</span>
 								</label>
@@ -976,11 +1031,15 @@ export function RsvpForm({
 										if (!canUseExtraNightsHelp || !needsExtraNightsHelp)
 											return true;
 										if (!value) {
-											return "Wybierz datę Od dla dodatkowego noclegu";
+											return isEnglish
+												? "Select a From date for extra accommodation"
+												: "Wybierz datę Od dla dodatkowego noclegu";
 										}
 										const to = getValues("extraNightsToDate");
 										if (to && value > to) {
-											return "Data Od nie może być późniejsza niż data Do";
+											return isEnglish
+												? "From date cannot be later than To date"
+												: "Data Od nie może być późniejsza niż data Do";
 										}
 										return true;
 									},
@@ -992,11 +1051,16 @@ export function RsvpForm({
 									validate: (value) => {
 										if (!canUseExtraNightsHelp || !needsExtraNightsHelp)
 											return true;
-										if (!value)
-											return "Wybierz datę Do dla dodatkowego noclegu";
+										if (!value) {
+											return isEnglish
+												? "Select a To date for extra accommodation"
+												: "Wybierz datę Do dla dodatkowego noclegu";
+										}
 										const from = getValues("extraNightsFromDate");
 										if (from && value < from) {
-											return "Data Do nie może być wcześniejsza niż data Od";
+											return isEnglish
+												? "To date cannot be earlier than From date"
+												: "Data Do nie może być wcześniejsza niż data Od";
 										}
 										return true;
 									},
@@ -1010,13 +1074,13 @@ export function RsvpForm({
 											className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
 											htmlFor={extraNightsFromDateId}
 										>
-											Od
+											{isEnglish ? "From" : "Od"}
 										</label>
 										<DatePicker
 											id={extraNightsFromDateId}
 											value={extraNightsFromDate}
 											onChange={setExtraNightsFromDate}
-											placeholder="Wybierz datę"
+											placeholder={isEnglish ? "Select date" : "Wybierz datę"}
 											className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
 											disabled={disabled}
 										/>
@@ -1031,13 +1095,13 @@ export function RsvpForm({
 											className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
 											htmlFor={extraNightsToDateId}
 										>
-											Do
+											{isEnglish ? "To" : "Do"}
 										</label>
 										<DatePicker
 											id={extraNightsToDateId}
 											value={extraNightsToDate}
 											onChange={setExtraNightsToDate}
-											placeholder="Wybierz datę"
+											placeholder={isEnglish ? "Select date" : "Wybierz datę"}
 											className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
 											disabled={disabled}
 										/>
@@ -1061,7 +1125,7 @@ export function RsvpForm({
 						<div className="grid grid-cols-1 gap-8 w-full">
 							<div className="flex flex-col gap-3 w-full">
 								<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-									Transport
+									{isEnglish ? "Transport" : "Transport"}
 								</h4>
 								<div className="flex flex-col md:flex-row gap-2 justify-between w-full">
 									<Controller
@@ -1081,10 +1145,14 @@ export function RsvpForm({
 													/>
 													<div className="flex flex-col">
 														<span className="font-medium text-gray-900">
-															Wypożyczamy auto
+															{isEnglish
+																? "We are renting a car"
+																: "Wypożyczamy auto"}
 														</span>
 														<span className="text-xs text-gray-500">
-															Spotkamy się na miejscu
+															{isEnglish
+																? "We will meet on site"
+																: "Spotkamy się na miejscu"}
 														</span>
 													</div>
 												</label>
@@ -1096,10 +1164,12 @@ export function RsvpForm({
 													/>
 													<div className="flex flex-col">
 														<span className="font-medium text-gray-900">
-															Potrzebujemy transportu
+															{isEnglish
+																? "We need transport"
+																: "Potrzebujemy transportu"}
 														</span>
 														<span className="text-xs text-gray-500">
-															Z lotniska
+															{isEnglish ? "From the airport" : "Z lotniska"}
 														</span>
 													</div>
 												</label>
@@ -1112,14 +1182,18 @@ export function RsvpForm({
 							{transport === "bus" && carpoolSuggestions.length > 0 && (
 								<div className="flex flex-col gap-3 w-full rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/5 p-4">
 									<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
-										Car Pool - dostępne miejsca
+										{isEnglish
+											? "Car Pool - available seats"
+											: "Car Pool - dostępne miejsca"}
 									</h4>
 									<p className="text-sm text-gray-700">
-										Twoja grupa potrzebuje{" "}
+										{isEnglish ? "Your group needs" : "Twoja grupa potrzebuje"}{" "}
 										<span className="font-semibold">
-											{formatSeatCount(requestedCarpoolSeats)}
+											{formatSeatCount(requestedCarpoolSeats, locale)}
 										</span>
-										. Wybierz jedną ofertę:
+										{isEnglish
+											? ". Select one offer:"
+											: ". Wybierz jedną ofertę:"}
 									</p>
 									<ul className="space-y-2">
 										{carpoolSuggestions.map((offer) => {
@@ -1161,24 +1235,36 @@ export function RsvpForm({
 															{formatRoute(
 																offer.pickupPoint,
 																offer.dropoffPoint,
+																locale,
 															)}
 														</p>
 														<p className="text-xs text-gray-500">
-															Przylot kierowcy:{" "}
-															{formatDateTime(offer.driverArrivalDateTime)} |{" "}
-															Wolne miejsca: {offer.seatsAvailable}
+															{isEnglish
+																? "Driver arrival"
+																: "Przylot kierowcy"}
+															:{" "}
+															{formatDateTime(
+																offer.driverArrivalDateTime,
+																locale,
+															)}{" "}
+															|{" "}
+															{isEnglish ? "Available seats" : "Wolne miejsca"}:{" "}
+															{offer.seatsAvailable}
 														</p>
 														{hasInsufficientSeats && (
 															<p className="text-xs text-amber-700 mt-1">
-																Za mało miejsc dla Twojej grupy (
-																{formatSeatCount(requestedCarpoolSeats)}).
+																{isEnglish
+																	? `Not enough seats for your group (${formatSeatCount(requestedCarpoolSeats, locale)}).`
+																	: `Za mało miejsc dla Twojej grupy (${formatSeatCount(requestedCarpoolSeats, locale)}).`}
 															</p>
 														)}
 														{offer.myRequestId && (
 															<p className="text-xs text-amber-600 mt-1">
-																Masz już zgłoszenie do tej oferty
+																{isEnglish
+																	? "You already have a request for this offer"
+																	: "Masz już zgłoszenie do tej oferty"}
 																{offer.myRequestStatus
-																	? ` (${formatCarpoolRequestStatus(offer.myRequestStatus)})`
+																	? ` (${formatCarpoolRequestStatus(offer.myRequestStatus, locale)})`
 																	: ""}
 																.
 															</p>
@@ -1190,15 +1276,16 @@ export function RsvpForm({
 									</ul>
 									{selectedCarpoolOfferId && (
 										<p className="text-xs text-[var(--color-primary)] font-medium">
-											Zgłoszenie zostanie wysłane po kliknięciu "Potwierdź
-											obecność".
+											{isEnglish
+												? 'The request will be sent after clicking "Confirm attendance".'
+												: 'Zgłoszenie zostanie wysłane po kliknięciu "Potwierdź obecność".'}
 										</p>
 									)}
 									{!hasOfferMatchingRequestedSeats && (
 										<p className="text-xs text-amber-700 font-medium">
-											Obecnie brak ofert z wystarczającą liczbą miejsc dla
-											Twojej grupy. Wybierz dojazd własny albo spróbuj ponownie
-											za chwilę.
+											{isEnglish
+												? "There are currently no offers with enough seats for your group. Choose your own transport or try again shortly."
+												: "Obecnie brak ofert z wystarczającą liczbą miejsc dla Twojej grupy. Wybierz dojazd własny albo spróbuj ponownie za chwilę."}
 										</p>
 									)}
 								</div>
@@ -1227,10 +1314,14 @@ export function RsvpForm({
 														/>
 														<div className="flex flex-col">
 															<span className="font-medium text-gray-900">
-																Mam wolne miejsca
+																{isEnglish
+																	? "I have available seats"
+																	: "Mam wolne miejsca"}
 															</span>
 															<span className="text-xs text-gray-500">
-																Mogę zabrać innych gości swoim autem
+																{isEnglish
+																	? "I can take other guests in my car"
+																	: "Mogę zabrać innych gości swoim autem"}
 															</span>
 														</div>
 													</label>
@@ -1242,10 +1333,14 @@ export function RsvpForm({
 														/>
 														<div className="flex flex-col">
 															<span className="font-medium text-gray-900">
-																Nie biorę udziału
+																{isEnglish
+																	? "I am not participating"
+																	: "Nie biorę udziału"}
 															</span>
 															<span className="text-xs text-gray-500">
-																Nie mam wolnych miejsc
+																{isEnglish
+																	? "I do not have free seats"
+																	: "Nie mam wolnych miejsc"}
 															</span>
 														</div>
 													</label>
@@ -1269,13 +1364,17 @@ export function RsvpForm({
 						className="text-gray-900 text-sm font-semibold uppercase tracking-wide"
 						htmlFor={messageId}
 					>
-						Wiadomość dla Pary Młodej
+						{isEnglish ? "Message to the couple" : "Wiadomość dla Pary Młodej"}
 					</label>
 					<Textarea
 						{...register("message")}
 						className="min-h-[100px] w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 text-gray-900 placeholder:text-gray-400 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all outline-none"
 						id={messageId}
-						placeholder="Masz pytania lub chcesz nam coś przekazać?"
+						placeholder={
+							isEnglish
+								? "Do you have any questions or anything to share with us?"
+								: "Masz pytania lub chcesz nam coś przekazać?"
+						}
 					/>
 				</div>
 
@@ -1286,15 +1385,16 @@ export function RsvpForm({
 						className="group relative flex h-auto w-full items-center justify-center overflow-hidden rounded-xl bg-[var(--color-primary)] py-4 px-6 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-600 hover:shadow-blue-600/40 active:scale-[0.98]"
 					>
 						<span className="relative z-10 flex items-center gap-2">
-							Potwierdź obecność
+							{isEnglish ? "Confirm attendance" : "Potwierdź obecność"}
 							<span className="transition-transform group-hover:translate-x-1">
 								→
 							</span>
 						</span>
 					</Button>
 					<p className="mt-4 text-center text-xs text-gray-400">
-						Klikając przycisk, wyrażasz zgodę na przetwarzanie danych w celach
-						organizacji wydarzenia.
+						{isEnglish
+							? "By clicking the button, you consent to data processing for event organization."
+							: "Klikając przycisk, wyrażasz zgodę na przetwarzanie danych w celach organizacji wydarzenia."}
 					</p>
 				</div>
 			</form>
@@ -1302,35 +1402,52 @@ export function RsvpForm({
 	);
 }
 
-function formatDateTime(value?: string) {
+function formatDateTime(value: string | undefined, locale: "pl" | "en") {
 	if (!value) return "-";
 	const [datePart, timePart] = value.split("T");
 	if (!datePart) return value;
 	const [year, month, day] = datePart.split("-").map(Number);
 	if (!year || !month || !day) return value;
-	const formattedDate = new Intl.DateTimeFormat("pl-PL", {
-		day: "2-digit",
-		month: "2-digit",
-	}).format(new Date(year, month - 1, day));
+	const formattedDate = new Intl.DateTimeFormat(
+		locale === "en" ? "en-US" : "pl-PL",
+		{
+			day: "2-digit",
+			month: "2-digit",
+		},
+	).format(new Date(year, month - 1, day));
 	return timePart ? `${formattedDate} ${timePart}` : formattedDate;
 }
 
-function formatRoute(pickupPoint?: string, dropoffPoint?: string) {
+function formatRoute(
+	pickupPoint: string | undefined,
+	dropoffPoint: string | undefined,
+	locale: "pl" | "en",
+) {
 	const pickup = pickupPoint?.trim();
 	const dropoff = dropoffPoint?.trim();
 	if (pickup && dropoff) return `${pickup} -> ${dropoff}`;
-	if (pickup) return `Start: ${pickup}`;
-	if (dropoff) return `Cel: ${dropoff}`;
-	return "Trasa do ustalenia";
+	if (pickup) return `${locale === "en" ? "Start" : "Start"}: ${pickup}`;
+	if (dropoff) return `${locale === "en" ? "Destination" : "Cel"}: ${dropoff}`;
+	return locale === "en" ? "Route to be confirmed" : "Trasa do ustalenia";
 }
 
-function formatCarpoolRequestStatus(value: string) {
-	if (value === "pending") return "oczekuje";
-	if (value === "accepted") return "zaakceptowane";
-	if (value === "rejected") return "odrzucone";
-	if (value === "cancelled_by_passenger") return "anulowane przez pasażera";
-	if (value === "cancelled_by_driver") return "anulowane przez kierowcę";
-	if (value === "cancelled_system") return "anulowane systemowo";
+function formatCarpoolRequestStatus(value: string, locale: "pl" | "en") {
+	if (value === "pending") return locale === "en" ? "pending" : "oczekuje";
+	if (value === "accepted") {
+		return locale === "en" ? "accepted" : "zaakceptowane";
+	}
+	if (value === "rejected") return locale === "en" ? "rejected" : "odrzucone";
+	if (value === "cancelled_by_passenger") {
+		return locale === "en"
+			? "cancelled by passenger"
+			: "anulowane przez pasażera";
+	}
+	if (value === "cancelled_by_driver") {
+		return locale === "en" ? "cancelled by driver" : "anulowane przez kierowcę";
+	}
+	if (value === "cancelled_system") {
+		return locale === "en" ? "cancelled by system" : "anulowane systemowo";
+	}
 	return value;
 }
 
