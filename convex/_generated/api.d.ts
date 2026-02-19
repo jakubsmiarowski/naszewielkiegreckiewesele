@@ -14,6 +14,7 @@ import type * as adminUsers from "../adminUsers.js";
 import type * as adminUsersStore from "../adminUsersStore.js";
 import type * as audit from "../audit.js";
 import type * as carpool from "../carpool.js";
+import type * as demo from "../demo.js";
 import type * as guests from "../guests.js";
 import type * as invitations from "../invitations.js";
 import type * as questions from "../questions.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   adminUsersStore: typeof adminUsersStore;
   audit: typeof audit;
   carpool: typeof carpool;
+  demo: typeof demo;
   guests: typeof guests;
   invitations: typeof invitations;
   questions: typeof questions;
