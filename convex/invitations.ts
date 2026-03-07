@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { getInternalApiKey } from "./adminConfig";
 import { requireAdminAccess } from "./adminAuth";
@@ -46,6 +46,34 @@ function normalizeDateOnly(value: string | undefined) {
     throw new Error("Podaj poprawny zakres dat dodatkowego noclegu.");
   }
   return trimmed;
+}
+
+async function generateUniqueQrToken(ctx: MutationCtx) {
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const token = randomToken();
+    const existing = await ctx.db
+      .query("invitations")
+      .withIndex("by_token", (q) => q.eq("qrToken", token))
+      .take(1);
+    if (existing.length === 0) {
+      return token;
+    }
+  }
+  throw new Error("Nie udało się wygenerować unikalnego tokenu zaproszenia.");
+}
+
+async function generateUniqueShortCodeFromDb(ctx: MutationCtx) {
+  for (let attempt = 0; attempt < 64; attempt += 1) {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const existing = await ctx.db
+      .query("invitations")
+      .withIndex("by_short_code", (q) => q.eq("shortCode", code))
+      .take(1);
+    if (existing.length === 0) {
+      return code;
+    }
+  }
+  throw new Error("Nie udało się wygenerować unikalnego PIN-u zaproszenia.");
 }
 
 export const getIdByToken = query({
@@ -427,6 +455,98 @@ export const markViewed = mutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.invitationId, { isViewed: true });
     return null;
+  },
+});
+
+export const createSingleInvitation = mutation({
+  args: {
+    adminAccessToken: v.optional(v.string()),
+    internalApiKey: v.optional(v.string()),
+    guests: v.array(v.string()),
+    hasPlusOne: v.optional(v.boolean()),
+    notes: v.optional(v.string()),
+  },
+  returns: v.object({
+    invitationId: v.id("invitations"),
+    displayName: v.string(),
+    shortCode: v.string(),
+    qrToken: v.string(),
+    guests: v.array(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    const hasInternalAccess =
+      typeof args.internalApiKey === "string" && args.internalApiKey === getInternalApiKey();
+    let actorId = "system:internal-api-key";
+    if (!hasInternalAccess) {
+      const admin = await requireAdminAccess(ctx, args.adminAccessToken ?? "");
+      actorId = admin.email;
+    }
+
+    const normalizedGuests = args.guests
+      .map((guest) => guest.trim())
+      .filter((guest) => guest.length > 0);
+    const deduplicatedGuests = Array.from(new Set(normalizedGuests));
+    if (deduplicatedGuests.length === 0) {
+      throw new Error("Podaj przynajmniej jednego gościa do zaproszenia.");
+    }
+
+    const qrToken = await generateUniqueQrToken(ctx);
+    const shortCode = await generateUniqueShortCodeFromDb(ctx);
+    const displayName = buildDisplayName(deduplicatedGuests);
+    const notes = args.notes?.trim();
+    const invitationId = await ctx.db.insert("invitations", {
+      qrToken,
+      shortCode,
+      displayName,
+      isViewed: false,
+      notes: notes && notes.length > 0 ? notes : undefined,
+      hasPlusOne: args.hasPlusOne === true,
+      plusOneName: undefined,
+      plusOneAttendance: undefined,
+      attendance: undefined,
+      guestAttendances: undefined,
+      answeredForAll: undefined,
+      answeredForName: undefined,
+      transport: undefined,
+      arrivalDateTime: undefined,
+      departureDateTime: undefined,
+      childrenCount: undefined,
+      childrenSleepOption: undefined,
+      accommodationType: undefined,
+      needsExtraNightsHelp: undefined,
+      extraNightsFromDate: undefined,
+      extraNightsToDate: undefined,
+      message: undefined,
+      rsvpUpdatedAt: undefined,
+    });
+
+    for (const guestName of deduplicatedGuests) {
+      await ctx.db.insert("guests", {
+        invitationId,
+        fullName: guestName,
+        relation: RELATION_BY_NAME.get(normalizeCompare(guestName)),
+      });
+    }
+
+    await writeAuditLog(ctx, {
+      action: "invitation.created",
+      actorType: hasInternalAccess ? "system" : "admin",
+      actorId,
+      entityType: "invitation",
+      entityId: String(invitationId),
+      metadata: {
+        guests: deduplicatedGuests,
+        hasPlusOne: args.hasPlusOne === true,
+      },
+    });
+
+    return {
+      invitationId,
+      displayName,
+      shortCode,
+      qrToken,
+      guests: deduplicatedGuests,
+    };
   },
 });
 

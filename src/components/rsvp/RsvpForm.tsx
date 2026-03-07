@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import {
@@ -79,6 +80,7 @@ export function RsvpForm({
 	const childrenCountId = `${formIdPrefix}-children-count`;
 	const arrivalDateId = `${formIdPrefix}-arrival-date`;
 	const departureDateId = `${formIdPrefix}-departure-date`;
+	const noFlightYetId = `${formIdPrefix}-no-flight-yet`;
 	const extraNightsHelpId = `${formIdPrefix}-extra-nights-help`;
 	const extraNightsFromDateId = `${formIdPrefix}-extra-nights-from-date`;
 	const extraNightsToDateId = `${formIdPrefix}-extra-nights-to-date`;
@@ -160,6 +162,9 @@ export function RsvpForm({
 	);
 	const [departureTime, setDepartureTime] = useState<string>(
 		initialDeparture.time,
+	);
+	const [hasNoFlightYet, setHasNoFlightYet] = useState<boolean>(
+		!defaultValues?.arrivalDateTime && !defaultValues?.departureDateTime,
 	);
 	const [extraNightsFromDate, setExtraNightsFromDate] = useState<
 		Date | undefined
@@ -249,6 +254,7 @@ export function RsvpForm({
 			setValue("carpoolDriverOptIn", "no", { shouldValidate: true });
 			setValue("arrivalDateTime", "", { shouldValidate: true });
 			setValue("departureDateTime", "", { shouldValidate: true });
+			clearErrors(["arrivalDateTime", "departureDateTime"]);
 			setValue("needsExtraNightsHelp", false, { shouldValidate: true });
 			setValue("extraNightsFromDate", "", { shouldValidate: true });
 			setValue("extraNightsToDate", "", { shouldValidate: true });
@@ -256,6 +262,7 @@ export function RsvpForm({
 			setArrivalTime("");
 			setDepartureDate(undefined);
 			setDepartureTime("");
+			setHasNoFlightYet(true);
 			setExtraNightsFromDate(undefined);
 			setExtraNightsToDate(undefined);
 			setValue("plusOneAttendance", undefined, { shouldValidate: true });
@@ -265,7 +272,18 @@ export function RsvpForm({
 			setValue("accommodationType", undefined, { shouldValidate: true });
 			setValue("selectedCarpoolOfferId", undefined, { shouldValidate: true });
 		}
-	}, [hasAnyAttending, setValue]);
+	}, [clearErrors, hasAnyAttending, setValue]);
+
+	useEffect(() => {
+		if (!hasNoFlightYet) return;
+		setValue("arrivalDateTime", "", { shouldValidate: true });
+		setValue("departureDateTime", "", { shouldValidate: true });
+		setArrivalDate(undefined);
+		setArrivalTime("");
+		setDepartureDate(undefined);
+		setDepartureTime("");
+		clearErrors(["arrivalDateTime", "departureDateTime"]);
+	}, [clearErrors, hasNoFlightYet, setValue]);
 
 	useEffect(() => {
 		if (!hasAnyAttending || transport !== "own") {
@@ -372,6 +390,12 @@ export function RsvpForm({
 			shouldValidate: true,
 		});
 		clearErrors("guestAttendances");
+	};
+
+	const handleNoFlightYetChange = (
+		checked: boolean | "indeterminate",
+	) => {
+		setHasNoFlightYet(checked === true);
 	};
 
 	const handleFormSubmit = (data: RSVPFormData) => {
@@ -848,10 +872,34 @@ export function RsvpForm({
 							<h4 className="text-gray-900 text-sm font-semibold uppercase tracking-wide">
 								{isEnglish ? "Arrival and departure" : "Przylot i wylot"}
 							</h4>
+							<label
+								className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
+								htmlFor={noFlightYetId}
+							>
+								<Checkbox
+									id={noFlightYetId}
+									checked={hasNoFlightYet}
+									onCheckedChange={handleNoFlightYetChange}
+									disabled={disabled}
+									className="mt-0.5 border-gray-300 data-[state=checked]:border-[var(--color-primary)] data-[state=checked]:bg-[var(--color-primary)]"
+								/>
+								<span className="flex flex-col gap-1">
+									<span className="text-sm font-medium text-gray-900">
+										{isEnglish
+											? "I don't have my flight yet"
+											: "Nie mam jeszcze lotu"}
+									</span>
+									<span className="text-xs text-gray-500">
+										{isEnglish
+											? "For now, confirming attendance is enough."
+											: "Na ten moment wystarczy nam sama informacja o obecności."}
+									</span>
+								</span>
+							</label>
 							<input
 								{...register("arrivalDateTime", {
 									validate: (value) => {
-										if (!hasAnyAttending) return true;
+										if (!hasAnyAttending || hasNoFlightYet) return true;
 										return value
 											? true
 											: isEnglish
@@ -864,7 +912,7 @@ export function RsvpForm({
 							<input
 								{...register("departureDateTime", {
 									validate: (value) => {
-										if (!hasAnyAttending) return true;
+										if (!hasAnyAttending || hasNoFlightYet) return true;
 										return value
 											? true
 											: isEnglish
@@ -874,64 +922,66 @@ export function RsvpForm({
 								})}
 								type="hidden"
 							/>
-							<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-								<div className="flex flex-col gap-2">
-									<label
-										className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
-										htmlFor={arrivalDateId}
-									>
-										{isEnglish ? "Arrival" : "Przylot"}
-									</label>
-									<DatePicker
-										id={arrivalDateId}
-										value={arrivalDate}
-										onChange={setArrivalDate}
-										withTime
-										timeValue={arrivalTime}
-										onTimeChange={setArrivalTime}
-										placeholder={
-											isEnglish
-												? "Select date and time"
-												: "Wybierz datę i godzinę"
-										}
-										className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
-										disabled={disabled}
-									/>
-									{errors.arrivalDateTime && (
-										<span className="text-red-500 text-sm">
-											{errors.arrivalDateTime.message}
-										</span>
-									)}
+							{!hasNoFlightYet && (
+								<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+									<div className="flex flex-col gap-2">
+										<label
+											className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
+											htmlFor={arrivalDateId}
+										>
+											{isEnglish ? "Arrival" : "Przylot"}
+										</label>
+										<DatePicker
+											id={arrivalDateId}
+											value={arrivalDate}
+											onChange={setArrivalDate}
+											withTime
+											timeValue={arrivalTime}
+											onTimeChange={setArrivalTime}
+											placeholder={
+												isEnglish
+													? "Select date and time"
+													: "Wybierz datę i godzinę"
+											}
+											className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
+											disabled={disabled}
+										/>
+										{errors.arrivalDateTime && (
+											<span className="text-red-500 text-sm">
+												{errors.arrivalDateTime.message}
+											</span>
+										)}
+									</div>
+									<div className="flex flex-col gap-2">
+										<label
+											className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
+											htmlFor={departureDateId}
+										>
+											{isEnglish ? "Departure" : "Wylot"}
+										</label>
+										<DatePicker
+											id={departureDateId}
+											value={departureDate}
+											onChange={setDepartureDate}
+											withTime
+											timeValue={departureTime}
+											onTimeChange={setDepartureTime}
+											placeholder={
+												isEnglish
+													? "Select date and time"
+													: "Wybierz datę i godzinę"
+											}
+											className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
+											disabled={disabled}
+										/>
+										{errors.departureDateTime && (
+											<span className="text-red-500 text-sm">
+												{errors.departureDateTime.message}
+											</span>
+										)}
+									</div>
 								</div>
-								<div className="flex flex-col gap-2">
-									<label
-										className="text-gray-900 text-xs font-semibold uppercase tracking-wide"
-										htmlFor={departureDateId}
-									>
-										{isEnglish ? "Departure" : "Wylot"}
-									</label>
-									<DatePicker
-										id={departureDateId}
-										value={departureDate}
-										onChange={setDepartureDate}
-										withTime
-										timeValue={departureTime}
-										onTimeChange={setDepartureTime}
-										placeholder={
-											isEnglish
-												? "Select date and time"
-												: "Wybierz datę i godzinę"
-										}
-										className="h-12 rounded-xl border-gray-200 bg-gray-50 px-4"
-										disabled={disabled}
-									/>
-									{errors.departureDateTime && (
-										<span className="text-red-500 text-sm">
-											{errors.departureDateTime.message}
-										</span>
-									)}
-								</div>
-							</div>
+							)}
 						</div>
 
 						<div className="flex flex-col gap-3">
