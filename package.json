@@ -9,10 +9,10 @@
     "codex:safe": "bash scripts/codex-safe.sh",
     "codex:safe:oss": "bash scripts/codex-safe.sh --oss --mode saver",
     "test": "vitest run",
-    "deploy": "npm run build && wrangler deploy --keep-vars",
-    "deploy:cloudflare": "wrangler deploy --keep-vars",
+    "deploy": "pnpm run build && pnpm exec wrangler deploy --keep-vars",
+    "deploy:cloudflare": "pnpm exec wrangler deploy --keep-vars",
     "prepare:demo:assets": "node scripts/remove-demo-private-assets.mjs",
-    "deploy:demo": "npm run build && npm run prepare:demo:assets && wrangler deploy --config wrangler.demo.jsonc --keep-vars",
+    "deploy:demo": "pnpm run build && pnpm run prepare:demo:assets && pnpm exec wrangler deploy --config wrangler.demo.jsonc --keep-vars",
     "ci:verify": "npm run check && npm run test",
     "format": "biome format",
     "lint": "biome lint",
@@ -64,6 +64,6 @@
     "vite": "^7.1.7",
     "vitest": "^3.0.5",
     "web-vitals": "^5.1.0",
-    "wrangler": "^4.40.3"
+    "wrangler": "^4.71.0"
   }
 }
