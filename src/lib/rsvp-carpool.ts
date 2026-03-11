@@ -1,3 +1,5 @@
+import { normalizeConvexErrorMessage } from "@/lib/convex-error";
+
 export type RsvpAttendanceValue = "yes" | "no" | undefined;
 type AppLocale = "pl" | "en";
 
@@ -84,27 +86,4 @@ export function formatCarpoolRequestError({
 	return locale === "en"
 		? "Could not send the car pool request. Please try again."
 		: "Nie udało się wysłać zgłoszenia car pool. Spróbuj ponownie.";
-}
-
-function normalizeConvexErrorMessage(message: string) {
-	if (!message) return "";
-
-	const uncaughtErrorMatch = message.match(/Uncaught Error:\s*([^\n(]+)/);
-	if (uncaughtErrorMatch?.[1]) {
-		return uncaughtErrorMatch[1].trim();
-	}
-
-	let cleaned = message
-		.replace(/\[CONVEX [^\]]+\]\s*/g, "")
-		.replace(/\[Request ID:[^\]]+\]\s*/g, "")
-		.replace(/Server Error\s*/g, "")
-		.replace(/\s+Called by client\.?$/g, "")
-		.trim();
-
-	const atHandlerIndex = cleaned.indexOf("at handler");
-	if (atHandlerIndex >= 0) {
-		cleaned = cleaned.slice(0, atHandlerIndex).trim();
-	}
-
-	return cleaned;
 }

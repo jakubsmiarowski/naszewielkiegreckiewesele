@@ -1,5 +1,5 @@
 import { useMutation } from "convex/react";
-import {
+import React, {
 	createContext,
 	type ErrorInfo,
 	type ReactNode,
@@ -7,10 +7,10 @@ import {
 	useEffect,
 	useMemo,
 } from "react";
-import React from "react";
+import type { ClientTelemetryKind } from "@/components/dashboard/types";
+import { buildRouteWithSearch } from "@/lib/route-location";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import type { ClientTelemetryKind } from "@/components/dashboard/types";
 
 const TELEMETRY_THROTTLE_MS = 5_000;
 const MAX_JSON_LENGTH = 20_000;
@@ -128,7 +128,7 @@ function getCurrentRoute() {
 	if (typeof window === "undefined") {
 		return undefined;
 	}
-	return `${window.location.pathname}${window.location.search}`;
+	return buildRouteWithSearch(window.location.pathname, window.location.search);
 }
 
 function getDeviceInfo() {
@@ -300,7 +300,10 @@ export function GlobalTelemetryListeners() {
 
 		return () => {
 			window.removeEventListener("error", handleWindowError);
-			window.removeEventListener("unhandledrejection", handleUnhandledRejection);
+			window.removeEventListener(
+				"unhandledrejection",
+				handleUnhandledRejection,
+			);
 		};
 	}, [captureClientError]);
 

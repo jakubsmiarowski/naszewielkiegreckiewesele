@@ -4,6 +4,7 @@ import { getInternalApiKey } from "./adminConfig";
 import { requireAdminAccess } from "./adminAuth";
 import { writeAuditLog } from "./audit";
 import { enforceCarpoolConsistencyAfterInvitationUpdate } from "./carpool";
+import { resolveRsvpFlightDateTimes } from "../src/lib/rsvp-flight";
 
 const RSVP_ATTENDANCE = v.union(v.literal("yes"), v.literal("no"));
 const RSVP_TRANSPORT = v.union(v.literal("own"), v.literal("bus"));
@@ -20,12 +21,6 @@ const RSVP_GUEST_ATTENDANCES = v.record(v.string(), RSVP_ATTENDANCE);
 function normalizeChildrenCount(value: number | undefined) {
   if (typeof value !== "number" || !Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(3, Math.trunc(value)));
-}
-
-function normalizeDateTime(value: string | undefined) {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function normalizeDateOnly(value: string | undefined) {
@@ -313,21 +308,12 @@ export const updateRsvp = mutation({
         patch.carpoolDriverOptIn = args.carpoolDriverOptIn === true;
       }
 
-      const effectiveArrivalDateTime = normalizeDateTime(
-        args.arrivalDateTime ?? invitation.arrivalDateTime
-      );
-      if (!effectiveArrivalDateTime) {
-        throw new Error("Podaj datę i godzinę przylotu.");
-      }
-      patch.arrivalDateTime = effectiveArrivalDateTime;
-
-      const effectiveDepartureDateTime = normalizeDateTime(
-        args.departureDateTime ?? invitation.departureDateTime
-      );
-      if (!effectiveDepartureDateTime) {
-        throw new Error("Podaj datę i godzinę wylotu.");
-      }
-      patch.departureDateTime = effectiveDepartureDateTime;
+      const flightDateTimes = resolveRsvpFlightDateTimes({
+        arrivalDateTime: args.arrivalDateTime,
+        departureDateTime: args.departureDateTime,
+      });
+      patch.arrivalDateTime = flightDateTimes.arrivalDateTime;
+      patch.departureDateTime = flightDateTimes.departureDateTime;
       if (args.plusOneAttendance !== undefined) {
         patch.plusOneAttendance = args.plusOneAttendance;
       }

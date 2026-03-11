@@ -1,6 +1,6 @@
+import { useLocation } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { useMemo, useState } from "react";
-import { useLocation } from "@tanstack/react-router";
 import type {
 	InvitationData,
 	RsvpSettings,
@@ -14,11 +14,16 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { formatLocalDate } from "@/lib/date-time";
 import { useLocale } from "@/lib/locale";
+import { buildRouteWithSearch } from "@/lib/route-location";
 import {
 	calculateRequestedCarpoolSeats,
 	formatCarpoolRequestError,
 	formatSeatCount,
 } from "@/lib/rsvp-carpool";
+import {
+	formatRsvpSubmitError,
+	getRsvpSubmitErrorMessage,
+} from "@/lib/rsvp-submit-error";
 import { useTelemetry } from "@/lib/telemetry";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -170,7 +175,7 @@ export function RsvpTab({
 	const hasRsvp = Boolean(invitation?.attendance) || answeredGuestsCount > 0;
 	const canEdit = !isAfterGrace;
 	const canSubmitNew = !isAfterDeadline;
-	const currentRoute = `${location.pathname}${location.search}`;
+	const currentRoute = buildRouteWithSearch(location.pathname, location.search);
 
 	const defaultValues: Partial<RSVPFormData> | undefined = invitation
 		? {
@@ -196,11 +201,15 @@ export function RsvpTab({
 		payload: RSVPFormData,
 		context: Record<string, unknown>,
 	) => {
+		const message =
+			getRsvpSubmitErrorMessage(error) ||
+			(error instanceof Error ? error.message : "Could not save RSVP");
+
 		captureClientError({
 			kind: "rsvp_submit_error",
 			route: currentRoute,
 			invitationId: invitation?._id,
-			message: error instanceof Error ? error.message : "Could not save RSVP",
+			message,
 			stack: error instanceof Error ? error.stack : undefined,
 			payload,
 			context: {
@@ -391,12 +400,11 @@ export function RsvpTab({
 			reportRsvpError(error, data, {
 				stage: "updateRsvp.final",
 			});
+			const description = formatRsvpSubmitError(error, locale);
 			toast({
 				variant: "destructive",
 				title: isEnglish ? "Could not save RSVP" : "Nie udało się zapisać RSVP",
-				description: isEnglish
-					? "Please try again in a moment."
-					: "Spróbuj ponownie za chwilę.",
+				description,
 			});
 		}
 	};

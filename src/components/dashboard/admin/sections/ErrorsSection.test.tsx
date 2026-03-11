@@ -17,7 +17,8 @@ describe("ErrorsSection", () => {
 						occurrenceCount: 3,
 						firstSeenAt: 1_700_000_000_000,
 						lastSeenAt: 1_700_000_100_000,
-						lastMessage: "Nie udało się zapisać RSVP",
+						lastMessage:
+							"[CONVEX M(invitations:updateRsvp)] [Request ID: abc123] Server Error Uncaught Error: Podaj datę i godzinę przylotu. at handler (../../convex/invitations.ts:320:13) Called by client",
 						lastRoute: "/dashboard",
 						release: "1.0.0-local",
 					},
@@ -31,7 +32,8 @@ describe("ErrorsSection", () => {
 					occurrenceCount: 3,
 					firstSeenAt: 1_700_000_000_000,
 					lastSeenAt: 1_700_000_100_000,
-					message: "Nie udało się zapisać RSVP",
+					message:
+						"[CONVEX M(invitations:updateRsvp)] [Request ID: abc123] Server Error Uncaught Error: Podaj datę i godzinę przylotu. at handler (../../convex/invitations.ts:320:13) Called by client",
 					route: "/dashboard",
 					release: "1.0.0-local",
 					payloadJson: '{"message":"Test RSVP"}',
@@ -52,9 +54,14 @@ describe("ErrorsSection", () => {
 			/>,
 		);
 
-		expect(screen.getByText("Błędy aplikacji")).toBeInTheDocument();
-		expect(screen.getByText("Nie udało się zapisać RSVP")).toBeInTheDocument();
-		expect(screen.getByText("Wystąpień: 3")).toBeInTheDocument();
+		expect(screen.getByText("Błędy aplikacji")).toBeTruthy();
+		expect(
+			screen.getAllByText("Podaj datę i godzinę przylotu.").length,
+		).toBeGreaterThan(0);
+		expect(screen.getByText("Wystąpień: 3")).toBeTruthy();
+		expect(screen.getByText("Context")).toBeTruthy();
+		expect(screen.getByText("Payload RSVP")).toBeTruthy();
+		expect(screen.getByText("Stack trace")).toBeTruthy();
 
 		fireEvent.click(screen.getByRole("button", { name: "W analizie" }));
 

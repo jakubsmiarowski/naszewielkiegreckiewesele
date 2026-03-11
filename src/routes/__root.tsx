@@ -14,6 +14,7 @@ import { isDemoMode } from "@/lib/app-mode";
 import { getBrowserCompatibilityIssue } from "@/lib/browser-compat";
 import { getCoupleLabel } from "@/lib/couple";
 import { LocaleProvider } from "@/lib/locale";
+import { buildRouteWithSearch } from "@/lib/route-location";
 import {
 	GlobalTelemetryListeners,
 	TelemetryErrorBoundary,
@@ -134,7 +135,7 @@ function AppRuntimeShell({ children }: { children: ReactNode }) {
 			<GlobalTelemetryListeners />
 			<TelemetryErrorBoundary
 				onError={captureClientError}
-				resetKey={`${location.pathname}${location.search}`}
+				resetKey={buildRouteWithSearch(location.pathname, location.search)}
 			>
 				<HeaderWrapper />
 				<DemoEnvironmentBanner />
@@ -205,9 +206,9 @@ function UnsupportedBrowserFallback({ issue }: { issue: string }) {
 					To urządzenie potrzebuje nowszej przeglądarki
 				</h1>
 				<p className="mt-3 text-sm text-muted-foreground">
-					Wykryliśmy brak wsparcia dla: <span className="font-medium">{issue}</span>.
-					Spróbuj zaktualizować Safari/Chrome albo otwórz stronę na nowszym
-					telefonie.
+					Wykryliśmy brak wsparcia dla:{" "}
+					<span className="font-medium">{issue}</span>. Spróbuj zaktualizować
+					Safari/Chrome albo otwórz stronę na nowszym telefonie.
 				</p>
 				<p className="mt-2 text-sm text-muted-foreground">
 					We detected a missing browser capability:{" "}

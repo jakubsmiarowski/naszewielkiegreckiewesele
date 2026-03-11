@@ -1,19 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RsvpTab } from "@/components/dashboard/RsvpTab";
-import type { InvitationData, RsvpSettings } from "@/components/dashboard/types";
+import type {
+	InvitationData,
+	RsvpSettings,
+} from "@/components/dashboard/types";
 
-const {
-	useMutationMock,
-	useQueryMock,
-	toastMock,
-	captureClientErrorMock,
-} = vi.hoisted(() => ({
-	useMutationMock: vi.fn(),
-	useQueryMock: vi.fn(),
-	toastMock: vi.fn(),
-	captureClientErrorMock: vi.fn(),
-}));
+const { useMutationMock, useQueryMock, toastMock, captureClientErrorMock } =
+	vi.hoisted(() => ({
+		useMutationMock: vi.fn(),
+		useQueryMock: vi.fn(),
+		toastMock: vi.fn(),
+		captureClientErrorMock: vi.fn(),
+	}));
 
 vi.mock("convex/react", () => ({
 	useMutation: useMutationMock,
@@ -21,7 +20,7 @@ vi.mock("convex/react", () => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-	useLocation: () => ({ pathname: "/dashboard", search: "" }),
+	useLocation: () => ({ pathname: "/dashboard", search: {} }),
 }));
 
 vi.mock("@/components/rsvp/RsvpForm", () => ({
@@ -77,7 +76,6 @@ const invitationData = {
 	invitation: {
 		_id: "invitation-1",
 		hasPlusOne: false,
-		guestAttendances: { guest1: "yes" },
 	},
 	guests: [{ _id: "guest1", fullName: "Anna Kowalska" }],
 } as InvitationData;
@@ -103,7 +101,11 @@ describe("RsvpTab telemetry", () => {
 	it("reports a telemetry event when RSVP save fails", async () => {
 		const updateRsvpMock = vi
 			.fn()
-			.mockRejectedValue(new Error("Backend unavailable"));
+			.mockRejectedValue(
+				new Error(
+					"[CONVEX M(invitations:updateRsvp)] [Request ID: abc123] Server Error Uncaught Error: Podaj datę i godzinę przylotu. at handler (../../convex/invitations.ts:320:13) Called by client",
+				),
+			);
 		const createCarpoolRequestMock = vi.fn();
 		useMutationMock
 			.mockReturnValueOnce(updateRsvpMock)
@@ -118,7 +120,7 @@ describe("RsvpTab telemetry", () => {
 				expect.objectContaining({
 					kind: "rsvp_submit_error",
 					invitationId: "invitation-1",
-					message: "Backend unavailable",
+					message: "Podaj datę i godzinę przylotu.",
 					route: "/dashboard",
 					payload: expect.objectContaining({
 						message: "Test RSVP",
@@ -135,6 +137,7 @@ describe("RsvpTab telemetry", () => {
 			expect.objectContaining({
 				variant: "destructive",
 				title: "Nie udało się zapisać RSVP",
+				description: "Podaj datę i godzinę przylotu.",
 			}),
 		);
 	});
