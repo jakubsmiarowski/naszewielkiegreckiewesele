@@ -17,6 +17,7 @@ import {
 	GreekPhrasesWidget,
 } from "@/components/dashboard/SidebarWidgets";
 import type {
+	AdminErrorEvent,
 	AttractionAnchorId,
 	CarpoolMediationAlert,
 	MainTabId,
@@ -108,6 +109,10 @@ function DashboardPage() {
 		api.questions.listForAdmin,
 		adminAccessToken ? { adminAccessToken } : "skip",
 	) as QaAdminQuestion[] | undefined;
+	const errorEvents = useQuery(
+		api.telemetry.listForAdmin,
+		adminAccessToken ? { adminAccessToken } : "skip",
+	) as AdminErrorEvent[] | undefined;
 
 	const [activeTab, setActiveTab] = useState<MainTabId>("RSVP");
 	const [focusAttractionId, setFocusAttractionId] =
@@ -219,7 +224,12 @@ function DashboardPage() {
 		if (!qaQuestions) return 0;
 		return qaQuestions.filter((item) => item.status === "pending").length;
 	}, [qaQuestions]);
-	const adminActionCount = (mediationAlerts?.length ?? 0) + pendingQaCount;
+	const pendingErrorCount = useMemo(() => {
+		if (!errorEvents) return 0;
+		return errorEvents.filter((item) => item.status === "new").length;
+	}, [errorEvents]);
+	const adminActionCount =
+		(mediationAlerts?.length ?? 0) + pendingQaCount + pendingErrorCount;
 
 	const eventDate = useMemo(() => new Date(WEDDING_EVENT.startIso), []);
 	const deadlineDate = useMemo(() => {
@@ -342,6 +352,7 @@ function DashboardPage() {
 							adminAccessToken={adminAccessToken}
 							mediationAlerts={mediationAlerts}
 							qaQuestions={qaQuestions}
+							errorEvents={errorEvents}
 						/>
 					)}
 					{activeTab !== "RSVP" &&

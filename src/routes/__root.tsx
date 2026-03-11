@@ -6,12 +6,20 @@ import {
 	useLocation,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { type ReactNode, useEffect, useState } from "react";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Toaster } from "@/components/ui/toaster";
 import { isDemoMode } from "@/lib/app-mode";
+import { getBrowserCompatibilityIssue } from "@/lib/browser-compat";
 import { getCoupleLabel } from "@/lib/couple";
 import { LocaleProvider } from "@/lib/locale";
+import {
+	GlobalTelemetryListeners,
+	TelemetryErrorBoundary,
+	TelemetryProvider,
+	useTelemetry,
+} from "@/lib/telemetry";
 import ConvexProvider from "../integrations/convex/provider";
 import appCss from "../styles.css?url";
 
@@ -84,7 +92,7 @@ export const Route = createRootRoute({
 	shellComponent: RootDocument,
 });
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ children }: { children: ReactNode }) {
 	const htmlLang = isDemoMode() ? "en" : "pl";
 
 	return (
@@ -95,29 +103,61 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<body className="flex min-h-screen w-full flex-col bg-background text-foreground overflow-x-hidden font-sans">
 				<ConvexProvider>
 					<LocaleProvider>
-						<HeaderWrapper />
-						<DemoEnvironmentBanner />
-						<main className="flex-1 flex flex-col items-center w-full">
-							{children}
-						</main>
-						<FooterWrapper />
-						<Toaster />
-						<TanStackDevtools
-							config={{
-								position: "bottom-right",
-							}}
-							plugins={[
-								{
-									name: "Tanstack Router",
-									render: <TanStackRouterDevtoolsPanel />,
-								},
-							]}
-						/>
+						<TelemetryProvider>
+							<AppRuntimeShell>{children}</AppRuntimeShell>
+						</TelemetryProvider>
 					</LocaleProvider>
 				</ConvexProvider>
 				<Scripts />
 			</body>
 		</html>
+	);
+}
+
+function AppRuntimeShell({ children }: { children: ReactNode }) {
+	const location = useLocation();
+	const { captureClientError } = useTelemetry();
+	const [compatibilityIssue, setCompatibilityIssue] = useState<string | null>(
+		null,
+	);
+
+	useEffect(() => {
+		setCompatibilityIssue(getBrowserCompatibilityIssue());
+	}, []);
+
+	if (compatibilityIssue) {
+		return <UnsupportedBrowserFallback issue={compatibilityIssue} />;
+	}
+
+	return (
+		<>
+			<GlobalTelemetryListeners />
+			<TelemetryErrorBoundary
+				onError={captureClientError}
+				resetKey={`${location.pathname}${location.search}`}
+			>
+				<HeaderWrapper />
+				<DemoEnvironmentBanner />
+				<main className="flex-1 flex w-full flex-col items-center">
+					{children}
+				</main>
+				<FooterWrapper />
+				<Toaster />
+				{import.meta.env.DEV ? (
+					<TanStackDevtools
+						config={{
+							position: "bottom-right",
+						}}
+						plugins={[
+							{
+								name: "Tanstack Router",
+								render: <TanStackRouterDevtoolsPanel />,
+							},
+						]}
+					/>
+				) : null}
+			</TelemetryErrorBoundary>
+		</>
 	);
 }
 
@@ -151,5 +191,29 @@ function DemoEnvironmentBanner() {
 				How to test demo
 			</a>
 		</div>
+	);
+}
+
+function UnsupportedBrowserFallback({ issue }: { issue: string }) {
+	return (
+		<main className="flex min-h-screen w-full items-center justify-center bg-background px-4 py-10 text-foreground">
+			<section className="w-full max-w-xl rounded-3xl border border-border bg-white p-8 text-center shadow-sm">
+				<p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+					Unsupported browser
+				</p>
+				<h1 className="mt-3 text-2xl font-bold">
+					To urządzenie potrzebuje nowszej przeglądarki
+				</h1>
+				<p className="mt-3 text-sm text-muted-foreground">
+					Wykryliśmy brak wsparcia dla: <span className="font-medium">{issue}</span>.
+					Spróbuj zaktualizować Safari/Chrome albo otwórz stronę na nowszym
+					telefonie.
+				</p>
+				<p className="mt-2 text-sm text-muted-foreground">
+					We detected a missing browser capability:{" "}
+					<span className="font-medium">{issue}</span>.
+				</p>
+			</section>
+		</main>
 	);
 }

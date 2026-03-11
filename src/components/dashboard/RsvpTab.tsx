@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "convex/react";
 import { useMemo, useState } from "react";
+import { useLocation } from "@tanstack/react-router";
 import type {
 	InvitationData,
 	RsvpSettings,
@@ -18,6 +19,7 @@ import {
 	formatCarpoolRequestError,
 	formatSeatCount,
 } from "@/lib/rsvp-carpool";
+import { useTelemetry } from "@/lib/telemetry";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -33,6 +35,8 @@ export function RsvpTab({
 	onGoToCarpool,
 }: RsvpTabProps) {
 	const { locale } = useLocale();
+	const location = useLocation();
+	const { captureClientError } = useTelemetry();
 	const isEnglish = locale === "en";
 	const updateRsvp = useMutation(api.invitations.updateRsvp);
 	const createCarpoolRequest = useMutation(api.carpool.createRequest);
@@ -166,6 +170,7 @@ export function RsvpTab({
 	const hasRsvp = Boolean(invitation?.attendance) || answeredGuestsCount > 0;
 	const canEdit = !isAfterGrace;
 	const canSubmitNew = !isAfterDeadline;
+	const currentRoute = `${location.pathname}${location.search}`;
 
 	const defaultValues: Partial<RSVPFormData> | undefined = invitation
 		? {
@@ -185,6 +190,25 @@ export function RsvpTab({
 				extraNightsToDate: invitation.extraNightsToDate ?? "",
 			}
 		: undefined;
+
+	const reportRsvpError = (
+		error: unknown,
+		payload: RSVPFormData,
+		context: Record<string, unknown>,
+	) => {
+		captureClientError({
+			kind: "rsvp_submit_error",
+			route: currentRoute,
+			invitationId: invitation?._id,
+			message: error instanceof Error ? error.message : "Could not save RSVP",
+			stack: error instanceof Error ? error.stack : undefined,
+			payload,
+			context: {
+				locale,
+				...context,
+			},
+		});
+	};
 
 	const handleSubmit = async (data: RSVPFormData) => {
 		if (!invitation) return;
@@ -274,6 +298,10 @@ export function RsvpTab({
 				if (!isLegacyRsvpValidatorError(error)) {
 					throw error;
 				}
+				reportRsvpError(error, data, {
+					stage: "updateRsvp.extendedPayload",
+					recoveredWithLegacyFallback: true,
+				});
 				await updateRsvp(legacyCompatiblePayload);
 				usedLegacyRsvpFallback = true;
 			}
@@ -319,6 +347,12 @@ export function RsvpTab({
 						});
 						hasCarpoolRequestBeenCreated = true;
 					} catch (error) {
+						reportRsvpError(error, data, {
+							stage: "createCarpoolRequest",
+							offerId: selectedOffer._id,
+							requestedSeats,
+							seatsAvailable: selectedOffer.seatsAvailable,
+						});
 						carpoolRequestError = formatCarpoolRequestError({
 							error,
 							requestedSeats,
@@ -353,7 +387,10 @@ export function RsvpTab({
 								: "Dziękujemy za przesłanie formularza.",
 			});
 			setIsEditing(false);
-		} catch (_error) {
+		} catch (error) {
+			reportRsvpError(error, data, {
+				stage: "updateRsvp.final",
+			});
 			toast({
 				variant: "destructive",
 				title: isEnglish ? "Could not save RSVP" : "Nie udało się zapisać RSVP",

@@ -14,6 +14,30 @@ const STORAGE_KEY = "nwgw:locale";
 const DEFAULT_LOCALE: AppLocale = "pl";
 const DEMO_LOCALE: AppLocale = "en";
 
+function readStoredLocale(defaultLocale: AppLocale) {
+	if (typeof window === "undefined") {
+		return defaultLocale;
+	}
+
+	try {
+		return resolveLocale(window.localStorage.getItem(STORAGE_KEY), defaultLocale);
+	} catch {
+		return defaultLocale;
+	}
+}
+
+function writeStoredLocale(locale: AppLocale) {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	try {
+		window.localStorage.setItem(STORAGE_KEY, locale);
+	} catch {
+		// Ignore restricted storage environments.
+	}
+}
+
 interface LocaleContextValue {
 	locale: AppLocale;
 	setLocale: (locale: AppLocale) => void;
@@ -41,20 +65,16 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		if (demoMode) {
 			setLocale(DEMO_LOCALE);
-			window.localStorage.setItem(STORAGE_KEY, DEMO_LOCALE);
+			writeStoredLocale(DEMO_LOCALE);
 			return;
 		}
 
-		const storedLocale = resolveLocale(
-			window.localStorage.getItem(STORAGE_KEY),
-			defaultLocale,
-		);
-		setLocale(storedLocale);
+		setLocale(readStoredLocale(defaultLocale));
 	}, [defaultLocale, demoMode]);
 
 	useEffect(() => {
 		document.documentElement.lang = locale;
-		window.localStorage.setItem(STORAGE_KEY, locale);
+		writeStoredLocale(locale);
 	}, [locale]);
 
 	const value = useMemo(

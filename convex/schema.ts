@@ -171,6 +171,35 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_createdAt", ["createdAt"]),
 
+  errorEvents: defineTable({
+    kind: v.union(
+      v.literal("runtime_error"),
+      v.literal("unhandled_rejection"),
+      v.literal("rsvp_submit_error")
+    ),
+    status: v.union(
+      v.literal("new"),
+      v.literal("investigating"),
+      v.literal("resolved")
+    ),
+    fingerprint: v.string(),
+    route: v.optional(v.string()),
+    release: v.optional(v.string()),
+    invitationId: v.optional(v.id("invitations")),
+    userAgent: v.optional(v.string()),
+    deviceInfo: v.optional(v.string()),
+    message: v.string(),
+    stack: v.optional(v.string()),
+    payloadJson: v.optional(v.string()),
+    contextJson: v.optional(v.string()),
+    firstSeenAt: v.number(),
+    lastSeenAt: v.number(),
+    occurrenceCount: v.number(),
+  })
+    .index("by_fingerprint", ["fingerprint"])
+    .index("by_status_lastSeenAt", ["status", "lastSeenAt"])
+    .index("by_lastSeenAt", ["lastSeenAt"]),
+
   adminUsers: defineTable({
     email: v.string(),
     isActive: v.boolean(),

@@ -7,6 +7,7 @@ import { ArrivalsSection } from "@/components/dashboard/admin/sections/ArrivalsS
 import { CarpoolAlertsSection } from "@/components/dashboard/admin/sections/CarpoolAlertsSection";
 import { DeadlinesSection } from "@/components/dashboard/admin/sections/DeadlinesSection";
 import { DeparturesSection } from "@/components/dashboard/admin/sections/DeparturesSection";
+import { ErrorsSection } from "@/components/dashboard/admin/sections/ErrorsSection";
 import { InvitationsSection } from "@/components/dashboard/admin/sections/InvitationsSection";
 import { OverviewSection } from "@/components/dashboard/admin/sections/OverviewSection";
 import { QaSection } from "@/components/dashboard/admin/sections/QaSection";
@@ -16,8 +17,12 @@ import type {
 	AdminUserRecord,
 } from "@/components/dashboard/admin/types";
 import type {
+	AdminErrorEvent,
+	AdminErrorEventDetail,
 	AdminInvitation,
 	CarpoolMediationAlert,
+	ClientTelemetryKind,
+	ErrorEventStatus,
 	QaAdminQuestion,
 	RsvpSettings,
 } from "@/components/dashboard/types";
@@ -31,7 +36,10 @@ interface AdminTabProps {
 	adminAccessToken: string | null;
 	mediationAlerts?: CarpoolMediationAlert[];
 	qaQuestions?: QaAdminQuestion[];
+	errorEvents?: AdminErrorEvent[];
 }
+
+const ALL_ERROR_FILTER = "__all__";
 
 export function AdminTab({
 	invitations,
@@ -39,6 +47,7 @@ export function AdminTab({
 	adminAccessToken,
 	mediationAlerts,
 	qaQuestions,
+	errorEvents,
 }: AdminTabProps) {
 	const updateRelation = useMutation(api.guests.updateGuestRelation);
 	const updateSettings = useMutation(api.settings.updateRsvpSettings);
@@ -46,6 +55,7 @@ export function AdminTab({
 	const answerQuestion = useMutation(api.questions.answerQuestion);
 	const addAdmin = useMutation(api.adminUsers.addAdmin);
 	const setAdminStatus = useMutation(api.adminUsers.setAdminStatus);
+	const setErrorEventStatus = useMutation(api.telemetry.setErrorStatus);
 	const adminUsers = useQuery(
 		api.adminUsers.listForAdmin,
 		adminAccessToken ? { adminAccessToken } : "skip",
@@ -70,7 +80,25 @@ export function AdminTab({
 		Record<string, boolean>
 	>({});
 	const [activeSection, setActiveSection] = useState<AdminSectionId>("admins");
+	const [selectedErrorId, setSelectedErrorId] = useState<string | null>(null);
+	const [statusMutationId, setStatusMutationId] = useState<string | null>(null);
+	const [errorStatusFilter, setErrorStatusFilter] = useState<
+		ErrorEventStatus | typeof ALL_ERROR_FILTER
+	>(ALL_ERROR_FILTER);
+	const [errorKindFilter, setErrorKindFilter] = useState<
+		ClientTelemetryKind | typeof ALL_ERROR_FILTER
+	>(ALL_ERROR_FILTER);
+	const [errorRouteFilter, setErrorRouteFilter] = useState(ALL_ERROR_FILTER);
 	const newAdminEmailId = useId();
+	const selectedErrorEvent = useQuery(
+		api.telemetry.getErrorEvent,
+		adminAccessToken && selectedErrorId
+			? {
+					adminAccessToken,
+					errorEventId: selectedErrorId as Id<"errorEvents">,
+				}
+			: "skip",
+	) as AdminErrorEventDetail | null | undefined;
 
 	useEffect(() => {
 		if (settings?.rsvpDeadline) {
@@ -139,7 +167,52 @@ export function AdminTab({
 		if (!qaQuestions) return 0;
 		return qaQuestions.filter((item) => item.status === "pending").length;
 	}, [qaQuestions]);
+	const pendingErrorCount = useMemo(() => {
+		if (!errorEvents) return 0;
+		return errorEvents.filter((item) => item.status === "new").length;
+	}, [errorEvents]);
 	const pendingCarpoolCount = mediationAlerts?.length ?? 0;
+	const availableErrorRoutes = useMemo(() => {
+		if (!errorEvents) return [];
+		return Array.from(
+			new Set(
+				errorEvents
+					.map((item) => item.lastRoute?.trim())
+					.filter((route): route is string => Boolean(route)),
+			),
+		).sort((a, b) => a.localeCompare(b));
+	}, [errorEvents]);
+	const filteredErrorEvents = useMemo(() => {
+		if (!errorEvents) return undefined;
+		return errorEvents.filter((item) => {
+			if (errorStatusFilter !== ALL_ERROR_FILTER) {
+				if (item.status !== errorStatusFilter) return false;
+			}
+			if (errorKindFilter !== ALL_ERROR_FILTER) {
+				if (item.kind !== errorKindFilter) return false;
+			}
+			if (errorRouteFilter !== ALL_ERROR_FILTER) {
+				if ((item.lastRoute ?? "") !== errorRouteFilter) return false;
+			}
+			return true;
+		});
+	}, [errorEvents, errorKindFilter, errorRouteFilter, errorStatusFilter]);
+
+	useEffect(() => {
+		if (!filteredErrorEvents || filteredErrorEvents.length === 0) {
+			if (selectedErrorId !== null) {
+				setSelectedErrorId(null);
+			}
+			return;
+		}
+
+		const isSelectedStillVisible = filteredErrorEvents.some(
+			(item) => item._id === selectedErrorId,
+		);
+		if (!isSelectedStillVisible) {
+			setSelectedErrorId(filteredErrorEvents[0]?._id ?? null);
+		}
+	}, [filteredErrorEvents, selectedErrorId]);
 
 	const adminSections = useMemo<AdminSectionMeta[]>(
 		() => [
@@ -152,6 +225,12 @@ export function AdminTab({
 				id: "deadlines",
 				title: "Terminy RSVP",
 				description: "Aktualizacja terminów odpowiedzi i car pool.",
+			},
+			{
+				id: "errors",
+				title: "Błędy aplikacji",
+				description: "Crashe klienta, błędy RSVP i unhandled promise.",
+				pendingCount: pendingErrorCount,
 			},
 			{
 				id: "carpool",
@@ -181,7 +260,7 @@ export function AdminTab({
 				description: "Pełna tabela gości, relacji, RSVP i QR.",
 			},
 		],
-		[pendingCarpoolCount, pendingQaCount],
+		[pendingCarpoolCount, pendingErrorCount, pendingQaCount],
 	);
 
 	const handleAddAdmin = async () => {
@@ -365,6 +444,30 @@ export function AdminTab({
 		}
 	};
 
+	const handleSetErrorStatus = async (status: ErrorEventStatus) => {
+		if (!adminAccessToken || !selectedErrorId) return;
+		try {
+			setStatusMutationId(selectedErrorId);
+			await setErrorEventStatus({
+				adminAccessToken,
+				errorEventId: selectedErrorId as Id<"errorEvents">,
+				status,
+			});
+			toast({
+				variant: "success",
+				title: "Status błędu zapisany",
+			});
+		} catch (_error) {
+			toast({
+				variant: "destructive",
+				title: "Nie udało się zmienić statusu błędu",
+				description: "Spróbuj ponownie za chwilę.",
+			});
+		} finally {
+			setStatusMutationId(null);
+		}
+	};
+
 	const handleToggleAnsweredCard = (questionId: string) => {
 		setExpandedAnsweredIds((previous) => ({
 			...previous,
@@ -410,6 +513,25 @@ export function AdminTab({
 					onGraceDeadlineChange={setGraceDeadline}
 					onCarpoolDeadlineChange={setCarpoolDeadline}
 					onSave={handleSaveSettings}
+				/>
+			)}
+
+			{activeSection === "errors" && (
+				<ErrorsSection
+					errorEvents={filteredErrorEvents}
+					selectedErrorId={selectedErrorId}
+					selectedError={selectedErrorEvent ?? null}
+					newErrorCount={pendingErrorCount}
+					statusFilter={errorStatusFilter}
+					kindFilter={errorKindFilter}
+					routeFilter={errorRouteFilter}
+					availableRoutes={availableErrorRoutes}
+					statusMutationId={statusMutationId}
+					onStatusFilterChange={setErrorStatusFilter}
+					onKindFilterChange={setErrorKindFilter}
+					onRouteFilterChange={setErrorRouteFilter}
+					onSelectError={setSelectedErrorId}
+					onSetErrorStatus={handleSetErrorStatus}
 				/>
 			)}
 

@@ -20,6 +20,7 @@ import type * as invitations from "../invitations.js";
 import type * as questions from "../questions.js";
 import type * as security from "../security.js";
 import type * as settings from "../settings.js";
+import type * as telemetry from "../telemetry.js";
 
 import type {
   ApiFromModules,
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   questions: typeof questions;
   security: typeof security;
   settings: typeof settings;
+  telemetry: typeof telemetry;
 }>;
 
 /**

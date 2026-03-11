@@ -12,6 +12,7 @@ export interface AdminUserRecord {
 export type AdminSectionId =
 	| "admins"
 	| "deadlines"
+	| "errors"
 	| "carpool"
 	| "qa"
 	| "arrivals"

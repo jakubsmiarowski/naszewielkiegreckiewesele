@@ -77,6 +77,47 @@ export interface RsvpSettings {
 	carpoolDeadline: string;
 }
 
+export type ClientTelemetryKind =
+	| "runtime_error"
+	| "unhandled_rejection"
+	| "rsvp_submit_error";
+
+export type ErrorEventStatus = "new" | "investigating" | "resolved";
+
+export interface AdminErrorEvent {
+	_id: string;
+	kind: ClientTelemetryKind;
+	status: ErrorEventStatus;
+	fingerprint: string;
+	occurrenceCount: number;
+	firstSeenAt: number;
+	lastSeenAt: number;
+	lastMessage: string;
+	lastRoute?: string;
+	invitationId?: string;
+	release?: string;
+	userAgent?: string;
+}
+
+export interface AdminErrorEventDetail {
+	_id: string;
+	kind: ClientTelemetryKind;
+	status: ErrorEventStatus;
+	fingerprint: string;
+	occurrenceCount: number;
+	firstSeenAt: number;
+	lastSeenAt: number;
+	message: string;
+	route?: string;
+	release?: string;
+	invitationId?: string;
+	userAgent?: string;
+	deviceInfo?: string;
+	stack?: string;
+	payloadJson?: string;
+	contextJson?: string;
+}
+
 export type CarpoolOfferStatus = "open" | "closed" | "cancelled";
 
 export type CarpoolRequestStatus =
