@@ -56,26 +56,42 @@ export function SearchWidget() {
 	);
 }
 
+type CountdownTimeLeft = {
+	days: number;
+	hours: number;
+	minutes: number;
+};
+
+function getTimeLeft(targetDate: Date | null): CountdownTimeLeft {
+	if (!targetDate) {
+		return { days: 0, hours: 0, minutes: 0 };
+	}
+
+	const diff = Math.max(targetDate.getTime() - Date.now(), 0);
+	const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+	const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+	const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+	return { days, hours, minutes };
+}
+
 function useCountdown(targetDate: Date | null) {
-	const [timeLeft, setTimeLeft] = useState(() => {
-		if (!targetDate) return { days: 0, hours: 0, minutes: 0 };
-		const diff = Math.max(targetDate.getTime() - Date.now(), 0);
-		const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-		const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-		const minutes = Math.floor((diff / (1000 * 60)) % 60);
-		return { days, hours, minutes };
-	});
+	const [timeLeft, setTimeLeft] = useState<CountdownTimeLeft>(() =>
+		getTimeLeft(targetDate),
+	);
 
 	useEffect(() => {
-		if (!targetDate) return;
-		const interval = setInterval(() => {
-			const diff = Math.max(targetDate.getTime() - Date.now(), 0);
-			const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-			const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-			const minutes = Math.floor((diff / (1000 * 60)) % 60);
-			setTimeLeft({ days, hours, minutes });
+		setTimeLeft(getTimeLeft(targetDate));
+
+		if (!targetDate) {
+			return;
+		}
+
+		const interval = window.setInterval(() => {
+			setTimeLeft(getTimeLeft(targetDate));
 		}, 60000);
-		return () => clearInterval(interval);
+
+		return () => window.clearInterval(interval);
 	}, [targetDate]);
 
 	return timeLeft;
